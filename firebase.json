@@ -1,0 +1,40 @@
+{
+  "hosting": [
+    {
+      "target": "pwa-invoice",
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+      {
+        "source": "/query",
+        "run": {
+          "serviceId": "api-dev-upgrade-v2",
+          "region": "asia-southeast1"
+        }
+      },
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "api-dev-upgrade-v2",
+          "region": "asia-southeast1"
+        }
+      },
+      {
+        "source": "/public/**",
+        "run": {
+          "serviceId": "api-dev-upgrade-v2",
+          "region": "asia-southeast1"
+        }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "cashflow-483906"
+  },
+  "targets": {
+    "cashflow-483906": {
+      "hosting": {
+        "pwa-invoice": [
+          "pwa-invoice"
+        ]
+      }
+    }
+  }
+}
