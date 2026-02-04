@@ -72,8 +72,8 @@ function Welcome() {
         {/* Hero Illustration */}
         <div style={{
           width: '100%',
-          maxWidth: 340,
-          height: 320,
+          maxWidth: 390,
+          height: 380,
           marginBottom: 40,
           position: 'relative'
         }}>
@@ -83,8 +83,8 @@ function Welcome() {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%) rotate(-5deg)',
-            width: 250,
-            height: 250,
+            width: 300,
+            height: 320,
             borderRadius: 28,
             border: '1px solid rgba(255,255,255,0.45)',
             boxShadow: '0 22px 45px rgba(15, 23, 42, 0.28)',
@@ -92,8 +92,11 @@ function Welcome() {
             background: '#0f172a'
           }}>
             <img
-              src="/hero-girl.svg"
+              src="/hero-girl-real.jpg"
               alt="Portrait of a confident business owner"
+              onError={(event) => {
+                event.currentTarget.src = '/hero-girl.svg';
+              }}
               style={{
                 width: '100%',
                 height: '100%',
@@ -123,8 +126,8 @@ function Welcome() {
             top: '50%',
             left: '50%',
             transform: 'translate(-38%, -38%) rotate(11deg)',
-            width: 215,
-            height: 180,
+            width: 240,
+            height: 220,
             background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.45) 0%, rgba(30, 41, 59, 0.34) 100%)',
             borderRadius: 20,
             boxShadow: '0 15px 30px rgba(100, 116, 139, 0.2)',
