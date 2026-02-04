@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from '../lib/auth';
+import BrandLogo from '../components/BrandLogo';
 
 function Welcome() {
   const navigate = useNavigate();
@@ -48,34 +49,14 @@ function Welcome() {
         padding: '32px 24px',
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
         zIndex: 1
       }}>
-        <div style={{
-          width: 44,
-          height: 44,
-          background: 'linear-gradient(135deg, #2563eb, #22d3ee)',
-          borderRadius: 12,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 8px 16px rgba(37, 99, 235, 0.25)'
-        }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="white" fillOpacity="0.9"/>
-            <path d="M14 2V8H20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M12 18V12" stroke="#2563eb" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M9 15H15" stroke="#2563eb" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
-        <span style={{
-          fontSize: 22,
-          fontWeight: 800,
-          color: '#1e293b',
-          letterSpacing: '-0.5px'
-        }}>
-          Cashflow
-        </span>
+        <BrandLogo
+          variant="full"
+          className="welcome-brand-logo"
+          title="Cashflow"
+          decorative={false}
+        />
       </div>
 
       {/* Main Content */}

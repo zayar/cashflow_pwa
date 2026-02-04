@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { gql, useMutation } from '@apollo/client';
 import { useNavigate, Link } from 'react-router-dom';
+import BrandLogo from '../components/BrandLogo';
 import { setToken, setUsername, getToken } from '../lib/auth';
 
 const LOGIN_MUTATION = gql`
@@ -12,16 +13,6 @@ const LOGIN_MUTATION = gql`
     }
   }
 `;
-
-function BrandIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
-      <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Z" fill="currentColor" opacity="0.95" />
-      <path d="M14 2v6h5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9 14h6M9 17h6" stroke="white" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 function Login() {
   const navigate = useNavigate();
@@ -62,10 +53,7 @@ function Login() {
       <div className="auth-panel">
         <div className="auth-head">
           <div className="auth-brand">
-            <span className="auth-brand-mark" aria-hidden="true">
-              <BrandIcon />
-            </span>
-            Cashflow Lite
+            <BrandLogo variant="full" className="auth-brand-logo" title="Cashflow Lite" decorative={false} />
           </div>
           <h1 className="heading" style={{ marginBottom: 6 }}>
             Welcome back

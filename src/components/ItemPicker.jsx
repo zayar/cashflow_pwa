@@ -53,6 +53,7 @@ function ItemPicker() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const lineId = params.get('lineId');
+  const returnStep = params.get('returnStep') === 'review' ? 'review' : 'items';
   const { dispatch } = useInvoiceDraft();
 
   const [search, setSearch] = useState('');
@@ -89,7 +90,7 @@ function ItemPicker() {
     const updatedRecent = [item, ...recentItems.filter((current) => current.id !== item.id)];
     setRecentItems(updatedRecent.slice(0, 6));
     saveRecentItems(updatedRecent);
-    navigate('/invoices/new');
+    navigate(`/invoices/new?step=${returnStep}`);
   };
 
   return (

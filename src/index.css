@@ -127,10 +127,16 @@ button {
   border-radius: 14px;
   display: grid;
   place-items: center;
-  color: white;
-  background: linear-gradient(140deg, #0a7bff 0%, #23b88f 100%);
-  box-shadow: 0 10px 20px rgba(10, 123, 255, 0.25);
+  color: #141b27;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, white 18%);
+  background: color-mix(in srgb, var(--surface) 90%, #eef4ff 10%);
+  box-shadow: var(--shadow-soft);
   flex-shrink: 0;
+}
+
+.brand-mark-svg {
+  width: 26px;
+  height: 26px;
 }
 
 .brand-copy {
@@ -661,6 +667,12 @@ textarea.input:focus {
   gap: 10px;
 }
 
+.default-location-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .row-button {
   width: 100%;
   min-height: 56px;
@@ -1087,22 +1099,22 @@ textarea.input:focus {
 .auth-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   margin-bottom: 12px;
   color: var(--text);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
-.auth-brand-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  color: white;
-  background: linear-gradient(140deg, #0a7bff 0%, #21b387 100%);
-  box-shadow: 0 10px 18px rgba(10, 123, 255, 0.24);
+.auth-brand-logo {
+  width: min(180px, 64vw);
+  height: auto;
+  color: #101826;
+}
+
+.welcome-brand-logo {
+  width: min(210px, 72vw);
+  height: auto;
+  color: #141f2f;
 }
 
 .auth-form {

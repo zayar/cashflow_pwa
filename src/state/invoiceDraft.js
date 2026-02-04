@@ -25,8 +25,8 @@ const initialInvoice = {
   customerName: '',
   referenceNumber: '',
   notes: '',
-  branchId: 1,
-  warehouseId: 1,
+  branchId: '',
+  warehouseId: '',
   currencyId: 1,
   currentStatus: 'Draft',
   lines: [createLine()]

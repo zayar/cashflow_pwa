@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { gql, useMutation } from '@apollo/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import InvoicePreview from '../components/InvoicePreview';
 import InvoiceLineCard from '../components/InvoiceLineCard';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
@@ -32,11 +32,18 @@ function currency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
+function parseStepParam(value) {
+  if (value === 'items') return 1;
+  if (value === 'review') return 2;
+  return 0;
+}
+
 function InvoiceForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { state: invoice, dispatch } = useInvoiceDraft();
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => parseStepParam(searchParams.get('step')));
   const [status, setStatus] = useState('');
   const [errors, setErrors] = useState({ customer: '', lines: [] });
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -60,7 +67,7 @@ function InvoiceForm() {
   }, [errors.customer, hasCustomer]);
 
   const openCustomerPicker = () => navigate('/pick/customer');
-  const openItemPicker = (lineId) => navigate(`/pick/item?lineId=${lineId}`);
+  const openItemPicker = (lineId) => navigate(`/pick/item?lineId=${lineId}&returnStep=items`);
 
   const addLineAndPick = () => {
     const line = createLine();
@@ -100,8 +107,8 @@ function InvoiceForm() {
 
     const input = {
       customerId: Number(invoice.customerId),
-      branchId: Number(invoice.branchId),
-      warehouseId: Number(invoice.warehouseId),
+      ...(invoice.branchId ? { branchId: Number(invoice.branchId) } : {}),
+      ...(invoice.warehouseId ? { warehouseId: Number(invoice.warehouseId) } : {}),
       currencyId: Number(invoice.currencyId),
       invoiceDate: isoDate,
       invoicePaymentTerms: invoice.paymentTerms,
@@ -180,18 +187,29 @@ function InvoiceForm() {
   const primaryLabel =
     step === 0 ? 'Continue to items' : step === 1 ? 'Continue to review' : saving ? 'Saving...' : 'Save invoice';
 
-  const secondaryButton =
-    step === 2
-      ? {
-          label: 'Share link',
-          action: handleShareLink,
-          style: 'btn btn-secondary'
-        }
-      : {
-          label: step === 0 ? 'Cancel' : 'Back',
-          action: step === 0 ? () => navigate('/') : () => setStep(step - 1),
-          style: 'btn btn-secondary'
-        };
+  const canShare = step === 2 && Boolean(invoice.invoiceId);
+
+  const secondaryButton = canShare
+    ? {
+        label: 'Share link',
+        action: handleShareLink,
+        style: 'btn btn-secondary'
+      }
+    : {
+        label: step === 0 ? 'Cancel' : 'Back',
+        action: step === 0 ? () => navigate('/') : () => setStep(step - 1),
+        style: 'btn btn-secondary'
+      };
+
+  const saveErrorMessage = useMemo(() => {
+    const raw = saveError?.message || '';
+    const lowered = raw.toLowerCase();
+
+    if (lowered.includes('branch not found') || lowered.includes('warehouse not found')) {
+      return 'Default branch or warehouse is missing. Set the default values in Cashflow Web, then retry.';
+    }
+    return raw;
+  }, [saveError]);
 
   return (
     <div className="invoice-page">
@@ -262,6 +280,15 @@ function InvoiceForm() {
                 ))}
               </select>
             </label>
+          </div>
+
+          <div className="default-location-row" role="status" aria-live="polite">
+            <span className="meta-chip">
+              Branch: {invoice.branchId ? `#${invoice.branchId}` : 'Account default'}
+            </span>
+            <span className="meta-chip">
+              Warehouse: {invoice.warehouseId ? `#${invoice.warehouseId}` : 'Account default'}
+            </span>
           </div>
 
           <button type="button" className="row-button" onClick={openCustomerPicker}>
@@ -366,7 +393,7 @@ function InvoiceForm() {
 
       {(status || saveError) && (
         <section className={saveError ? 'state-error' : 'surface-card'} role="status" aria-live="polite">
-          <p style={{ margin: 0 }}>{saveError ? saveError.message : status}</p>
+          <p style={{ margin: 0 }}>{saveError ? saveErrorMessage : status}</p>
         </section>
       )}
 
