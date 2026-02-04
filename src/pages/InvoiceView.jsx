@@ -3,6 +3,7 @@ import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
 import BrandLogo from '../components/BrandLogo';
+import { getDefaultInvoiceCurrencyId, getDefaultInvoiceLocationIds } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import {
   computeDueDate,
@@ -12,30 +13,30 @@ import {
   formatShortDate
 } from '../lib/formatters';
 
-const GET_INVOICE = gql`
-  query GetInvoice($id: ID!) {
-    getSalesInvoice(id: $id) {
-      id
-      invoiceNumber
-      invoiceDate
-      invoicePaymentTerms
-      currentStatus
-      invoiceTotalAmount
-      remainingBalance
-      referenceNumber
-      branchId
-      warehouseId
-      currencyId
-      customer {
-        id
-        name
-      }
-      details {
-        id
-        name
-        detailQty
-        detailUnitRate
-        detailDiscount
+const FIND_INVOICE = gql`
+  query FindInvoice($limit: Int = 80) {
+    paginateSalesInvoice(limit: $limit) {
+      edges {
+        node {
+          id
+          invoiceNumber
+          invoiceDate
+          invoicePaymentTerms
+          currentStatus
+          invoiceTotalAmount
+          remainingBalance
+          customer {
+            id
+            name
+          }
+          details {
+            id
+            name
+            detailQty
+            detailUnitRate
+            detailDiscount
+          }
+        }
       }
     }
   }
@@ -89,13 +90,17 @@ const DELETE_INVOICE = gql`
 function buildInvoiceInput(invoice) {
   if (!invoice) return null;
 
+  const defaults = getDefaultInvoiceLocationIds();
+  const fallbackCurrencyId = getDefaultInvoiceCurrencyId();
+  const isoDate = invoice.invoiceDate || new Date().toISOString();
+
   return {
     customerId: Number(invoice.customer?.id),
-    branchId: Number(invoice.branchId),
-    warehouseId: Number(invoice.warehouseId),
-    currencyId: Number(invoice.currencyId),
-    invoiceDate: invoice.invoiceDate,
-    invoicePaymentTerms: invoice.invoicePaymentTerms,
+    branchId: Number(invoice.branchId ?? defaults.branchId),
+    warehouseId: Number(invoice.warehouseId ?? defaults.warehouseId),
+    currencyId: Number(invoice.currencyId ?? fallbackCurrencyId),
+    invoiceDate: isoDate,
+    invoicePaymentTerms: invoice.invoicePaymentTerms || 'DueOnReceipt',
     currentStatus: invoice.currentStatus,
     referenceNumber: invoice.referenceNumber || undefined,
     isTaxInclusive: false,
@@ -123,6 +128,7 @@ function InvoiceView() {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [limit, setLimit] = useState(80);
 
   const { data: businessData } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-and-network' });
   const { data: locationData } = useQuery(GET_LOCATIONS, { fetchPolicy: 'cache-and-network' });
@@ -132,8 +138,8 @@ function InvoiceView() {
     loading,
     error,
     refetch: refetchInvoice
-  } = useQuery(GET_INVOICE, {
-    variables: { id },
+  } = useQuery(FIND_INVOICE, {
+    variables: { limit },
     fetchPolicy: 'cache-and-network',
     errorPolicy: 'all'
   });
@@ -141,23 +147,31 @@ function InvoiceView() {
   const [updateInvoice, updateState] = useMutation(UPDATE_INVOICE);
   const [deleteInvoice, deleteState] = useMutation(DELETE_INVOICE);
 
-  const invoice = data?.getSalesInvoice;
+  const invoice = useMemo(() => {
+    const edges = data?.paginateSalesInvoice?.edges ?? [];
+    const match = edges.find((edge) => String(edge?.node?.id || '') === String(id || ''));
+    return match?.node || null;
+  }, [data, id]);
   const baseCurrency = businessData?.getBusiness?.baseCurrency;
 
   const branches = locationData?.listAllBranch ?? [];
   const warehouses = locationData?.listAllWarehouse ?? [];
 
+  const defaults = useMemo(() => getDefaultInvoiceLocationIds(), []);
+  const fallbackBranchId = invoice?.branchId ?? defaults.branchId;
+  const fallbackWarehouseId = invoice?.warehouseId ?? defaults.warehouseId;
+
   const branchName = useMemo(() => {
-    if (!invoice?.branchId) return '';
-    const match = branches.find((branch) => String(branch.id) === String(invoice.branchId));
-    return match?.name || `Branch #${invoice.branchId}`;
-  }, [branches, invoice?.branchId]);
+    if (!fallbackBranchId) return '';
+    const match = branches.find((branch) => String(branch.id) === String(fallbackBranchId));
+    return match?.name || `Branch #${fallbackBranchId}`;
+  }, [branches, fallbackBranchId]);
 
   const warehouseName = useMemo(() => {
-    if (!invoice?.warehouseId) return '';
-    const match = warehouses.find((warehouse) => String(warehouse.id) === String(invoice.warehouseId));
-    return match?.name || `Warehouse #${invoice.warehouseId}`;
-  }, [invoice?.warehouseId, warehouses]);
+    if (!fallbackWarehouseId) return '';
+    const match = warehouses.find((warehouse) => String(warehouse.id) === String(fallbackWarehouseId));
+    return match?.name || `Warehouse #${fallbackWarehouseId}`;
+  }, [fallbackWarehouseId, warehouses]);
 
   const paymentTermsLabel = formatPaymentTerms(invoice?.invoicePaymentTerms);
   const dueDate = computeDueDate(invoice?.invoiceDate, invoice?.invoicePaymentTerms);
@@ -212,6 +226,25 @@ function InvoiceView() {
     const input = buildInvoiceInput(invoice);
     if (!input) return;
 
+    const requiredOk =
+      Number.isFinite(input.customerId) &&
+      input.customerId > 0 &&
+      Number.isFinite(input.branchId) &&
+      input.branchId > 0 &&
+      Number.isFinite(input.warehouseId) &&
+      input.warehouseId > 0 &&
+      Number.isFinite(input.currencyId) &&
+      input.currencyId > 0 &&
+      Array.isArray(input.details) &&
+      input.details.length > 0;
+
+    if (!requiredOk) {
+      setStatus('Missing invoice defaults (branch/warehouse/currency). Open Edit and set defaults, then confirm.');
+      setIsConfirmOpen(false);
+      setIsActionsOpen(false);
+      return;
+    }
+
     setStatus('');
     try {
       await updateInvoice({
@@ -256,6 +289,34 @@ function InvoiceView() {
           <div className="skeleton-card">
             <div className="skeleton skeleton-line long" />
             <div className="skeleton skeleton-line short" />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (!loading && !error && !invoice) {
+    const canLoadMore = limit < 640;
+    return (
+      <div className="stack">
+        <section className="state-empty" role="status">
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Invoice not found in recent invoices.</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>
+            Tap load more to search further back, or return to invoices.
+          </p>
+          <div className="toolbar" style={{ justifyContent: 'center', gap: 10 }}>
+            {canLoadMore && (
+              <button
+                className="btn btn-secondary"
+                type="button"
+                onClick={() => setLimit((prev) => Math.min(prev * 2, 640))}
+              >
+                Load more
+              </button>
+            )}
+            <button className="btn btn-primary" type="button" onClick={() => navigate('/')}>
+              Back to invoices
+            </button>
           </div>
         </section>
       </div>
@@ -511,4 +572,3 @@ function InvoiceView() {
 }
 
 export default InvoiceView;
-

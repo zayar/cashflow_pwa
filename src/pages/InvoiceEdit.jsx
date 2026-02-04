@@ -4,28 +4,28 @@ import { useParams } from 'react-router-dom';
 import InvoiceForm from './InvoiceForm';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
 
-const GET_INVOICE = gql`
-  query GetInvoiceForEdit($id: ID!) {
-    getSalesInvoice(id: $id) {
-      id
-      invoiceNumber
-      invoiceDate
-      invoicePaymentTerms
-      currentStatus
-      referenceNumber
-      branchId
-      warehouseId
-      currencyId
-      customer {
-        id
-        name
-      }
-      details {
-        id
-        name
-        detailQty
-        detailUnitRate
-        detailDiscount
+const FIND_INVOICE = gql`
+  query FindInvoiceForEdit($limit: Int = 120) {
+    paginateSalesInvoice(limit: $limit) {
+      edges {
+        node {
+          id
+          invoiceNumber
+          invoiceDate
+          invoicePaymentTerms
+          currentStatus
+          customer {
+            id
+            name
+          }
+          details {
+            id
+            name
+            detailQty
+            detailUnitRate
+            detailDiscount
+          }
+        }
       }
     }
   }
@@ -42,14 +42,19 @@ function InvoiceEdit() {
   const { id } = useParams();
   const { state, dispatch } = useInvoiceDraft();
   const [isHydrated, setIsHydrated] = useState(() => String(state.invoiceId || '') === String(id || ''));
+  const [limit, setLimit] = useState(120);
 
-  const { data, loading, error, refetch } = useQuery(GET_INVOICE, {
-    variables: { id },
+  const { data, loading, error, refetch } = useQuery(FIND_INVOICE, {
+    variables: { limit },
     fetchPolicy: 'cache-and-network',
     errorPolicy: 'all'
   });
 
-  const invoice = data?.getSalesInvoice;
+  const invoice = useMemo(() => {
+    const edges = data?.paginateSalesInvoice?.edges ?? [];
+    const match = edges.find((edge) => String(edge?.node?.id || '') === String(id || ''));
+    return match?.node || null;
+  }, [data, id]);
   const hasDraftForInvoice = String(state.invoiceId || '') === String(invoice?.id || id || '');
 
   const draft = useMemo(() => {
@@ -76,13 +81,13 @@ function InvoiceEdit() {
       customerName: invoice.customer?.name || '',
       referenceNumber: invoice.referenceNumber || '',
       notes: '',
-      branchId: invoice.branchId,
-      warehouseId: invoice.warehouseId,
-      currencyId: invoice.currencyId,
+      branchId: invoice.branchId ?? state.branchId,
+      warehouseId: invoice.warehouseId ?? state.warehouseId,
+      currencyId: invoice.currencyId ?? state.currencyId,
       currentStatus: invoice.currentStatus || 'Draft',
       lines: lines.length > 0 ? lines : [createLine()]
     };
-  }, [invoice]);
+  }, [invoice, state.branchId, state.currencyId, state.warehouseId]);
 
   useEffect(() => {
     setIsHydrated(String(state.invoiceId || '') === String(id || ''));
@@ -99,6 +104,13 @@ function InvoiceEdit() {
     setIsHydrated(true);
   }, [dispatch, draft, invoice, state.invoiceId]);
 
+  useEffect(() => {
+    if (loading || error) return;
+    if (!invoice && limit < 640) {
+      setLimit((prev) => Math.min(prev * 2, 640));
+    }
+  }, [error, invoice, limit, loading]);
+
   if ((loading && !data && !hasDraftForInvoice) || !isHydrated) {
     return (
       <div className="stack">
@@ -111,6 +123,20 @@ function InvoiceEdit() {
             <div className="skeleton skeleton-line long" />
             <div className="skeleton skeleton-line short" />
           </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (!loading && !error && !invoice) {
+    return (
+      <div className="stack">
+        <section className="state-empty" role="status">
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Invoice not found in recent invoices.</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>Return to invoices and refresh, then try again.</p>
+          <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
+            Try again
+          </button>
         </section>
       </div>
     );
