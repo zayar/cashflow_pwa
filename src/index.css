@@ -16,6 +16,8 @@
   --primary: #0a7bff;
   --primary-strong: #085dcc;
   --primary-soft: #e5f1ff;
+  --ink: #0f1217;
+  --ink-soft: #1b212b;
 
   --success: #0f9967;
   --warning: #b46914;
@@ -99,8 +101,9 @@ button {
   position: sticky;
   top: 0;
   z-index: 20;
-  backdrop-filter: blur(14px);
-  background: color-mix(in srgb, var(--bg) 78%, white 22%);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  background: rgba(247, 251, 255, 0.74);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, white 20%);
 }
 
@@ -211,9 +214,11 @@ button {
 .section-card,
 .surface-card {
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 90%, #f4f9ff 10%);
+  background: rgba(255, 255, 255, 0.76);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
   padding: var(--space-4);
 }
 
@@ -263,7 +268,11 @@ button {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    background-color 0.14s ease,
+    border-color 0.14s ease;
 }
 
 .btn:disabled {
@@ -278,25 +287,27 @@ button {
 
 .btn-primary {
   color: white;
-  border-color: color-mix(in srgb, var(--primary) 74%, black 26%);
-  background: linear-gradient(145deg, var(--primary) 0%, var(--primary-strong) 100%);
-  box-shadow: 0 10px 20px rgba(10, 123, 255, 0.28);
+  border-color: color-mix(in srgb, var(--ink) 86%, white 14%);
+  background: linear-gradient(150deg, var(--ink-soft) 0%, var(--ink) 75%, #090b0e 100%);
+  box-shadow: 0 12px 24px rgba(9, 11, 14, 0.32);
 }
 
 .btn-primary:not(:disabled):hover {
-  box-shadow: 0 12px 22px rgba(8, 93, 204, 0.35);
+  box-shadow: 0 14px 26px rgba(9, 11, 14, 0.4);
 }
 
 .btn-secondary {
   color: var(--text);
   border-color: var(--border);
-  background: var(--surface-soft);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .btn-ghost {
-  color: var(--primary-strong);
-  border-color: color-mix(in srgb, var(--primary) 22%, white 78%);
-  background: color-mix(in srgb, var(--primary-soft) 65%, white 35%);
+  color: var(--ink-soft);
+  border-color: color-mix(in srgb, var(--ink) 18%, white 82%);
+  background: rgba(247, 250, 255, 0.72);
 }
 
 .btn-danger {
@@ -1257,8 +1268,9 @@ textarea.input:focus {
   display: grid;
   grid-template-columns: 1fr 1.3fr;
   gap: 10px;
-  background: color-mix(in srgb, var(--bg) 80%, white 20%);
-  backdrop-filter: blur(16px);
+  background: rgba(245, 249, 255, 0.74);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
   border-top: 1px solid var(--border);
 }
 
@@ -1507,14 +1519,16 @@ textarea.input:focus {
   width: 58px;
   height: 58px;
   border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--primary) 66%, white 34%);
-  background: linear-gradient(150deg, #0a7bff 0%, #0864d3 55%, #1aa77f 100%);
+  border: 1px solid color-mix(in srgb, var(--ink) 72%, white 28%);
+  background:
+    radial-gradient(130% 90% at 18% 12%, rgba(255, 255, 255, 0.16) 0%, transparent 48%),
+    linear-gradient(150deg, #272d37 0%, #14181f 58%, #0b0d12 100%);
   color: white;
   font-size: 30px;
   line-height: 1;
   display: grid;
   place-items: center;
-  box-shadow: 0 14px 26px rgba(10, 102, 205, 0.34);
+  box-shadow: 0 14px 28px rgba(10, 12, 15, 0.4);
   transition: transform 0.18s ease;
 }
 
@@ -1530,9 +1544,10 @@ textarea.input:focus {
   z-index: 21;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  background: color-mix(in srgb, #ffffff 88%, #e9f2ff 12%);
+  background: rgba(252, 254, 255, 0.8);
   border-top: 1px solid var(--border);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
   box-shadow: 0 -8px 20px rgba(14, 34, 62, 0.08);
 }
 
@@ -1641,7 +1656,7 @@ textarea.input:focus {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
-    background: color-mix(in srgb, var(--surface) 86%, var(--bg-accent) 14%);
+    background: rgba(252, 254, 255, 0.82);
     margin-top: 4px;
   }
 
