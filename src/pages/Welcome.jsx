@@ -15,7 +15,8 @@ function Welcome() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      // Use dynamic viewport height so "Get Started" stays visible on mobile browsers.
+      minHeight: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       background: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)',
@@ -46,7 +47,7 @@ function Welcome() {
 
       {/* Logo Header */}
       <div style={{
-        padding: '32px 24px',
+        padding: '22px 24px',
         display: 'flex',
         alignItems: 'center',
         zIndex: 1
@@ -64,17 +65,17 @@ function Welcome() {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'center',
-        padding: '0 32px',
+        padding: '0 24px',
         zIndex: 1
       }}>
         {/* Hero Illustration */}
         <div style={{
           width: '100%',
-          maxWidth: 430,
-          height: 430,
-          marginBottom: 22,
+          maxWidth: 410,
+          height: 360,
+          marginBottom: 18,
           position: 'relative'
         }}>
           {/* Main portrait card */}
@@ -83,8 +84,8 @@ function Welcome() {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%) rotate(-5deg)',
-            width: 340,
-            height: 360,
+            width: 320,
+            height: 330,
             borderRadius: 30,
             border: '1px solid rgba(255,255,255,0.45)',
             boxShadow: '0 22px 45px rgba(15, 23, 42, 0.28)',
@@ -101,7 +102,7 @@ function Welcome() {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                transform: 'scale(1.08)',
+                transform: 'scale(1.06)',
                 objectPosition: 'center 22%'
               }}
             />
@@ -113,8 +114,8 @@ function Welcome() {
             top: '50%',
             left: '50%',
             transform: 'translate(-38%, -38%) rotate(11deg)',
-            width: 280,
-            height: 260,
+            width: 260,
+            height: 240,
             background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(239, 246, 255, 0.74) 100%)',
             borderRadius: 24,
             boxShadow: '0 15px 30px rgba(100, 116, 139, 0.2)',
@@ -192,21 +193,33 @@ function Welcome() {
 
         {/* Headline */}
         <h1 style={{
-          fontSize: 32,
+          fontSize: 30,
           fontWeight: 800,
           color: '#1e293b',
           textAlign: 'center',
           lineHeight: 1.2,
-          marginBottom: 24,
+          marginBottom: 10,
           letterSpacing: '-0.5px'
         }}>
           Fast and easy<br />invoice solution.
         </h1>
+
+        <p style={{
+          fontSize: 15,
+          color: '#64748b',
+          textAlign: 'center',
+          lineHeight: 1.55,
+          margin: 0,
+          marginBottom: 14,
+          maxWidth: 320
+        }}>
+          Create, send, and track professional invoices in seconds. Get paid faster with Cashflow.
+        </p>
       </div>
 
       {/* Bottom Action */}
       <div style={{
-        padding: '6px 32px 24px',
+        padding: '12px 24px 18px',
         zIndex: 1
       }}>
         <button
