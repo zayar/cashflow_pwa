@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import InvoicePreview from '../components/InvoicePreview';
 import InvoiceLineCard from '../components/InvoiceLineCard';
 import Modal from '../components/Modal';
@@ -13,6 +13,16 @@ const CREATE_INVOICE = gql`
     createSalesInvoice(input: $input) {
       id
       invoiceNumber
+    }
+  }
+`;
+
+const UPDATE_INVOICE = gql`
+  mutation UpdateInvoice($id: ID!, $input: NewSalesInvoice!) {
+    updateSalesInvoice(id: $id, input: $input) {
+      id
+      invoiceNumber
+      currentStatus
     }
   }
 `;
@@ -100,6 +110,7 @@ function getNetworkErrorMessage(error) {
 
 function InvoiceForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { state: invoice, dispatch } = useInvoiceDraft();
 
@@ -113,7 +124,10 @@ function InvoiceForm() {
   const [currencyIdInput, setCurrencyIdInput] = useState('');
   const [locationInputError, setLocationInputError] = useState('');
 
-  const [createInvoice, { loading: saving, error: saveError }] = useMutation(CREATE_INVOICE);
+  const [createInvoice, createState] = useMutation(CREATE_INVOICE);
+  const [updateInvoice, updateState] = useMutation(UPDATE_INVOICE);
+  const saving = createState.loading || updateState.loading;
+  const saveError = createState.error || updateState.error;
 
   const {
     data: businessData,
@@ -211,8 +225,15 @@ function InvoiceForm() {
     setIsLocationOpen(false);
   };
 
-  const openCustomerPicker = () => navigate('/pick/customer');
-  const openItemPicker = (lineId) => navigate(`/pick/item?lineId=${lineId}&returnStep=items`);
+  const openCustomerPicker = () =>
+    navigate(`/pick/customer?returnTo=${encodeURIComponent(location.pathname)}`);
+
+  const openItemPicker = (lineId) =>
+    navigate(
+      `/pick/item?lineId=${encodeURIComponent(String(lineId))}&returnStep=items&returnTo=${encodeURIComponent(
+        location.pathname
+      )}`
+    );
 
   const addLineAndPick = () => {
     const line = createLine();
@@ -281,14 +302,23 @@ function InvoiceForm() {
       }))
     };
 
-    const { data } = await createInvoice({ variables: { input } });
-    const number = data?.createSalesInvoice?.invoiceNumber || data?.createSalesInvoice?.id;
-    const id = data?.createSalesInvoice?.id;
+    const isUpdating = Boolean(invoice.invoiceId);
+    const variables = isUpdating ? { id: invoice.invoiceId, input } : { input };
+    const mutate = isUpdating ? updateInvoice : createInvoice;
+    const { data } = await mutate({ variables });
+
+    const payload = isUpdating ? data?.updateSalesInvoice : data?.createSalesInvoice;
+    const number = payload?.invoiceNumber || payload?.id;
+    const id = payload?.id;
     if (number) dispatch({ type: 'setInvoiceNumber', invoiceNumber: number });
     if (id) dispatch({ type: 'setInvoiceId', invoiceId: id });
     saveDefaultInvoiceLocationIds(branchId, warehouseId);
     saveDefaultInvoiceCurrencyId(currencyId);
-    setStatus(`Invoice ${number || ''} saved.`.trim());
+    setStatus(isUpdating ? `Invoice ${number || ''} updated.`.trim() : `Invoice ${number || ''} saved.`.trim());
+
+    if (id) {
+      navigate(`/invoices/${encodeURIComponent(String(id))}`, { replace: true });
+    }
   };
 
   const handleShareLink = async () => {

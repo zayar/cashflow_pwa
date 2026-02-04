@@ -8,6 +8,8 @@ import Clients from './pages/Clients';
 import More from './pages/More';
 import Login from './pages/Login';
 import InvoiceForm from './pages/InvoiceForm';
+import InvoiceView from './pages/InvoiceView';
+import InvoiceEdit from './pages/InvoiceEdit';
 import ItemForm from './pages/ItemForm';
 import ClientForm from './pages/ClientForm';
 import CustomerPickerPage from './pages/CustomerPicker';
@@ -21,6 +23,8 @@ export function AppRoutes() {
       children: [
         { index: true, element: <Invoices /> },
         { path: 'invoices/new', element: <InvoiceForm /> },
+        { path: 'invoices/:id', element: <InvoiceView /> },
+        { path: 'invoices/:id/edit', element: <InvoiceEdit /> },
         { path: 'items', element: <Items /> },
         { path: 'items/new', element: <ItemForm /> },
         { path: 'clients', element: <Clients /> },

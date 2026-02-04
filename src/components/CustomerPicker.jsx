@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import PickerHeader from './PickerHeader';
 import QuickAddCustomer from './QuickAddCustomer';
 import { useInvoiceDraft } from '../state/invoiceDraft';
@@ -27,6 +27,8 @@ function SearchIcon() {
 function CustomerPicker() {
   const { dispatch } = useInvoiceDraft();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const returnTo = params.get('returnTo') || '/invoices/new';
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const debounced = useDebouncedValue(search, 300);
@@ -48,13 +50,14 @@ function CustomerPicker() {
       customerId: customer.id,
       customerName: customer.name
     });
-    navigate('/invoices/new');
+    navigate(returnTo);
   };
 
   return (
     <div className="picker-page">
       <PickerHeader
         title="Choose client"
+        backTo={returnTo}
         rightAction={
           <button className="btn btn-primary" type="button" onClick={() => setShowAdd(true)}>
             + Add
@@ -115,11 +118,7 @@ function CustomerPicker() {
         <QuickAddCustomer
           onClose={() => setShowAdd(false)}
           onSave={(customer) => {
-            dispatch({
-              type: 'setCustomer',
-              customerId: customer.id,
-              customerName: customer.name
-            });
+            handleSelect(customer);
           }}
         />
       )}

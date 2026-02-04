@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
+import { useInvoiceDraft } from '../state/invoiceDraft';
+import { formatInvoiceNumberShort, formatMoney, formatShortDate } from '../lib/formatters';
 
 const INVOICES_QUERY = gql`
   query PaginateInvoices($limit: Int = 20) {
@@ -22,15 +24,24 @@ const INVOICES_QUERY = gql`
   }
 `;
 
+const BUSINESS_QUERY = gql`
+  query GetBusinessCurrency {
+    getBusiness {
+      id
+      baseCurrency {
+        id
+        name
+        symbol
+      }
+    }
+  }
+`;
+
 const tabs = [
   { key: 'all', label: 'All' },
   { key: 'outstanding', label: 'Outstanding' },
   { key: 'paid', label: 'Paid' }
 ];
-
-function currency(value) {
-  return `$${Number(value || 0).toFixed(2)}`;
-}
 
 function statusClass(status) {
   const normalized = (status || '').toLowerCase();
@@ -68,13 +79,17 @@ function LoadingInvoices() {
 }
 
 function Invoices() {
+  const { dispatch } = useInvoiceDraft();
   const [tab, setTab] = useState('all');
   const [search, setSearch] = useState('');
 
+  const { data: businessData } = useQuery(BUSINESS_QUERY, { fetchPolicy: 'cache-and-network' });
   const { data, loading, error, refetch } = useQuery(INVOICES_QUERY, {
     variables: { limit: 20 },
     fetchPolicy: 'cache-and-network'
   });
+
+  const baseCurrency = businessData?.getBusiness?.baseCurrency;
 
   const invoices = useMemo(
     () => data?.paginateSalesInvoice?.edges?.map((edge) => edge.node) ?? [],
@@ -105,7 +120,13 @@ function Invoices() {
             <p className="kicker">Invoice List</p>
             <h2 className="title">Recent invoices</h2>
           </div>
-          <Link to="/invoices/new" className="btn btn-primary">
+          <Link
+            to="/invoices/new"
+            className="btn btn-primary"
+            onClick={() => {
+              dispatch({ type: 'reset' });
+            }}
+          >
             + New invoice
           </Link>
         </div>
@@ -164,28 +185,28 @@ function Invoices() {
       {!error && filtered.length > 0 && (
         <ul className="list" aria-live="polite">
           {filtered.map((invoice) => (
-            <li key={invoice.id} className="list-item list-card">
-              <div style={{ minWidth: 0 }}>
-                <p style={{ margin: 0, fontWeight: 800 }}>
-                  {invoice.invoiceNumber || `Invoice ${invoice.id}`}
-                </p>
-                <p className="subtle" style={{ marginTop: 2, marginBottom: 8 }}>
-                  {invoice.customer?.name || 'No client selected'}
-                </p>
-                <div className="list-meta">
-                  <span className="meta-chip">
-                    {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 'No date'}
-                  </span>
-                  <span className="meta-chip">Balance: {currency(invoice.remainingBalance)}</span>
+            <li key={invoice.id} className="list-card list-clickable">
+              <Link to={`/invoices/${invoice.id}`} className="list-link">
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 800 }}>
+                    {formatInvoiceNumberShort(invoice.invoiceNumber) || `Invoice ${invoice.id}`}
+                  </p>
+                  <p className="subtle" style={{ marginTop: 2, marginBottom: 8 }}>
+                    {invoice.customer?.name || 'No client selected'}
+                  </p>
+                  <div className="list-meta">
+                    <span className="meta-chip">{formatShortDate(invoice.invoiceDate) || 'No date'}</span>
+                    <span className="meta-chip">Balance: {formatMoney(invoice.remainingBalance, baseCurrency)}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <p style={{ margin: 0, fontWeight: 800 }}>{currency(invoice.invoiceTotalAmount)}</p>
-                <span className={`badge ${statusClass(invoice.currentStatus)}`}>
-                  {invoice.currentStatus || 'Unknown'}
-                </span>
-              </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{formatMoney(invoice.invoiceTotalAmount, baseCurrency)}</p>
+                  <span className={`badge ${statusClass(invoice.currentStatus)}`}>
+                    {invoice.currentStatus || 'Unknown'}
+                  </span>
+                </div>
+              </Link>
             </li>
           ))}
         </ul>

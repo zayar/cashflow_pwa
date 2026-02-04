@@ -9,6 +9,14 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/invoices/new')) {
     return { title: 'Create Invoice', kicker: 'Guided Flow', backPath: '/' };
   }
+  const invoiceMatch = pathname.match(/^\/invoices\/([^/]+)/);
+  const invoiceId = invoiceMatch?.[1] || '';
+  if (invoiceId && pathname.endsWith('/edit')) {
+    return { title: 'Edit Invoice', kicker: 'Guided Flow', backPath: `/invoices/${invoiceId}` };
+  }
+  if (invoiceId) {
+    return { title: 'Invoice', kicker: 'Invoice', backPath: '/' };
+  }
   if (pathname.startsWith('/items/new')) {
     return { title: 'Create Item', kicker: 'Catalog', backPath: '/items' };
   }
@@ -35,7 +43,7 @@ function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
 
   const isEditorPage =
-    location.pathname.startsWith('/invoices/new') ||
+    location.pathname.startsWith('/invoices/') ||
     location.pathname.startsWith('/items/new') ||
     location.pathname.startsWith('/clients/new');
 

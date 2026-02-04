@@ -39,6 +39,12 @@ function invoiceReducer(state, action) {
   switch (action.type) {
     case 'setField':
       return { ...state, [action.field]: action.value };
+    case 'hydrate':
+      return {
+        ...state,
+        ...action.invoice,
+        lines: Array.isArray(action.invoice?.lines) && action.invoice.lines.length > 0 ? action.invoice.lines : state.lines
+      };
     case 'setCustomer':
       return { ...state, customerId: action.customerId, customerName: action.customerName };
     case 'addLine':
