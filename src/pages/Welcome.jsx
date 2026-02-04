@@ -72,8 +72,8 @@ function Welcome() {
         {/* Hero Illustration */}
         <div style={{
           width: '100%',
-          maxWidth: 390,
-          height: 380,
+          maxWidth: 430,
+          height: 430,
           marginBottom: 40,
           position: 'relative'
         }}>
@@ -83,13 +83,13 @@ function Welcome() {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%) rotate(-5deg)',
-            width: 300,
-            height: 320,
-            borderRadius: 28,
+            width: 340,
+            height: 360,
+            borderRadius: 30,
             border: '1px solid rgba(255,255,255,0.45)',
             boxShadow: '0 22px 45px rgba(15, 23, 42, 0.28)',
             overflow: 'hidden',
-            background: '#0f172a'
+            background: 'linear-gradient(160deg, #ffffff 0%, #f4f8ff 60%, #edf3ff 100%)'
           }}>
             <img
               src="/hero-girl-real.jpg"
@@ -100,24 +100,11 @@ function Welcome() {
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover'
+                objectFit: 'cover',
+                transform: 'scale(1.08)',
+                objectPosition: 'center 22%'
               }}
             />
-            <div style={{
-              position: 'absolute',
-              left: 14,
-              bottom: 14,
-              padding: '8px 11px',
-              borderRadius: 12,
-              background: 'rgba(15, 23, 42, 0.52)',
-              color: 'white',
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: '0.02em',
-              backdropFilter: 'blur(6px)'
-            }}>
-              Paid invoices +32%
-            </div>
           </div>
 
           {/* Secondary glass card (background) */}
@@ -126,10 +113,10 @@ function Welcome() {
             top: '50%',
             left: '50%',
             transform: 'translate(-38%, -38%) rotate(11deg)',
-            width: 240,
-            height: 220,
-            background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.45) 0%, rgba(30, 41, 59, 0.34) 100%)',
-            borderRadius: 20,
+            width: 280,
+            height: 260,
+            background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(239, 246, 255, 0.74) 100%)',
+            borderRadius: 24,
             boxShadow: '0 15px 30px rgba(100, 116, 139, 0.2)',
             backdropFilter: 'blur(4px)',
             zIndex: -1
