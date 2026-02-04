@@ -1,10 +1,11 @@
 import { createContext, createElement, useContext, useMemo, useReducer } from 'react';
-import { getDefaultInvoiceLocationIds } from '../lib/auth';
+import { getDefaultInvoiceCurrencyId, getDefaultInvoiceLocationIds } from '../lib/auth';
 
 const InvoiceDraftContext = createContext(null);
 
 const today = new Date().toISOString().slice(0, 10);
 const defaultLocationIds = getDefaultInvoiceLocationIds();
+const defaultCurrencyId = getDefaultInvoiceCurrencyId();
 
 export function createLine() {
   return {
@@ -29,7 +30,7 @@ const initialInvoice = {
   notes: '',
   branchId: defaultLocationIds.branchId,
   warehouseId: defaultLocationIds.warehouseId,
-  currencyId: 1,
+  currencyId: defaultCurrencyId,
   currentStatus: 'Draft',
   lines: [createLine()]
 };

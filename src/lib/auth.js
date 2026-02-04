@@ -2,6 +2,7 @@ const TOKEN_KEY = 'pwa-invoice-token';
 const NAME_KEY = 'pwa-invoice-username';
 const DEFAULT_BRANCH_KEY = 'pwa-invoice-default-branch-id';
 const DEFAULT_WAREHOUSE_KEY = 'pwa-invoice-default-warehouse-id';
+const DEFAULT_CURRENCY_KEY = 'pwa-invoice-default-currency-id';
 
 function isBrowser() {
   return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
@@ -91,10 +92,10 @@ function writeStoredDefault(key, value) {
 }
 
 function inferDefaultsFromToken() {
-  if (!isBrowser()) return { branchId: 0, warehouseId: 0 };
+  if (!isBrowser()) return { branchId: 0, warehouseId: 0, currencyId: 0 };
 
   const payload = decodeTokenPayload(getToken());
-  if (!payload) return { branchId: 0, warehouseId: 0 };
+  if (!payload) return { branchId: 0, warehouseId: 0, currencyId: 0 };
 
   const branchId = findNumericClaim(payload, [
     'branchid',
@@ -114,7 +115,16 @@ function inferDefaultsFromToken() {
     'default_warehouse_id'
   ]);
 
-  return { branchId, warehouseId };
+  const currencyId = findNumericClaim(payload, [
+    'currencyid',
+    'defaultcurrencyid',
+    'basecurrencyid',
+    'currency_id',
+    'default_currency_id',
+    'base_currency_id'
+  ]);
+
+  return { branchId, warehouseId, currencyId };
 }
 
 export function getDefaultInvoiceLocationIds() {
@@ -135,4 +145,16 @@ export function getDefaultInvoiceLocationIds() {
 export function saveDefaultInvoiceLocationIds(branchId, warehouseId) {
   writeStoredDefault(DEFAULT_BRANCH_KEY, branchId);
   writeStoredDefault(DEFAULT_WAREHOUSE_KEY, warehouseId);
+}
+
+export function getDefaultInvoiceCurrencyId() {
+  const storedCurrencyId = readStoredDefault(DEFAULT_CURRENCY_KEY);
+  if (storedCurrencyId) return storedCurrencyId;
+
+  const tokenDefaults = inferDefaultsFromToken();
+  return tokenDefaults.currencyId || 1;
+}
+
+export function saveDefaultInvoiceCurrencyId(currencyId) {
+  writeStoredDefault(DEFAULT_CURRENCY_KEY, currencyId);
 }

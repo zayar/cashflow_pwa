@@ -6,7 +6,7 @@ import InvoiceLineCard from '../components/InvoiceLineCard';
 import Modal from '../components/Modal';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
-import { saveDefaultInvoiceLocationIds } from '../lib/auth';
+import { saveDefaultInvoiceCurrencyId, saveDefaultInvoiceLocationIds } from '../lib/auth';
 
 const CREATE_INVOICE = gql`
   mutation CreateInvoice($input: NewSalesInvoice!) {
@@ -26,6 +26,19 @@ const GET_INVOICE_LOCATIONS = gql`
     listAllWarehouse {
       id
       name
+    }
+  }
+`;
+
+const GET_BUSINESS_DEFAULTS = gql`
+  query GetBusinessDefaults {
+    getBusiness {
+      id
+      baseCurrency {
+        id
+        name
+        symbol
+      }
     }
   }
 `;
@@ -97,9 +110,19 @@ function InvoiceForm() {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [branchIdInput, setBranchIdInput] = useState('');
   const [warehouseIdInput, setWarehouseIdInput] = useState('');
+  const [currencyIdInput, setCurrencyIdInput] = useState('');
   const [locationInputError, setLocationInputError] = useState('');
 
   const [createInvoice, { loading: saving, error: saveError }] = useMutation(CREATE_INVOICE);
+
+  const {
+    data: businessData,
+    loading: businessLoading,
+    error: businessError
+  } = useQuery(GET_BUSINESS_DEFAULTS, {
+    fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all'
+  });
 
   const {
     data: locationData,
@@ -127,12 +150,25 @@ function InvoiceForm() {
     }
   }, [errors.customer, hasCustomer]);
 
+  const baseCurrency = businessData?.getBusiness?.baseCurrency;
+  const baseCurrencyId = toPositiveInt(baseCurrency?.id);
+
   const openLocationSettings = () => {
     setLocationInputError('');
     setBranchIdInput(String(invoice.branchId || ''));
     setWarehouseIdInput(String(invoice.warehouseId || ''));
+    setCurrencyIdInput(String(invoice.currencyId || baseCurrencyId || ''));
     setIsLocationOpen(true);
   };
+
+  useEffect(() => {
+    if (!baseCurrencyId) return;
+    const currentCurrencyId = toPositiveInt(invoice.currencyId);
+    if (currentCurrencyId === baseCurrencyId) return;
+
+    dispatch({ type: 'setField', field: 'currencyId', value: baseCurrencyId });
+    saveDefaultInvoiceCurrencyId(baseCurrencyId);
+  }, [baseCurrencyId, dispatch, invoice.currencyId]);
 
   const branches = locationData?.listAllBranch ?? [];
   const warehouses = locationData?.listAllWarehouse ?? [];
@@ -150,19 +186,27 @@ function InvoiceForm() {
     if (warehouses.length > 0 && (!warehouseIdInput || !warehouseIds.has(String(warehouseIdInput)))) {
       setWarehouseIdInput(String(warehouses[0]?.id ?? ''));
     }
-  }, [branches, warehouses, branchIdInput, warehouseIdInput, isLocationOpen]);
+
+    if (baseCurrencyId && toPositiveInt(currencyIdInput) !== baseCurrencyId) {
+      setCurrencyIdInput(String(baseCurrencyId));
+    }
+  }, [branches, warehouses, branchIdInput, warehouseIdInput, baseCurrencyId, currencyIdInput, isLocationOpen]);
 
   const saveLocationSettings = () => {
     const nextBranchId = toPositiveInt(branchIdInput);
     const nextWarehouseId = toPositiveInt(warehouseIdInput);
-    if (!nextBranchId || !nextWarehouseId) {
-      setLocationInputError('Please enter a valid branch and warehouse.');
+    const nextCurrencyId = toPositiveInt(currencyIdInput || baseCurrencyId);
+
+    if (!nextBranchId || !nextWarehouseId || !nextCurrencyId) {
+      setLocationInputError('Please enter a valid branch, warehouse, and currency.');
       return;
     }
 
     dispatch({ type: 'setField', field: 'branchId', value: nextBranchId });
     dispatch({ type: 'setField', field: 'warehouseId', value: nextWarehouseId });
+    dispatch({ type: 'setField', field: 'currencyId', value: nextCurrencyId });
     saveDefaultInvoiceLocationIds(nextBranchId, nextWarehouseId);
+    saveDefaultInvoiceCurrencyId(nextCurrencyId);
     setStatus('Invoice defaults updated.');
     setIsLocationOpen(false);
   };
@@ -204,11 +248,13 @@ function InvoiceForm() {
 
     const branchId = Number(invoice.branchId);
     const warehouseId = Number(invoice.warehouseId);
+    const currencyId = baseCurrencyId || Number(invoice.currencyId);
     const validBranchId = Number.isFinite(branchId) && branchId > 0;
     const validWarehouseId = Number.isFinite(warehouseId) && warehouseId > 0;
+    const validCurrencyId = Number.isFinite(currencyId) && currencyId > 0;
 
-    if (!validBranchId || !validWarehouseId) {
-      setStatus('Choose a branch and warehouse to save invoices.');
+    if (!validBranchId || !validWarehouseId || !validCurrencyId) {
+      setStatus('Choose invoice defaults (branch, warehouse, currency) to save invoices.');
       openLocationSettings();
       return;
     }
@@ -221,7 +267,7 @@ function InvoiceForm() {
       customerId: Number(invoice.customerId),
       branchId,
       warehouseId,
-      currencyId: Number(invoice.currencyId),
+      currencyId,
       invoiceDate: isoDate,
       invoicePaymentTerms: invoice.paymentTerms,
       currentStatus: invoice.currentStatus || 'Draft',
@@ -241,6 +287,7 @@ function InvoiceForm() {
     if (number) dispatch({ type: 'setInvoiceNumber', invoiceNumber: number });
     if (id) dispatch({ type: 'setInvoiceId', invoiceId: id });
     saveDefaultInvoiceLocationIds(branchId, warehouseId);
+    saveDefaultInvoiceCurrencyId(currencyId);
     setStatus(`Invoice ${number || ''} saved.`.trim());
   };
 
@@ -321,13 +368,20 @@ function InvoiceForm() {
     if (lowered.includes('branch not found') || lowered.includes('warehouse not found')) {
       return 'We could not find the selected branch/warehouse. Please choose valid defaults.';
     }
+    if (lowered.includes('currency not found')) {
+      return 'We could not find the selected currency. Please choose a valid default currency.';
+    }
     return raw;
   }, [saveError]);
 
   const hasLocationNotFoundError = useMemo(() => {
     const raw = getNetworkErrorMessage(saveError) || saveError?.message || '';
     const lowered = raw.toLowerCase();
-    return lowered.includes('branch not found') || lowered.includes('warehouse not found');
+    return (
+      lowered.includes('branch not found') ||
+      lowered.includes('warehouse not found') ||
+      lowered.includes('currency not found')
+    );
   }, [saveError]);
 
   useEffect(() => {
@@ -413,6 +467,16 @@ function InvoiceForm() {
             </span>
             <span className="meta-chip">
               Warehouse: {invoice.warehouseId ? `#${invoice.warehouseId}` : 'Account default'}
+            </span>
+            <span className="meta-chip">
+              Currency:{' '}
+              {baseCurrency?.name
+                ? `${baseCurrency.symbol || ''}${baseCurrency.symbol ? ' ' : ''}${baseCurrency.name} (#${
+                    invoice.currencyId || baseCurrencyId || '--'
+                  })`
+                : invoice.currencyId
+                  ? `#${invoice.currencyId}`
+                  : 'Account default'}
             </span>
             <button
               className="btn btn-ghost"
@@ -530,7 +594,7 @@ function InvoiceForm() {
           {saveError && hasLocationNotFoundError && (
             <div className="toolbar" style={{ marginTop: 12 }}>
               <button className="btn btn-secondary" type="button" onClick={openLocationSettings}>
-                Set branch & warehouse
+                Set invoice defaults
               </button>
             </div>
           )}
@@ -541,7 +605,7 @@ function InvoiceForm() {
         <Modal title="Invoice defaults" onClose={() => setIsLocationOpen(false)}>
           <div className="form-grid">
             <p className="subtle" style={{ marginTop: 0 }}>
-              Cashflow Lite uses your existing Branch + Warehouse. Select valid defaults so invoices can be created.
+              Cashflow Lite uses your existing Branch + Warehouse + Currency. Select valid defaults so invoices can be created.
             </p>
 
             {locationsLoading && <p className="subtle">Loading branches and warehouses…</p>}
@@ -550,6 +614,13 @@ function InvoiceForm() {
                 <p style={{ margin: 0 }}>
                   Couldn&apos;t load locations from the server. Enter the IDs manually.
                 </p>
+              </div>
+            )}
+
+            {businessLoading && <p className="subtle">Loading currency…</p>}
+            {businessError && (
+              <div className="state-error" role="alert">
+                <p style={{ margin: 0 }}>Couldn&apos;t load currency from the server. Enter the currency ID manually.</p>
               </div>
             )}
 
@@ -603,6 +674,33 @@ function InvoiceForm() {
                   value={warehouseIdInput}
                   onChange={(event) => setWarehouseIdInput(event.target.value)}
                   placeholder="Warehouse ID"
+                />
+              )}
+            </label>
+
+            <label className="field">
+              <span className="label">Currency</span>
+              {baseCurrencyId ? (
+                <select
+                  className="input"
+                  value={currencyIdInput}
+                  onChange={(event) => setCurrencyIdInput(event.target.value)}
+                >
+                  <option value={baseCurrencyId}>
+                    {baseCurrency?.name
+                      ? `${baseCurrency.name}${baseCurrency.symbol ? ` (${baseCurrency.symbol})` : ''} (#${baseCurrencyId})`
+                      : `Currency #${baseCurrencyId}`}
+                  </option>
+                </select>
+              ) : (
+                <input
+                  className="input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={currencyIdInput}
+                  onChange={(event) => setCurrencyIdInput(event.target.value)}
+                  placeholder="Currency ID"
                 />
               )}
             </label>
