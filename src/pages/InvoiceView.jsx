@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
-import BrandLogo from '../components/BrandLogo';
-import { getDefaultInvoiceCurrencyId, getDefaultInvoiceLocationIds } from '../lib/auth';
+import { getDefaultInvoiceCurrencyId, getDefaultInvoiceLocationIds, getUsername } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import {
   computeDueDate,
@@ -153,6 +152,14 @@ function InvoiceView() {
     return match?.node || null;
   }, [data, id]);
   const baseCurrency = businessData?.getBusiness?.baseCurrency;
+
+  const accountLabel = useMemo(() => getUsername(), []);
+  const accountTitle = useMemo(() => {
+    if (!accountLabel) return '';
+    const trimmed = String(accountLabel).trim();
+    if (!trimmed) return '';
+    return trimmed.split('--')[0] || trimmed;
+  }, [accountLabel]);
 
   const branches = locationData?.listAllBranch ?? [];
   const warehouses = locationData?.listAllWarehouse ?? [];
@@ -361,11 +368,10 @@ function InvoiceView() {
       <section className="invoice-paper-wrap" aria-label="Invoice paper">
         <div className="invoice-paper">
           <div className="invoice-paper-head">
-            <div className="invoice-paper-brand">
-              <BrandLogo variant="mark" className="invoice-paper-logo" decorative />
+            <div className="invoice-paper-brand" aria-label="Account">
               <div>
-                <p className="invoice-paper-brand-title">Cashflow</p>
-                <p className="invoice-paper-brand-subtle">cashflow lite</p>
+                {accountTitle && <p className="invoice-paper-brand-title">{accountTitle}</p>}
+                {accountLabel && <p className="invoice-paper-brand-subtle">{accountLabel}</p>}
               </div>
             </div>
 

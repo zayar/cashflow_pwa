@@ -704,9 +704,12 @@ textarea.input:focus {
 
 .invoice-paper-wrap {
   padding-bottom: 2px;
+  display: flex;
+  justify-content: center;
 }
 
 .invoice-paper {
+  width: min(860px, 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -724,7 +727,6 @@ textarea.input:focus {
 .invoice-paper-brand {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
   min-width: 0;
 }
 
@@ -837,11 +839,19 @@ textarea.input:focus {
 
 .invoice-table-row {
   display: grid;
-  grid-template-columns: 28px 1fr 64px 86px 96px;
-  gap: 10px;
+  grid-template-columns:
+    26px minmax(240px, 3fr) minmax(64px, 0.9fr)
+    minmax(96px, 1.1fr) minmax(118px, 1.35fr);
+  gap: 14px;
   align-items: start;
   padding: 12px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, white 18%);
+}
+
+.invoice-table-row > :nth-child(3),
+.invoice-table-row > :nth-child(4),
+.invoice-table-row > :nth-child(5) {
+  white-space: nowrap;
 }
 
 .invoice-table-head {

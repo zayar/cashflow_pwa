@@ -6,6 +6,27 @@ const getApiBaseUrl = () => {
   return '';
 };
 
+const getShareViewerOrigin = () => {
+  const envOrigin = import.meta?.env?.VITE_SHARE_VIEWER_ORIGIN;
+  if (envOrigin) return String(envOrigin).replace(/\/$/, '');
+
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin.replace(/\/$/, '')
+      : '';
+
+  // Default to the main Cashflow web app for the public invoice viewer.
+  // This matches how share links work in the web product.
+  if (typeof window !== 'undefined') {
+    const hostname = window.location?.hostname || '';
+    if (hostname === 'pwa-invoice.web.app') {
+      return 'https://cashflow-483906.web.app';
+    }
+  }
+
+  return origin;
+};
+
 const request = async (path, { method = 'GET', body, includeToken = true } = {}) => {
   const baseUrl = getApiBaseUrl();
   const headers = { 'Content-Type': 'application/json' };
@@ -45,9 +66,7 @@ export const createInvoiceShareToken = async (invoiceId) => {
 
 export const buildInvoiceShareUrl = (token) => {
   if (!token) return '';
-  const origin =
-    typeof window !== 'undefined' && window.location?.origin
-      ? window.location.origin.replace(/\/$/, '')
-      : '';
+  const origin = getShareViewerOrigin();
+  // Public invoice viewer lives in the main Cashflow web app.
   return `${origin}/#/public/invoices/${encodeURIComponent(String(token))}`;
 };
