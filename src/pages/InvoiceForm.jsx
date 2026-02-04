@@ -5,6 +5,7 @@ import InvoicePreview from '../components/InvoicePreview';
 import InvoiceLineCard from '../components/InvoiceLineCard';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
+import { saveDefaultInvoiceLocationIds } from '../lib/auth';
 
 const CREATE_INVOICE = gql`
   mutation CreateInvoice($input: NewSalesInvoice!) {
@@ -36,6 +37,32 @@ function parseStepParam(value) {
   if (value === 'items') return 1;
   if (value === 'review') return 2;
   return 0;
+}
+
+function getNetworkErrorMessage(error) {
+  const result = error?.networkError?.result;
+  const graphqlMessage = result?.errors?.[0]?.message;
+  if (graphqlMessage) return graphqlMessage;
+
+  if (typeof result?.message === 'string' && result.message.trim()) {
+    return result.message.trim();
+  }
+
+  const bodyText = error?.networkError?.bodyText;
+  if (typeof bodyText === 'string') {
+    try {
+      const parsed = JSON.parse(bodyText);
+      const parsedGraphql = parsed?.errors?.[0]?.message;
+      if (parsedGraphql) return parsedGraphql;
+      if (typeof parsed?.message === 'string' && parsed.message.trim()) {
+        return parsed.message.trim();
+      }
+    } catch {
+      if (bodyText.trim()) return bodyText.trim();
+    }
+  }
+
+  return '';
 }
 
 function InvoiceForm() {
@@ -101,14 +128,24 @@ function InvoiceForm() {
     setStatus('');
     if (!validateBeforeSave()) return;
 
+    const branchId = Number(invoice.branchId);
+    const warehouseId = Number(invoice.warehouseId);
+    const validBranchId = Number.isFinite(branchId) && branchId > 0;
+    const validWarehouseId = Number.isFinite(warehouseId) && warehouseId > 0;
+
+    if (!validBranchId || !validWarehouseId) {
+      setStatus('Default branch/warehouse is missing. Set a default in Cashflow Web and try again.');
+      return;
+    }
+
     const isoDate = invoice.invoiceDate
       ? new Date(`${invoice.invoiceDate}T00:00:00Z`).toISOString()
       : new Date().toISOString();
 
     const input = {
       customerId: Number(invoice.customerId),
-      ...(invoice.branchId ? { branchId: Number(invoice.branchId) } : {}),
-      ...(invoice.warehouseId ? { warehouseId: Number(invoice.warehouseId) } : {}),
+      branchId,
+      warehouseId,
       currencyId: Number(invoice.currencyId),
       invoiceDate: isoDate,
       invoicePaymentTerms: invoice.paymentTerms,
@@ -128,6 +165,7 @@ function InvoiceForm() {
     const id = data?.createSalesInvoice?.id;
     if (number) dispatch({ type: 'setInvoiceNumber', invoiceNumber: number });
     if (id) dispatch({ type: 'setInvoiceId', invoiceId: id });
+    saveDefaultInvoiceLocationIds(branchId, warehouseId);
     setStatus(`Invoice ${number || ''} saved.`.trim());
   };
 
@@ -202,7 +240,7 @@ function InvoiceForm() {
       };
 
   const saveErrorMessage = useMemo(() => {
-    const raw = saveError?.message || '';
+    const raw = getNetworkErrorMessage(saveError) || saveError?.message || '';
     const lowered = raw.toLowerCase();
 
     if (lowered.includes('branch not found') || lowered.includes('warehouse not found')) {

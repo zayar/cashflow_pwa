@@ -1,8 +1,10 @@
 import { createContext, createElement, useContext, useMemo, useReducer } from 'react';
+import { getDefaultInvoiceLocationIds } from '../lib/auth';
 
 const InvoiceDraftContext = createContext(null);
 
 const today = new Date().toISOString().slice(0, 10);
+const defaultLocationIds = getDefaultInvoiceLocationIds();
 
 export function createLine() {
   return {
@@ -25,8 +27,8 @@ const initialInvoice = {
   customerName: '',
   referenceNumber: '',
   notes: '',
-  branchId: '',
-  warehouseId: '',
+  branchId: defaultLocationIds.branchId,
+  warehouseId: defaultLocationIds.warehouseId,
   currencyId: 1,
   currentStatus: 'Draft',
   lines: [createLine()]
