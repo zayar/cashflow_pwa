@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Portrait of a young woman">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#2a3548"/>
+      <stop offset="65%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#080b12"/>
+    </radialGradient>
+    <radialGradient id="rim" cx="76%" cy="24%" r="40%">
+      <stop offset="0%" stop-color="#f0d5bf" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#f0d5bf" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shirt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f3a5d"/>
+      <stop offset="100%" stop-color="#0e2039"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="40%" y1="10%" x2="60%" y2="100%">
+      <stop offset="0%" stop-color="#f3d7c1"/>
+      <stop offset="100%" stop-color="#d4ac8f"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="20%" y1="10%" x2="80%" y2="90%">
+      <stop offset="0%" stop-color="#3b291f"/>
+      <stop offset="100%" stop-color="#19120f"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="640" fill="url(#bgGlow)"/>
+  <rect width="640" height="640" fill="url(#rim)"/>
+
+  <path d="M145 552c26-86 81-130 175-130s149 44 175 130H145z" fill="url(#shirt)"/>
+  <path d="M284 402h72v68h-72z" fill="url(#skin)"/>
+  <ellipse cx="320" cy="268" rx="108" ry="124" fill="url(#skin)"/>
+
+  <path d="M209 262c-9-62 24-141 111-141 85 0 117 77 111 140-7-10-22-21-45-28-19-6-45-9-66-4-21 5-37 17-49 29-12 12-29 27-45 32-13-9-15-18-17-28z" fill="url(#hair)"/>
+  <path d="M212 232c-35 24-57 72-48 120 9 48 52 79 92 86-28-20-51-45-58-78-6-28 1-57 14-80z" fill="#201712"/>
+  <path d="M430 232c35 24 57 72 48 120-9 48-52 79-92 86 28-20 51-45 58-78 6-28-1-57-14-80z" fill="#201712"/>
+
+  <ellipse cx="278" cy="280" rx="8" ry="6" fill="#1b1d21"/>
+  <ellipse cx="362" cy="278" rx="8" ry="6" fill="#1b1d21"/>
+  <path d="M286 335c12 12 56 12 68 0" stroke="#b57e68" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M316 296c-2 12-5 25-2 35 3 9 11 13 20 12" stroke="#be9076" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M256 252c18-14 40-16 58-7" stroke="#2f1f18" stroke-width="6" stroke-linecap="round"/>
+  <path d="M326 245c18-8 39-6 58 8" stroke="#2f1f18" stroke-width="6" stroke-linecap="round"/>
+
+  <ellipse cx="264" cy="308" rx="18" ry="12" fill="#d39784" opacity="0.35"/>
+  <ellipse cx="376" cy="308" rx="18" ry="12" fill="#d39784" opacity="0.35"/>
+</svg>

@@ -69,64 +69,66 @@ function Welcome() {
         padding: '0 32px',
         zIndex: 1
       }}>
-        {/* Invoice Illustration */}
+        {/* Hero Illustration */}
         <div style={{
           width: '100%',
-          maxWidth: 320,
-          height: 280,
+          maxWidth: 340,
+          height: 320,
           marginBottom: 40,
           position: 'relative'
         }}>
-          {/* Main Invoice Card */}
+          {/* Main portrait card */}
           <div style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
-            transform: 'translate(-50%, -50%) rotate(-6deg)',
-            width: 220,
-            height: 160,
-            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            borderRadius: 16,
-            boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-            padding: 20,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
+            transform: 'translate(-50%, -50%) rotate(-5deg)',
+            width: 250,
+            height: 250,
+            borderRadius: 28,
+            border: '1px solid rgba(255,255,255,0.45)',
+            boxShadow: '0 22px 45px rgba(15, 23, 42, 0.28)',
+            overflow: 'hidden',
+            background: '#0f172a'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ color: 'white', fontSize: 12, fontWeight: 600, opacity: 0.9 }}>INVOICE</div>
-              <div style={{
-                width: 28,
-                height: 28,
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-              </div>
-            </div>
-            <div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginBottom: 4 }}>Total Amount</div>
-              <div style={{ color: 'white', fontSize: 28, fontWeight: 800 }}>$1,250.00</div>
+            <img
+              src="/hero-girl.svg"
+              alt="Portrait of a confident business owner"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+            <div style={{
+              position: 'absolute',
+              left: 14,
+              bottom: 14,
+              padding: '8px 11px',
+              borderRadius: 12,
+              background: 'rgba(15, 23, 42, 0.52)',
+              color: 'white',
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              backdropFilter: 'blur(6px)'
+            }}>
+              Paid invoices +32%
             </div>
           </div>
 
-          {/* Secondary Invoice Card (background) */}
+          {/* Secondary glass card (background) */}
           <div style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
-            transform: 'translate(-40%, -40%) rotate(12deg)',
-            width: 200,
-            height: 140,
-            background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
-            borderRadius: 16,
-            boxShadow: '0 15px 30px rgba(100, 116, 139, 0.25)',
-            opacity: 0.4,
+            transform: 'translate(-38%, -38%) rotate(11deg)',
+            width: 215,
+            height: 180,
+            background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.45) 0%, rgba(30, 41, 59, 0.34) 100%)',
+            borderRadius: 20,
+            boxShadow: '0 15px 30px rgba(100, 116, 139, 0.2)',
+            backdropFilter: 'blur(4px)',
             zIndex: -1
           }} />
 
@@ -166,6 +168,28 @@ function Welcome() {
           }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
               <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+          </div>
+
+          <div style={{
+            position: 'absolute',
+            top: 58,
+            left: 8,
+            width: 46,
+            height: 46,
+            background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 20px rgba(2, 132, 199, 0.34)',
+            animation: 'float 3s ease-in-out infinite 0.9s'
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 19h16" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              <rect x="6" y="11" width="3" height="6" rx="1" fill="white" />
+              <rect x="11" y="8" width="3" height="9" rx="1" fill="white" />
+              <rect x="16" y="5" width="3" height="12" rx="1" fill="white" />
             </svg>
           </div>
         </div>
