@@ -1,8 +1,40 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate, Navigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import Fab from '../components/Fab';
 import { clearToken, getToken, getUsername } from '../lib/auth';
+
+function getPageCopy(pathname) {
+  if (pathname.startsWith('/invoices/new')) {
+    return { title: 'Create Invoice', kicker: 'Guided Flow', backPath: '/' };
+  }
+  if (pathname.startsWith('/items/new')) {
+    return { title: 'Create Item', kicker: 'Catalog', backPath: '/items' };
+  }
+  if (pathname.startsWith('/clients/new')) {
+    return { title: 'Create Client', kicker: 'Customers', backPath: '/clients' };
+  }
+  if (pathname.startsWith('/items')) {
+    return { title: 'Items', kicker: 'Catalog', backPath: '/' };
+  }
+  if (pathname.startsWith('/clients')) {
+    return { title: 'Clients', kicker: 'Customers', backPath: '/' };
+  }
+  if (pathname.startsWith('/more')) {
+    return { title: 'More', kicker: 'Settings', backPath: '/' };
+  }
+  return { title: 'Invoices', kicker: 'Dashboard', backPath: '/' };
+}
+
+function BrandMark() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+      <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Z" fill="currentColor" opacity="0.95" />
+      <path d="M14 2v6h5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 14h6M9 17h6" stroke="white" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function RootLayout() {
   const navigate = useNavigate();
@@ -10,35 +42,20 @@ function RootLayout() {
   const [token, setToken] = useState('');
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Hide Fab and BottomNav on editor pages
-  const isEditorPage = 
+
+  const isEditorPage =
     location.pathname.startsWith('/invoices/new') ||
     location.pathname.startsWith('/items/new') ||
     location.pathname.startsWith('/clients/new');
-  
-  // Determine page title
-  const getPageTitle = () => {
-    if (location.pathname.startsWith('/invoices/new')) return 'Invoice';
-    if (location.pathname.startsWith('/items/new')) return 'New Item';
-    if (location.pathname.startsWith('/clients/new')) return 'New Client';
-    return 'Dashboard';
-  };
 
-  // Determine back path
-  const getBackPath = () => {
-    if (location.pathname.startsWith('/items/new')) return '/items';
-    if (location.pathname.startsWith('/clients/new')) return '/clients';
-    return '/';
-  };
+  const pageCopy = useMemo(() => getPageCopy(location.pathname), [location.pathname]);
 
   useEffect(() => {
     const currentToken = getToken();
     setToken(currentToken);
     setUsername(getUsername());
     setIsLoading(false);
-    
-    // Redirect to welcome if not authenticated
+
     if (!currentToken && location.pathname !== '/welcome') {
       navigate('/welcome', { replace: true });
     }
@@ -51,49 +68,46 @@ function RootLayout() {
     navigate('/welcome', { replace: true });
   };
 
-  // Show nothing while checking auth (prevents flash)
   if (isLoading) {
     return null;
   }
 
-  // If no token, don't render the layout (will redirect)
   if (!token) {
     return <Navigate to="/welcome" replace />;
   }
 
   return (
     <div className="app-shell">
-      <header style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <p className="subtle" style={{ margin: 0 }}>PWA Invoice</p>
-          <h1 className="heading" style={{ margin: 0 }}>
-            {getPageTitle()}
-          </h1>
-        </div>
-        {isEditorPage ? (
-          <Link to={getBackPath()} style={{ color: '#2563eb', fontWeight: 700 }}>Back</Link>
-        ) : token ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className="subtle" style={{ margin: 0 }}>Hi, {username || 'User'}</span>
-            <button
-              onClick={handleLogout}
-              style={{
-                background: '#ef4444',
-                color: '#fff',
-                border: 'none',
-                padding: '8px 12px',
-                borderRadius: 999,
-                cursor: 'pointer',
-                fontWeight: 700
-              }}
-            >
-              Logout
-            </button>
+      <div className="topbar-wrap">
+        <header className="topbar">
+          <div className="brand-cluster">
+            <div className="brand-icon" aria-hidden="true">
+              <BrandMark />
+            </div>
+            <div className="brand-copy">
+              <p className="brand-kicker">{pageCopy.kicker}</p>
+              <h1 className="heading">{pageCopy.title}</h1>
+            </div>
           </div>
-        ) : (
-          <Link to="/login" style={{ color: '#2563eb', fontWeight: 700 }}>Login</Link>
-        )}
-      </header>
+
+          <div className="topbar-actions">
+            {isEditorPage ? (
+              <Link to={pageCopy.backPath} className="btn btn-secondary" aria-label="Back">
+                Back
+              </Link>
+            ) : (
+              <>
+                <span className="user-chip" title={username || 'User'}>
+                  Hi, {username || 'User'}
+                </span>
+                <button type="button" className="btn btn-danger" onClick={handleLogout}>
+                  Logout
+                </button>
+              </>
+            )}
+          </div>
+        </header>
+      </div>
 
       <main className={`content ${isEditorPage ? 'content-editor' : ''}`}>
         <Outlet />

@@ -1,6 +1,6 @@
 import { useQuery, gql } from '@apollo/client';
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 
 const GET_CUSTOMERS = gql`
   query GetCustomers($limit: Int, $after: String) {
@@ -22,91 +22,168 @@ const GET_CUSTOMERS = gql`
   }
 `;
 
+function SearchIcon() {
+  return (
+    <svg className="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ClientsLoading() {
+  return (
+    <div className="state-loading" aria-live="polite">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div className="skeleton-card" key={index}>
+          <div className="skeleton skeleton-line long" />
+          <div className="skeleton skeleton-line short" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function formatCurrency(amount) {
+  return `$${Number(amount || 0).toFixed(2)}`;
+}
+
 function Clients() {
   const location = useLocation();
   const [successMsg, setSuccessMsg] = useState('');
-  
-  const { data, loading, error } = useQuery(GET_CUSTOMERS, {
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+
+  const { data, loading, error, refetch } = useQuery(GET_CUSTOMERS, {
     variables: { limit: 50 },
     fetchPolicy: 'cache-and-network'
   });
 
-  // Show success message if coming from creating a new client
   useEffect(() => {
     if (location.state?.created) {
       setSuccessMsg('Client created successfully!');
       const timer = setTimeout(() => setSuccessMsg(''), 3000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [location.state]);
 
-  const customers = data?.paginateCustomer?.edges?.map(edge => edge.node) || [];
+  const customers = useMemo(
+    () => data?.paginateCustomer?.edges?.map((edge) => edge.node) ?? [],
+    [data]
+  );
 
-  if (loading && !data) {
-    return (
-      <div className="card">
-        <p className="subtle">Customers</p>
-        <h2 className="heading">Clients</h2>
-        <p className="subtle">Loading...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="card">
-        <p className="subtle">Customers</p>
-        <h2 className="heading">Clients</h2>
-        <p className="subtle" style={{ color: '#ef4444' }}>Error: {error.message}</p>
-      </div>
-    );
-  }
-
-  if (customers.length === 0) {
-    return (
-      <div className="card">
-        <p className="subtle">Customers</p>
-        <h2 className="heading">Clients</h2>
-        <p className="subtle">No clients yet. Tap + to add your first client.</p>
-      </div>
-    );
-  }
+  const filteredCustomers = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return customers.filter((customer) => {
+      const outstanding = Number(customer.totalOutstandingReceivable || 0);
+      if (filter === 'outstanding' && outstanding <= 0) return false;
+      if (!term) return true;
+      const haystack = `${customer.name || ''} ${customer.email || ''} ${customer.phone || ''}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [customers, filter, search]);
 
   return (
-    <div>
-      <div className="card" style={{ marginBottom: 80 }}>
-        <p className="subtle">Customers</p>
-        <h2 className="heading">Clients ({customers.length})</h2>
-        {successMsg && (
-          <div style={{ 
-            marginTop: 8, 
-            padding: '8px 12px', 
-            background: '#dcfce7', 
-            color: '#166534',
-            borderRadius: 8,
-            fontSize: 14 
-          }}>
-            {successMsg}
+    <div className="stack">
+      <section className="card">
+        <div className="card-header">
+          <div>
+            <p className="kicker">Customers</p>
+            <h2 className="title">Clients ({customers.length})</h2>
           </div>
-        )}
-      </div>
-      
-      {customers.map((client) => (
-        <div key={client.id} className="section-card" style={{ marginBottom: 8 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontWeight: 600 }}>{client.name}</div>
-              {client.email && <div className="subtle" style={{ fontSize: 12 }}>{client.email}</div>}
-              {!client.email && client.phone && <div className="subtle" style={{ fontSize: 12 }}>{client.phone}</div>}
-            </div>
-            {client.totalOutstandingReceivable > 0 && (
-              <div style={{ fontWeight: 600, color: '#ef4444' }}>
-                ${parseFloat(client.totalOutstandingReceivable || 0).toFixed(2)}
-              </div>
-            )}
-          </div>
+          <Link to="/clients/new" className="btn btn-primary">
+            + New client
+          </Link>
         </div>
-      ))}
+
+        <div className="search-wrap">
+          <SearchIcon />
+          <input
+            className="input"
+            placeholder="Search name, email, or phone"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+
+        <div className="toolbar" style={{ marginTop: 10, justifyContent: 'space-between' }}>
+          <div className="pill-tabs" role="tablist" aria-label="Client filters">
+            <button
+              type="button"
+              className={`pill ${filter === 'all' ? 'active' : ''}`}
+              onClick={() => setFilter('all')}
+              role="tab"
+              aria-selected={filter === 'all'}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              className={`pill ${filter === 'outstanding' ? 'active' : ''}`}
+              onClick={() => setFilter('outstanding')}
+              role="tab"
+              aria-selected={filter === 'outstanding'}
+            >
+              Outstanding
+            </button>
+          </div>
+
+          <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
+            Refresh
+          </button>
+        </div>
+
+        {successMsg && <div className="toast" style={{ marginTop: 10 }}>{successMsg}</div>}
+      </section>
+
+      {loading && !data && <ClientsLoading />}
+
+      {error && (
+        <section className="state-error" role="alert">
+          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load clients.</p>
+          <p style={{ marginTop: 0, marginBottom: 12 }}>{error.message}</p>
+          <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
+            Try again
+          </button>
+        </section>
+      )}
+
+      {!loading && !error && filteredCustomers.length === 0 && (
+        <section className="state-empty">
+          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>No clients found.</p>
+          <p style={{ margin: 0 }}>Use the + New client button to add your first customer.</p>
+        </section>
+      )}
+
+      {!error && filteredCustomers.length > 0 && (
+        <ul className="list" aria-live="polite">
+          {filteredCustomers.map((client) => {
+            const outstanding = Number(client.totalOutstandingReceivable || 0);
+            const hasOutstanding = outstanding > 0;
+            return (
+              <li key={client.id} className="list-item list-card">
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{client.name}</p>
+                  <p className="subtle" style={{ marginTop: 2, marginBottom: 8 }}>
+                    {client.email || client.phone || 'No contact details'}
+                  </p>
+                  <div className="list-meta">
+                    <span className="meta-chip">Client ID {client.id}</span>
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{formatCurrency(outstanding)}</p>
+                  <span className={`badge ${hasOutstanding ? 'badge-warning' : 'badge-success'}`}>
+                    {hasOutstanding ? 'Outstanding' : 'Clear'}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

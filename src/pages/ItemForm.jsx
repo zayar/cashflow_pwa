@@ -61,173 +61,148 @@ function ItemForm() {
   const [purchasePrice, setPurchasePrice] = useState('');
   const [sku, setSku] = useState('');
   const [error, setError] = useState('');
-  
-  // Fetch required data for dropdowns and defaults
+
   const { data: unitsData, loading: unitsLoading } = useQuery(GET_PRODUCT_UNITS);
   const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_PRODUCT_CATEGORIES);
   const { data: businessData, loading: businessLoading } = useQuery(GET_BUSINESS_ACCOUNTS);
-  
+
   const [createProduct, { loading: createLoading }] = useMutation(CREATE_PRODUCT, {
     onCompleted: () => {
       navigate('/items', { replace: true, state: { created: true } });
     },
-    onError: (err) => {
-      // Show the actual error message from the server
-      console.error('Create product error:', err);
-      const message = err.message || 'Failed to create item';
+    onError: (mutationError) => {
+      const message = mutationError.message || 'Failed to create item';
       setError(message);
     }
   });
 
   const loading = createLoading || unitsLoading || categoriesLoading || businessLoading;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
     setError('');
-    
+
     if (!name.trim()) {
-      setError('Item name is required');
+      setError('Item name is required.');
       return;
     }
 
-    // Get the first active unit ID (required field)
-    const activeUnits = unitsData?.listAllProductUnit?.filter(u => u.isActive) || [];
+    const activeUnits = unitsData?.listAllProductUnit?.filter((unit) => unit.isActive) || [];
     const defaultUnitId = activeUnits[0]?.id;
     if (!defaultUnitId) {
       setError('No active unit found. Please configure units in the main application.');
       return;
     }
 
-    // Get the first active category ID (required field for items)
-    const activeCategories = categoriesData?.listAllProductCategory?.filter(c => c.isActive) || [];
+    const activeCategories = categoriesData?.listAllProductCategory?.filter((category) => category.isActive) || [];
     const defaultCategoryId = activeCategories[0]?.id;
     if (!defaultCategoryId) {
       setError('No active category found. Please configure categories in the main application.');
       return;
     }
 
-    // Get default accounts from business data
     const accounts = businessData?.listAllAccount || [];
-    const defaultSalesAccount = accounts.find(a => a.mainType === 'Income' && a.isActive);
-    const defaultPurchaseAccount = accounts.find(a => a.mainType === 'Expense' && a.isActive);
-    const defaultInventoryAccount = accounts.find(a => a.detailType === 'Stock' && a.isActive);
+    const defaultSalesAccount = accounts.find((account) => account.mainType === 'Income' && account.isActive);
+    const defaultPurchaseAccount = accounts.find((account) => account.mainType === 'Expense' && account.isActive);
+    const defaultInventoryAccount = accounts.find((account) => account.detailType === 'Stock' && account.isActive);
 
     if (!defaultSalesAccount || !defaultPurchaseAccount) {
       setError('Required accounts not found. Please configure accounts in the main application.');
       return;
     }
 
-    // Build input with all required fields
-    // Using actual IDs from the database instead of hardcoded values
-    // Note: Backend expects 0 for optional IDs, not null
-    // Explicitly convert all IDs to integers to prevent null conversion
     const input = {
       name: name.trim(),
-      // Unit - required, use first active unit
       unitId: parseInt(defaultUnitId, 10),
-      // Category - required, use first active category  
       categoryId: parseInt(defaultCategoryId, 10),
-      // Accounts - use actual account IDs from database
       salesAccountId: parseInt(defaultSalesAccount.id, 10),
       purchaseAccountId: parseInt(defaultPurchaseAccount.id, 10),
       inventoryAccountId: parseInt(defaultInventoryAccount?.id || 0, 10),
-      // Pricing
       salesPrice: parseFloat(salesPrice) || 0,
       purchasePrice: parseFloat(purchasePrice) || 0,
       isSalesTaxInclusive: false,
-      // Tax IDs - 0 means no tax
       salesTaxId: 0,
-      salesTaxType: "I",
+      salesTaxType: 'I',
       purchaseTaxId: 0,
-      purchaseTaxType: "I",
-      // Supplier - 0 means no supplier (must be integer, not null)
+      purchaseTaxType: 'I',
       supplierId: 0,
-      // Inventory
       isBatchTracking: false,
-      // Optional fields - only include if they have values
       ...(sku.trim() && { sku: sku.trim() }),
-      // Images and opening stocks
       images: [],
       openingStocks: []
     };
 
-    console.log('Creating product with input:', JSON.stringify(input, null, 2));
     createProduct({ variables: { input } });
   };
 
   return (
     <div className="invoice-page">
-      <div className="section-card">
-        <h2 className="heading">New Item</h2>
-        <p className="subtle">Add a new product or service</p>
-      </div>
+      <section className="flow-banner">
+        <p className="kicker">Catalog</p>
+        <h2 className="title" style={{ marginBottom: 6 }}>
+          Add a new item
+        </h2>
+        <p className="subtle">Save common products or services so invoice creation is faster.</p>
+      </section>
 
-      <form onSubmit={handleSubmit}>
-        <div className="section-card">
-          <label className="field">
-            <span className="label">Item Name *</span>
-            <input
-              className="input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Strawberry"
-              autoFocus
-            />
-          </label>
+      <form className="invoice-panel" onSubmit={handleSubmit}>
+        <label className="field">
+          <span className="label">Item name *</span>
+          <input
+            className="input"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="e.g., Monthly Consulting"
+            autoFocus
+          />
+        </label>
 
+        <div className="invoice-meta-grid">
           <label className="field">
-            <span className="label">Sales Price</span>
+            <span className="label">Sales price</span>
             <input
               className="input"
               type="number"
               min="0"
               step="0.01"
               value={salesPrice}
-              onChange={(e) => setSalesPrice(e.target.value)}
+              onChange={(event) => setSalesPrice(event.target.value)}
               placeholder="0.00"
             />
           </label>
 
           <label className="field">
-            <span className="label">Purchase Price (Cost)</span>
+            <span className="label">Purchase price</span>
             <input
               className="input"
               type="number"
               min="0"
               step="0.01"
               value={purchasePrice}
-              onChange={(e) => setPurchasePrice(e.target.value)}
+              onChange={(event) => setPurchasePrice(event.target.value)}
               placeholder="0.00"
             />
           </label>
-
-          <label className="field">
-            <span className="label">SKU (optional)</span>
-            <input
-              className="input"
-              value={sku}
-              onChange={(e) => setSku(e.target.value)}
-              placeholder="e.g., PROD-001"
-            />
-          </label>
-
-          {error && (
-            <div className="inline-error" style={{ marginTop: 12 }}>
-              {error}
-            </div>
-          )}
         </div>
 
+        <label className="field">
+          <span className="label">SKU (optional)</span>
+          <input
+            className="input"
+            value={sku}
+            onChange={(event) => setSku(event.target.value)}
+            placeholder="e.g., SKU-001"
+          />
+        </label>
+
+        {error && <div className="inline-error">{error}</div>}
+
         <div className="sticky-actions">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => navigate('/items')}
-          >
+          <button type="button" className="btn btn-secondary" onClick={() => navigate('/items')}>
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Saving…' : 'Save Item'}
+            {loading ? 'Saving...' : 'Save item'}
           </button>
         </div>
       </form>

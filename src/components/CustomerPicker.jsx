@@ -15,6 +15,15 @@ const LIST_CUSTOMERS = gql`
   }
 `;
 
+function SearchIcon() {
+  return (
+    <svg className="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function CustomerPicker() {
   const { dispatch } = useInvoiceDraft();
   const navigate = useNavigate();
@@ -45,41 +54,62 @@ function CustomerPicker() {
   return (
     <div className="picker-page">
       <PickerHeader
-        title="Clients"
+        title="Choose client"
         rightAction={
           <button className="btn btn-primary" type="button" onClick={() => setShowAdd(true)}>
-            + Add client
+            + Add
           </button>
         }
       />
 
-      <div className="picker-search">
-        <input
-          className="input"
-          placeholder="Search clients"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+      <section className="picker-section">
+        <div className="picker-search search-wrap">
+          <SearchIcon />
+          <input
+            className="input"
+            placeholder="Search clients"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
 
-      {loading && <p className="subtle">Loading clients…</p>}
-      {error && <p className="subtle" style={{ color: '#ef4444' }}>{error.message}</p>}
-
-      <div className="picker-list">
-        {customers.map((customer) => (
-          <button
-            key={customer.id}
-            type="button"
-            className="picker-item"
-            onClick={() => handleSelect(customer)}
-          >
-            <div className="picker-item-title">{customer.name}</div>
-          </button>
-        ))}
-        {!loading && customers.length === 0 && (
-          <p className="empty">No clients found.</p>
+        {loading && !data && (
+          <div className="state-loading" style={{ marginTop: 8 }}>
+            <div className="skeleton-card">
+              <div className="skeleton skeleton-line long" />
+              <div className="skeleton skeleton-line short" />
+            </div>
+            <div className="skeleton-card">
+              <div className="skeleton skeleton-line long" />
+              <div className="skeleton skeleton-line short" />
+            </div>
+          </div>
         )}
-      </div>
+
+        {error && (
+          <div className="state-error" role="alert">
+            <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load clients.</p>
+            <p style={{ marginTop: 0, marginBottom: 0 }}>{error.message}</p>
+          </div>
+        )}
+
+        {!error && (
+          <div className="picker-list" style={{ marginTop: 10 }}>
+            {customers.map((customer) => (
+              <button key={customer.id} type="button" className="picker-item" onClick={() => handleSelect(customer)}>
+                <div className="picker-item-title">{customer.name}</div>
+                <span className="meta-chip">Select</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!loading && !error && customers.length === 0 && (
+          <p className="empty" style={{ marginTop: 10 }}>
+            No clients found. Add one in seconds.
+          </p>
+        )}
+      </section>
 
       {showAdd && (
         <QuickAddCustomer

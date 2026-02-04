@@ -3,6 +3,11 @@ function formatAmount(value) {
   return `$${number.toFixed(2)}`;
 }
 
+function parseNumber(value) {
+  if (value === '' || Number.isNaN(Number(value))) return 0;
+  return Number(value);
+}
+
 function InvoiceLineCard({
   line,
   onSelectItem,
@@ -13,7 +18,7 @@ function InvoiceLineCard({
   onRemove,
   showError
 }) {
-  const amount = (Number(line.qty || 0) * Number(line.rate || 0)) - Number(line.discount || 0);
+  const amount = Number(line.qty || 0) * Number(line.rate || 0) - Number(line.discount || 0);
 
   return (
     <div className={`line-card ${showError ? 'line-card-error' : ''}`}>
@@ -34,7 +39,7 @@ function InvoiceLineCard({
             min="0"
             step="0.01"
             value={line.qty}
-            onChange={(e) => onChangeQty(Number(e.target.value))}
+            onChange={(event) => onChangeQty(parseNumber(event.target.value))}
           />
         </label>
         <label className="field">
@@ -45,7 +50,7 @@ function InvoiceLineCard({
             min="0"
             step="0.01"
             value={line.rate}
-            onChange={(e) => onChangeRate(Number(e.target.value))}
+            onChange={(event) => onChangeRate(parseNumber(event.target.value))}
           />
         </label>
         <label className="field">
@@ -56,28 +61,22 @@ function InvoiceLineCard({
             min="0"
             step="0.01"
             value={line.discount}
-            onChange={(e) => onChangeDiscount(Number(e.target.value))}
+            onChange={(event) => onChangeDiscount(parseNumber(event.target.value))}
           />
         </label>
       </div>
 
       <div className="line-actions">
         <label className="toggle">
-          <input
-            type="checkbox"
-            checked={line.taxable}
-            onChange={(e) => onToggleTaxable(e.target.checked)}
-          />
+          <input type="checkbox" checked={line.taxable} onChange={(event) => onToggleTaxable(event.target.checked)} />
           <span>Taxable</span>
         </label>
         <button className="btn btn-secondary" type="button" onClick={onRemove}>
-          Remove
+          Remove line
         </button>
       </div>
 
-      {showError && (
-        <div className="inline-error">Please select an item for this line.</div>
-      )}
+      {showError && <div className="inline-error">Please select an item for this line.</div>}
     </div>
   );
 }

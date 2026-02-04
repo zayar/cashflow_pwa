@@ -13,44 +13,60 @@ function formatTerms(value) {
     case 'Net30':
       return 'Net 30';
     default:
-      return value || '—';
+      return value || '--';
   }
 }
 
 function InvoicePreview({ invoice }) {
-  const subtotal = invoice.lines.reduce((sum, line) => sum + line.qty * line.rate, 0);
-  const total = subtotal - invoice.lines.reduce((sum, line) => sum + line.discount, 0);
+  const subtotal = invoice.lines.reduce((sum, line) => sum + Number(line.qty || 0) * Number(line.rate || 0), 0);
+  const discounts = invoice.lines.reduce((sum, line) => sum + Number(line.discount || 0), 0);
+  const total = subtotal - discounts;
 
   return (
     <div className="preview">
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <div>
-          <div style={{ fontWeight: 700 }}>Preview</div>
-          <div className="subtle">Invoice draft</div>
+          <p style={{ margin: 0, fontWeight: 800 }}>Invoice preview</p>
+          <p className="subtle" style={{ fontSize: 13 }}>
+            {invoice.invoiceNumber ? `#${invoice.invoiceNumber}` : 'Draft'}
+          </p>
         </div>
-        <div className="chip">{formatTerms(invoice.paymentTerms)}</div>
+        <span className="meta-chip" style={{ color: '#eaf3ff', borderColor: 'rgba(226, 239, 255, 0.3)', background: 'rgba(11, 28, 54, 0.45)' }}>
+          {formatTerms(invoice.paymentTerms)}
+        </span>
       </div>
-      <div className="subtle" style={{ marginBottom: 4 }}>Customer: {invoice.customerName || '—'}</div>
-      <div className="subtle" style={{ marginBottom: 12 }}>Date: {invoice.invoiceDate}</div>
-      <div style={{ borderTop: '1px solid #1f2937', paddingTop: 8 }}>
-        {invoice.lines.map((line, idx) => (
-          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span>{line.name || 'Item'} × {line.qty}</span>
-            <span>{currency(line.qty * line.rate)}</span>
+
+      <p className="subtle" style={{ marginBottom: 4 }}>
+        Customer: {invoice.customerName || '--'}
+      </p>
+      <p className="subtle" style={{ marginBottom: 10 }}>
+        Date: {invoice.invoiceDate || '--'}
+      </p>
+
+      <div className="preview-divider">
+        {invoice.lines.map((line) => (
+          <div className="preview-line" key={line.id}>
+            <span>
+              {line.name || 'Item'} x {Number(line.qty || 0)}
+            </span>
+            <span>{currency(Number(line.qty || 0) * Number(line.rate || 0))}</span>
           </div>
         ))}
       </div>
-      <div style={{ borderTop: '1px solid #1f2937', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
-        <span>Subtotal</span>
-        <span>{currency(subtotal)}</span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span>Discounts</span>
-        <span>-{currency(invoice.lines.reduce((sum, l) => sum + l.discount, 0))}</span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, marginTop: 4 }}>
-        <span>Total</span>
-        <span>{currency(total)}</span>
+
+      <div className="preview-divider">
+        <div className="preview-line">
+          <span>Subtotal</span>
+          <span>{currency(subtotal)}</span>
+        </div>
+        <div className="preview-line">
+          <span>Discounts</span>
+          <span>-{currency(discounts)}</span>
+        </div>
+        <div className="preview-line" style={{ fontWeight: 800, marginBottom: 0 }}>
+          <span>Total</span>
+          <span>{currency(total)}</span>
+        </div>
       </div>
     </div>
   );

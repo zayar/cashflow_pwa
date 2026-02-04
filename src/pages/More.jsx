@@ -6,29 +6,57 @@ function More() {
 
   const handleLogout = () => {
     clearToken();
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   return (
-    <div className="card">
-      <p className="subtle">Settings</p>
-      <h2 className="heading">More</h2>
-      <p className="subtle">Offline mode, exports, and preferences will live here.</p>
-      
-      <div style={{ marginTop: 24 }}>
-        <button 
-          onClick={handleLogout} 
-          className="btn" 
-          style={{ 
-            width: '100%', 
-            background: '#fee2e2', 
-            color: '#ef4444', 
-            border: '1px solid #fecaca' 
-          }}
-        >
-          Logout
+    <div className="stack">
+      <section className="card">
+        <p className="kicker">Workspace</p>
+        <h2 className="title" style={{ marginBottom: 6 }}>
+          More
+        </h2>
+        <p className="subtle">Manage preferences, exports, and account actions.</p>
+      </section>
+
+      <section className="upgrade-card" aria-label="Upgrade to Cashflow Pro">
+        <p className="kicker">Upgrade</p>
+        <h3 className="title" style={{ marginBottom: 0 }}>
+          Cashflow Pro
+        </h3>
+        <p className="subtle">Unlock recurring invoices, smart reminders, and team permissions.</p>
+        <button className="btn btn-ghost" type="button">
+          Upgrade to Cashflow Pro
         </button>
-      </div>
+      </section>
+
+      <section className="more-grid">
+        <div className="feature-list">
+          <div className="feature-row">
+            <div>
+              <p style={{ margin: 0, fontWeight: 700 }}>PDF Export</p>
+              <p className="subtle" style={{ fontSize: 13 }}>
+                Available from invoice actions
+              </p>
+            </div>
+            <span className="meta-chip">Ready</span>
+          </div>
+
+          <div className="feature-row">
+            <div>
+              <p style={{ margin: 0, fontWeight: 700 }}>Offline Mode</p>
+              <p className="subtle" style={{ fontSize: 13 }}>
+                Core pages stay responsive offline
+              </p>
+            </div>
+            <span className="meta-chip">PWA</span>
+          </div>
+        </div>
+
+        <button onClick={handleLogout} className="btn btn-danger btn-full" type="button">
+          Log out
+        </button>
+      </section>
     </div>
   );
 }

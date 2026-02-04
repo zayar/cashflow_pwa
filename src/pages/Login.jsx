@@ -13,253 +13,113 @@ const LOGIN_MUTATION = gql`
   }
 `;
 
+function BrandIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+      <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Z" fill="currentColor" opacity="0.95" />
+      <path d="M14 2v6h5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 14h6M9 17h6" stroke="white" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: '', password: '' });
   const [login, { loading, error }] = useMutation(LOGIN_MUTATION);
   const [message, setMessage] = useState('');
 
-  // If already logged in, redirect to invoices
   useEffect(() => {
     if (getToken()) {
       navigate('/', { replace: true });
     }
   }, [navigate]);
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (event) => {
+    setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setMessage('');
+
     try {
       const { data } = await login({ variables: form });
       const info = data?.login;
       if (info?.token) {
         setToken(info.token);
         if (info.name) setUsername(info.name);
-        setMessage('Welcome back!');
-        // Short delay to show success message
-        setTimeout(() => navigate('/', { replace: true }), 600);
+        setMessage('Signed in. Redirecting...');
+        setTimeout(() => navigate('/', { replace: true }), 450);
       }
     } catch (err) {
-      setMessage(err.message || 'Login failed');
+      setMessage(err.message || 'Login failed.');
     }
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      background: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Background decoration */}
-      <div style={{
-        position: 'absolute',
-        top: '-10%',
-        left: '-20%',
-        width: '80%',
-        height: '50%',
-        background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, rgba(34, 211, 238, 0.04) 100%)',
-        borderRadius: '50%',
-        filter: 'blur(60px)'
-      }} />
-
-      {/* Logo Header */}
-      <div style={{
-        padding: '32px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        zIndex: 1
-      }}>
-        <div style={{
-          width: 44,
-          height: 44,
-          background: 'linear-gradient(135deg, #2563eb, #22d3ee)',
-          borderRadius: 12,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 8px 16px rgba(37, 99, 235, 0.25)'
-        }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="white" fillOpacity="0.9"/>
-            <path d="M14 2V8H20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M12 18V12" stroke="#2563eb" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M9 15H15" stroke="#2563eb" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
-        <span style={{
-          fontSize: 22,
-          fontWeight: 800,
-          color: '#1e293b',
-          letterSpacing: '-0.5px'
-        }}>
-          Cashflow
-        </span>
-      </div>
-
-      {/* Main Content */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        padding: '0 32px 32px',
-        zIndex: 1
-      }}>
-        <div style={{ 
-          width: '100%', 
-          maxWidth: 400, 
-          margin: '0 auto'
-        }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <h1 className="heading" style={{ 
-              fontSize: 28, 
-              marginBottom: 8,
-              color: '#1e293b',
-              fontWeight: 800
-            }}>
-              Welcome Back!
-            </h1>
-            <p className="subtle" style={{ fontSize: 15, color: '#64748b' }}>
-              Sign in to manage your invoices
-            </p>
+    <div className="auth-page">
+      <div className="auth-panel">
+        <div className="auth-head">
+          <div className="auth-brand">
+            <span className="auth-brand-mark" aria-hidden="true">
+              <BrandIcon />
+            </span>
+            Cashflow Lite
           </div>
+          <h1 className="heading" style={{ marginBottom: 6 }}>
+            Welcome back
+          </h1>
+          <p className="subtle">Sign in to create and share invoices quickly.</p>
+        </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div className="field">
-              <label className="label" htmlFor="username" style={{ 
-                marginBottom: 8, 
-                display: 'block',
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#475569'
-              }}>
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-                required
-                className="input"
-                placeholder="Enter your username"
-                style={{ 
-                  padding: 16, 
-                  background: 'white',
-                  fontSize: 16,
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 12,
-                  width: '100%',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            
-            <div className="field">
-              <label className="label" htmlFor="password" style={{ 
-                marginBottom: 8, 
-                display: 'block',
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#475569'
-              }}>
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                className="input"
-                placeholder="Enter your password"
-                style={{ 
-                  padding: 16, 
-                  background: 'white',
-                  fontSize: 16,
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 12,
-                  width: '100%',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label className="field" htmlFor="username">
+            <span className="label">Username</span>
+            <input
+              id="username"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              className="input"
+              placeholder="Enter your username"
+              autoComplete="username"
+              required
+            />
+          </label>
 
-            {/* Forgot password link */}
-            <div style={{ textAlign: 'right' }}>
-              <a href="#" style={{
-                fontSize: 13,
-                color: '#64748b',
-                textDecoration: 'none'
-              }}>
-                Forgot password?
-              </a>
-            </div>
+          <label className="field" htmlFor="password">
+            <span className="label">Password</span>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              className="input"
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              required
+            />
+          </label>
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ 
-                marginTop: 8, 
-                padding: 18, 
-                fontSize: 17,
-                fontWeight: 700,
-                borderRadius: 16,
-                border: 'none',
-                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                color: 'white',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                boxShadow: '0 10px 30px rgba(30, 41, 59, 0.3)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {loading ? 'Signing in…' : 'Log In'}
-            </button>
-          </form>
+          <button className="btn btn-primary btn-full" type="submit" disabled={loading}>
+            {loading ? 'Signing in...' : 'Log in'}
+          </button>
 
           {(message || error) && (
-            <div style={{ 
-              marginTop: 24, 
-              padding: 14, 
-              borderRadius: 12, 
-              background: error ? '#fef2f2' : '#f0fdf4',
-              color: error ? '#ef4444' : '#10b981',
-              textAlign: 'center',
-              fontSize: 14,
-              fontWeight: 600
-            }}>
+            <div className={`auth-state ${error ? 'auth-state-error' : 'auth-state-success'}`} role="status" aria-live="polite">
               {error ? error.message : message}
             </div>
           )}
 
-          {/* Back to welcome */}
-          <div style={{ 
-            marginTop: 32, 
-            textAlign: 'center',
-            fontSize: 14,
-            color: '#64748b'
-          }}>
-            <Link to="/welcome" style={{ 
-              color: '#2563eb', 
-              textDecoration: 'none',
-              fontWeight: 600
-            }}>
-              ← Back to welcome
+          <p className="auth-foot">
+            New here?{' '}
+            <Link to="/welcome" className="auth-link">
+              Back to welcome
             </Link>
-          </div>
-        </div>
+          </p>
+        </form>
       </div>
     </div>
   );

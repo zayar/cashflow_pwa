@@ -1,24 +1,21 @@
 import { Link, useLocation } from 'react-router-dom';
 
 function getFabDestination(pathname) {
-  // Items page → add new item
   if (pathname === '/items') {
-    return '/items/new';
+    return { to: '/items/new', label: 'Add item' };
   }
-  // Clients page → add new client
   if (pathname === '/clients') {
-    return '/clients/new';
+    return { to: '/clients/new', label: 'Add client' };
   }
-  // Default (home/invoices) → add new invoice
-  return '/invoices/new';
+  return { to: '/invoices/new', label: 'Add invoice' };
 }
 
 function Fab() {
   const location = useLocation();
-  const to = getFabDestination(location.pathname);
-  
+  const { to, label } = getFabDestination(location.pathname);
+
   return (
-    <Link to={to} className="fab" aria-label="Add new">
+    <Link to={to} className="fab" aria-label={label} title={label}>
       +
     </Link>
   );
