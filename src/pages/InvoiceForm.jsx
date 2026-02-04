@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { gql, useMutation } from '@apollo/client';
+import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import InvoicePreview from '../components/InvoicePreview';
 import InvoiceLineCard from '../components/InvoiceLineCard';
+import Modal from '../components/Modal';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import { saveDefaultInvoiceLocationIds } from '../lib/auth';
@@ -12,6 +13,19 @@ const CREATE_INVOICE = gql`
     createSalesInvoice(input: $input) {
       id
       invoiceNumber
+    }
+  }
+`;
+
+const GET_INVOICE_LOCATIONS = gql`
+  query GetInvoiceLocations {
+    listAllBranch {
+      id
+      name
+    }
+    listAllWarehouse {
+      id
+      name
     }
   }
 `;
@@ -37,6 +51,12 @@ function parseStepParam(value) {
   if (value === 'items') return 1;
   if (value === 'review') return 2;
   return 0;
+}
+
+function toPositiveInt(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return 0;
+  return Math.trunc(number);
 }
 
 function getNetworkErrorMessage(error) {
@@ -74,8 +94,22 @@ function InvoiceForm() {
   const [status, setStatus] = useState('');
   const [errors, setErrors] = useState({ customer: '', lines: [] });
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [branchIdInput, setBranchIdInput] = useState('');
+  const [warehouseIdInput, setWarehouseIdInput] = useState('');
+  const [locationInputError, setLocationInputError] = useState('');
 
   const [createInvoice, { loading: saving, error: saveError }] = useMutation(CREATE_INVOICE);
+
+  const {
+    data: locationData,
+    loading: locationsLoading,
+    error: locationsError
+  } = useQuery(GET_INVOICE_LOCATIONS, {
+    skip: !isLocationOpen,
+    fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all'
+  });
 
   const totals = useMemo(() => {
     const subtotal = invoice.lines.reduce((sum, line) => sum + Number(line.qty || 0) * Number(line.rate || 0), 0);
@@ -92,6 +126,46 @@ function InvoiceForm() {
       setErrors((prev) => ({ ...prev, customer: '' }));
     }
   }, [errors.customer, hasCustomer]);
+
+  const openLocationSettings = () => {
+    setLocationInputError('');
+    setBranchIdInput(String(invoice.branchId || ''));
+    setWarehouseIdInput(String(invoice.warehouseId || ''));
+    setIsLocationOpen(true);
+  };
+
+  const branches = locationData?.listAllBranch ?? [];
+  const warehouses = locationData?.listAllWarehouse ?? [];
+
+  useEffect(() => {
+    if (!isLocationOpen) return;
+
+    const branchIds = new Set(branches.map((branch) => String(branch.id)));
+    const warehouseIds = new Set(warehouses.map((warehouse) => String(warehouse.id)));
+
+    if (branches.length > 0 && (!branchIdInput || !branchIds.has(String(branchIdInput)))) {
+      setBranchIdInput(String(branches[0]?.id ?? ''));
+    }
+
+    if (warehouses.length > 0 && (!warehouseIdInput || !warehouseIds.has(String(warehouseIdInput)))) {
+      setWarehouseIdInput(String(warehouses[0]?.id ?? ''));
+    }
+  }, [branches, warehouses, branchIdInput, warehouseIdInput, isLocationOpen]);
+
+  const saveLocationSettings = () => {
+    const nextBranchId = toPositiveInt(branchIdInput);
+    const nextWarehouseId = toPositiveInt(warehouseIdInput);
+    if (!nextBranchId || !nextWarehouseId) {
+      setLocationInputError('Please enter a valid branch and warehouse.');
+      return;
+    }
+
+    dispatch({ type: 'setField', field: 'branchId', value: nextBranchId });
+    dispatch({ type: 'setField', field: 'warehouseId', value: nextWarehouseId });
+    saveDefaultInvoiceLocationIds(nextBranchId, nextWarehouseId);
+    setStatus('Invoice defaults updated.');
+    setIsLocationOpen(false);
+  };
 
   const openCustomerPicker = () => navigate('/pick/customer');
   const openItemPicker = (lineId) => navigate(`/pick/item?lineId=${lineId}&returnStep=items`);
@@ -134,7 +208,8 @@ function InvoiceForm() {
     const validWarehouseId = Number.isFinite(warehouseId) && warehouseId > 0;
 
     if (!validBranchId || !validWarehouseId) {
-      setStatus('Default branch/warehouse is missing. Set a default in Cashflow Web and try again.');
+      setStatus('Choose a branch and warehouse to save invoices.');
+      openLocationSettings();
       return;
     }
 
@@ -244,10 +319,22 @@ function InvoiceForm() {
     const lowered = raw.toLowerCase();
 
     if (lowered.includes('branch not found') || lowered.includes('warehouse not found')) {
-      return 'Default branch or warehouse is missing. Set the default values in Cashflow Web, then retry.';
+      return 'We could not find the selected branch/warehouse. Please choose valid defaults.';
     }
     return raw;
   }, [saveError]);
+
+  const hasLocationNotFoundError = useMemo(() => {
+    const raw = getNetworkErrorMessage(saveError) || saveError?.message || '';
+    const lowered = raw.toLowerCase();
+    return lowered.includes('branch not found') || lowered.includes('warehouse not found');
+  }, [saveError]);
+
+  useEffect(() => {
+    if (saveError && hasLocationNotFoundError && !isLocationOpen) {
+      openLocationSettings();
+    }
+  }, [hasLocationNotFoundError, isLocationOpen, saveError]);
 
   return (
     <div className="invoice-page">
@@ -327,6 +414,14 @@ function InvoiceForm() {
             <span className="meta-chip">
               Warehouse: {invoice.warehouseId ? `#${invoice.warehouseId}` : 'Account default'}
             </span>
+            <button
+              className="btn btn-ghost"
+              type="button"
+              onClick={openLocationSettings}
+              style={{ minHeight: 36, padding: '8px 12px' }}
+            >
+              Change
+            </button>
           </div>
 
           <button type="button" className="row-button" onClick={openCustomerPicker}>
@@ -432,7 +527,98 @@ function InvoiceForm() {
       {(status || saveError) && (
         <section className={saveError ? 'state-error' : 'surface-card'} role="status" aria-live="polite">
           <p style={{ margin: 0 }}>{saveError ? saveErrorMessage : status}</p>
+          {saveError && hasLocationNotFoundError && (
+            <div className="toolbar" style={{ marginTop: 12 }}>
+              <button className="btn btn-secondary" type="button" onClick={openLocationSettings}>
+                Set branch & warehouse
+              </button>
+            </div>
+          )}
         </section>
+      )}
+
+      {isLocationOpen && (
+        <Modal title="Invoice defaults" onClose={() => setIsLocationOpen(false)}>
+          <div className="form-grid">
+            <p className="subtle" style={{ marginTop: 0 }}>
+              Cashflow Lite uses your existing Branch + Warehouse. Select valid defaults so invoices can be created.
+            </p>
+
+            {locationsLoading && <p className="subtle">Loading branches and warehouses…</p>}
+            {locationsError && (
+              <div className="state-error" role="alert">
+                <p style={{ margin: 0 }}>
+                  Couldn&apos;t load locations from the server. Enter the IDs manually.
+                </p>
+              </div>
+            )}
+
+            <label className="field">
+              <span className="label">Branch</span>
+              {branches.length > 0 ? (
+                <select
+                  className="input"
+                  value={branchIdInput}
+                  onChange={(event) => setBranchIdInput(event.target.value)}
+                >
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name ? `${branch.name} (#${branch.id})` : `Branch #${branch.id}`}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={branchIdInput}
+                  onChange={(event) => setBranchIdInput(event.target.value)}
+                  placeholder="Branch ID"
+                />
+              )}
+            </label>
+
+            <label className="field">
+              <span className="label">Warehouse</span>
+              {warehouses.length > 0 ? (
+                <select
+                  className="input"
+                  value={warehouseIdInput}
+                  onChange={(event) => setWarehouseIdInput(event.target.value)}
+                >
+                  {warehouses.map((warehouse) => (
+                    <option key={warehouse.id} value={warehouse.id}>
+                      {warehouse.name ? `${warehouse.name} (#${warehouse.id})` : `Warehouse #${warehouse.id}`}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={warehouseIdInput}
+                  onChange={(event) => setWarehouseIdInput(event.target.value)}
+                  placeholder="Warehouse ID"
+                />
+              )}
+            </label>
+
+            {locationInputError && <div className="inline-error">{locationInputError}</div>}
+
+            <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" type="button" onClick={() => setIsLocationOpen(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" type="button" onClick={saveLocationSettings}>
+                Save defaults
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       <div className={`sheet-backdrop ${isPreviewOpen ? 'open' : ''}`} onClick={() => setIsPreviewOpen(false)} />
