@@ -162,23 +162,25 @@ function Clients() {
             const outstanding = Number(client.totalOutstandingReceivable || 0);
             const hasOutstanding = outstanding > 0;
             return (
-              <li key={client.id} className="list-item list-card">
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: 0, fontWeight: 800 }}>{client.name}</p>
-                  <p className="subtle" style={{ marginTop: 2, marginBottom: 8 }}>
-                    {client.email || client.phone || 'No contact details'}
-                  </p>
-                  <div className="list-meta">
-                    <span className="meta-chip">Client ID {client.id}</span>
+              <li key={client.id} className="list-card list-clickable">
+                <Link to={`/clients/${client.id}`} className="list-link">
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 800 }}>{client.name}</p>
+                    <p className="subtle" style={{ marginTop: 2, marginBottom: 8 }}>
+                      {client.email || client.phone || 'No contact details'}
+                    </p>
+                    <div className="list-meta">
+                      <span className="meta-chip">Client ID {client.id}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <p style={{ margin: 0, fontWeight: 800 }}>{formatCurrency(outstanding)}</p>
-                  <span className={`badge ${hasOutstanding ? 'badge-warning' : 'badge-success'}`}>
-                    {hasOutstanding ? 'Outstanding' : 'Clear'}
-                  </span>
-                </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 800 }}>{formatCurrency(outstanding)}</p>
+                    <span className={`badge ${hasOutstanding ? 'badge-warning' : 'badge-success'}`}>
+                      {hasOutstanding ? 'Outstanding' : 'Clear'}
+                    </span>
+                  </div>
+                </Link>
               </li>
             );
           })}

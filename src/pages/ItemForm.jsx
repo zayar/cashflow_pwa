@@ -1,11 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { getDefaultInvoiceLocationIds } from '../lib/auth';
 
 const CREATE_PRODUCT = gql`
   mutation CreateProduct($input: NewProduct!) {
     createProduct(input: $input) {
+      id
+      name
+      salesPrice
+      sku
+    }
+  }
+`;
+
+const UPDATE_PRODUCT = gql`
+  mutation UpdateProduct($id: ID!, $input: NewProduct!) {
+    updateProduct(id: $id, input: $input) {
       id
       name
       salesPrice
@@ -64,8 +75,29 @@ const GET_WAREHOUSES = gql`
   }
 `;
 
+const FIND_PRODUCT = gql`
+  query FindProduct($limit: Int = 120) {
+    paginateProduct(limit: $limit) {
+      edges {
+        node {
+          id
+          name
+          salesPrice
+          purchasePrice
+          sku
+          isActive
+        }
+      }
+    }
+  }
+`;
+
 function ItemForm() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+  const [limit, setLimit] = useState(120);
+  const [isHydrated, setIsHydrated] = useState(!isEdit);
   const [name, setName] = useState('');
   const [salesPrice, setSalesPrice] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
@@ -76,25 +108,52 @@ function ItemForm() {
   const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_PRODUCT_CATEGORIES);
   const { data: businessData, loading: businessLoading } = useQuery(GET_BUSINESS_ACCOUNTS);
   const { data: warehouseData, loading: warehousesLoading } = useQuery(GET_WAREHOUSES);
-
-  const [createProduct, { loading: createLoading }] = useMutation(CREATE_PRODUCT, {
-    onCompleted: () => {
-      navigate('/items', { replace: true, state: { created: true } });
-    },
-    onError: (mutationError) => {
-      const message = mutationError.message || 'Failed to create item';
-      setError(message);
-    }
+  const {
+    data: productData,
+    loading: productLoading,
+    error: productError,
+    refetch: refetchProduct
+  } = useQuery(FIND_PRODUCT, {
+    skip: !isEdit,
+    variables: { limit },
+    fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all'
   });
 
-  const loading = createLoading || unitsLoading || categoriesLoading || businessLoading;
+  const [createProduct, createState] = useMutation(CREATE_PRODUCT);
+  const [updateProduct, updateState] = useMutation(UPDATE_PRODUCT);
+
+  const product = useMemo(() => {
+    const edges = productData?.paginateProduct?.edges ?? [];
+    const match = edges.find((edge) => String(edge?.node?.id || '') === String(id || ''));
+    return match?.node || null;
+  }, [id, productData]);
+
+  useEffect(() => {
+    if (!isEdit || isHydrated || !product) return;
+    setName(product.name || '');
+    setSalesPrice(product.salesPrice !== null && product.salesPrice !== undefined ? String(product.salesPrice) : '');
+    setPurchasePrice(product.purchasePrice !== null && product.purchasePrice !== undefined ? String(product.purchasePrice) : '');
+    setSku(product.sku || '');
+    setIsHydrated(true);
+  }, [isEdit, isHydrated, product]);
+
+  useEffect(() => {
+    if (!isEdit || productLoading || productError) return;
+    if (!product && limit < 640) {
+      setLimit((prev) => Math.min(prev * 2, 640));
+    }
+  }, [isEdit, limit, product, productError, productLoading]);
+
+  const saving = createState.loading || updateState.loading;
+  const loading = saving || unitsLoading || categoriesLoading || businessLoading;
   const warehouses = warehouseData?.listAllWarehouse ?? [];
   const defaults = getDefaultInvoiceLocationIds();
   const defaultWarehouseId = String(defaults.warehouseId || '');
   const hasWarehouse = warehouses.some((warehouse) => String(warehouse.id) === defaultWarehouseId);
   const selectedWarehouseId = hasWarehouse ? defaultWarehouseId : warehouses[0]?.id ? String(warehouses[0].id) : defaultWarehouseId;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
 
@@ -148,17 +207,77 @@ function ItemForm() {
       openingStocks: []
     };
 
-    createProduct({ variables: { input } });
+    try {
+      if (isEdit) {
+        await updateProduct({ variables: { id, input } });
+        navigate(`/items/${id}`, { replace: true, state: { updated: true } });
+      } else {
+        await createProduct({ variables: { input } });
+        navigate('/items', { replace: true, state: { created: true } });
+      }
+    } catch (mutationError) {
+      const message = mutationError.message || 'Failed to save item';
+      setError(message);
+    }
   };
+
+  if (isEdit && ((productLoading && !productData) || (product && !isHydrated))) {
+    return (
+      <div className="stack">
+        <section className="state-loading" aria-live="polite">
+          <div className="skeleton-card">
+            <div className="skeleton skeleton-line long" />
+            <div className="skeleton skeleton-line short" />
+          </div>
+          <div className="skeleton-card">
+            <div className="skeleton skeleton-line long" />
+            <div className="skeleton skeleton-line short" />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (isEdit && !productLoading && !productError && !product) {
+    return (
+      <div className="stack">
+        <section className="state-empty" role="status">
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Item not found in recent items.</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>Return to items and refresh, then try again.</p>
+          <button className="btn btn-secondary" type="button" onClick={() => refetchProduct()}>
+            Try again
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  if (isEdit && (productError || !product)) {
+    return (
+      <div className="stack">
+        <section className="state-error" role="alert">
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Could not load this item.</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>{productError?.message || 'Item not found.'}</p>
+          <button className="btn btn-secondary" type="button" onClick={() => refetchProduct()}>
+            Try again
+          </button>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="invoice-page">
       <section className="flow-banner">
         <p className="kicker">Catalog</p>
         <h2 className="title" style={{ marginBottom: 6 }}>
-          Add a new item
+          {isEdit ? 'Edit item' : 'Add a new item'}
         </h2>
-        <p className="subtle">Save common products or services so invoice creation is faster.</p>
+        <p className="subtle">
+          {isEdit
+            ? 'Update item details like name and prices.'
+            : 'Save common products or services so invoice creation is faster.'}
+        </p>
       </section>
 
       <form className="invoice-panel" onSubmit={handleSubmit}>
@@ -234,11 +353,11 @@ function ItemForm() {
         {error && <div className="inline-error">{error}</div>}
 
         <div className="sticky-actions">
-          <button type="button" className="btn btn-secondary" onClick={() => navigate('/items')}>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate(isEdit ? `/items/${id}` : '/items')}>
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Saving...' : 'Save item'}
+            {loading ? 'Saving...' : isEdit ? 'Save changes' : 'Save item'}
           </button>
         </div>
       </form>

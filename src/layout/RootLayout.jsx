@@ -20,8 +20,24 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/items/new')) {
     return { title: 'Create Item', kicker: 'Catalog', backPath: '/items' };
   }
+  const itemMatch = pathname.match(/^\/items\/([^/]+)/);
+  const itemId = itemMatch?.[1] || '';
+  if (itemId && itemId !== 'new' && pathname.endsWith('/edit')) {
+    return { title: 'Edit Item', kicker: 'Catalog', backPath: `/items/${itemId}` };
+  }
+  if (itemId && itemId !== 'new') {
+    return { title: 'Item', kicker: 'Catalog', backPath: '/items' };
+  }
   if (pathname.startsWith('/clients/new')) {
     return { title: 'Create Client', kicker: 'Customers', backPath: '/clients' };
+  }
+  const clientMatch = pathname.match(/^\/clients\/([^/]+)/);
+  const clientId = clientMatch?.[1] || '';
+  if (clientId && clientId !== 'new' && pathname.endsWith('/edit')) {
+    return { title: 'Edit Client', kicker: 'Customers', backPath: `/clients/${clientId}` };
+  }
+  if (clientId && clientId !== 'new') {
+    return { title: 'Client', kicker: 'Customers', backPath: '/clients' };
   }
   if (pathname.startsWith('/items')) {
     return { title: 'Items', kicker: 'Catalog', backPath: '/' };
@@ -42,10 +58,20 @@ function RootLayout() {
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  const itemMatch = location.pathname.match(/^\/items\/([^/]+)/);
+  const itemId = itemMatch?.[1] || '';
+  const clientMatch = location.pathname.match(/^\/clients\/([^/]+)/);
+  const clientId = clientMatch?.[1] || '';
+
+  const isItemDetail = Boolean(itemId && itemId !== 'new');
+  const isClientDetail = Boolean(clientId && clientId !== 'new');
+
   const isEditorPage =
     location.pathname.startsWith('/invoices/') ||
     location.pathname.startsWith('/items/new') ||
-    location.pathname.startsWith('/clients/new');
+    location.pathname.startsWith('/clients/new') ||
+    isItemDetail ||
+    isClientDetail;
 
   const pageCopy = useMemo(() => getPageCopy(location.pathname), [location.pathname]);
 

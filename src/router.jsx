@@ -12,6 +12,8 @@ import InvoiceView from './pages/InvoiceView';
 import InvoiceEdit from './pages/InvoiceEdit';
 import ItemForm from './pages/ItemForm';
 import ClientForm from './pages/ClientForm';
+import ClientView from './pages/ClientView';
+import ItemView from './pages/ItemView';
 import CustomerPickerPage from './pages/CustomerPicker';
 import ItemPickerPage from './pages/ItemPicker';
 
@@ -27,8 +29,12 @@ export function AppRoutes() {
         { path: 'invoices/:id/edit', element: <InvoiceEdit /> },
         { path: 'items', element: <Items /> },
         { path: 'items/new', element: <ItemForm /> },
+        { path: 'items/:id', element: <ItemView /> },
+        { path: 'items/:id/edit', element: <ItemForm /> },
         { path: 'clients', element: <Clients /> },
         { path: 'clients/new', element: <ClientForm /> },
+        { path: 'clients/:id', element: <ClientView /> },
+        { path: 'clients/:id/edit', element: <ClientForm /> },
         { path: 'more', element: <More /> }
       ]
     },

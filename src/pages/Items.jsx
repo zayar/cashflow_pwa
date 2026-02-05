@@ -169,23 +169,25 @@ function Items() {
       {!error && filteredProducts.length > 0 && (
         <ul className="list" aria-live="polite">
           {filteredProducts.map((item) => (
-            <li key={item.id} className="list-item list-card">
-              <div style={{ minWidth: 0 }}>
-                <p style={{ margin: 0, fontWeight: 800 }}>{item.name}</p>
-                <p className="subtle" style={{ marginTop: 2, marginBottom: 8 }}>
-                  {item.sku ? `SKU: ${item.sku}` : 'No SKU'}
-                </p>
-                <div className="list-meta">
-                  <span className="meta-chip">Item ID {item.id}</span>
+            <li key={item.id} className="list-card list-clickable">
+              <Link to={`/items/${item.id}`} className="list-link">
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{item.name}</p>
+                  <p className="subtle" style={{ marginTop: 2, marginBottom: 8 }}>
+                    {item.sku ? `SKU: ${item.sku}` : 'No SKU'}
+                  </p>
+                  <div className="list-meta">
+                    <span className="meta-chip">Item ID {item.id}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <p style={{ margin: 0, fontWeight: 800 }}>{formatCurrency(item.salesPrice)}</p>
-                <span className={`badge ${item.isActive ? 'badge-success' : 'badge-neutral'}`}>
-                  {item.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{formatCurrency(item.salesPrice)}</p>
+                  <span className={`badge ${item.isActive ? 'badge-success' : 'badge-neutral'}`}>
+                    {item.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </Link>
             </li>
           ))}
         </ul>
