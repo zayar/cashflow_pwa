@@ -31,6 +31,8 @@ function ClientForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [shippingAddress, setShippingAddress] = useState('');
   const [error, setError] = useState('');
 
   const { data: businessData, loading: businessLoading } = useQuery(GET_BUSINESS);
@@ -65,6 +67,8 @@ function ClientForm() {
       name: name.trim(),
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
+      billingAddress: billingAddress.trim() || undefined,
+      shippingAddress: shippingAddress.trim() || undefined,
       currencyId: baseCurrencyId,
       customerPaymentTerms: 'DueOnReceipt'
     };
@@ -89,7 +93,6 @@ function ClientForm() {
             className="input"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="e.g., Acme Co"
             autoFocus
           />
         </label>
@@ -101,7 +104,6 @@ function ClientForm() {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="client@example.com"
           />
         </label>
 
@@ -112,7 +114,26 @@ function ClientForm() {
             type="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
-            placeholder="+1 000 000 0000"
+          />
+        </label>
+
+        <label className="field">
+          <span className="label">Billing address (optional)</span>
+          <textarea
+            className="input"
+            rows={3}
+            value={billingAddress}
+            onChange={(event) => setBillingAddress(event.target.value)}
+          />
+        </label>
+
+        <label className="field">
+          <span className="label">Shipping address (optional)</span>
+          <textarea
+            className="input"
+            rows={3}
+            value={shippingAddress}
+            onChange={(event) => setShippingAddress(event.target.value)}
           />
         </label>
 

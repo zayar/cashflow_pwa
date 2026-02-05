@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
+import { getDefaultInvoiceLocationIds } from '../lib/auth';
 
 const CREATE_PRODUCT = gql`
   mutation CreateProduct($input: NewProduct!) {
@@ -54,6 +55,15 @@ const GET_BUSINESS_ACCOUNTS = gql`
   }
 `;
 
+const GET_WAREHOUSES = gql`
+  query GetWarehousesForItemForm {
+    listAllWarehouse {
+      id
+      name
+    }
+  }
+`;
+
 function ItemForm() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
@@ -65,6 +75,7 @@ function ItemForm() {
   const { data: unitsData, loading: unitsLoading } = useQuery(GET_PRODUCT_UNITS);
   const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_PRODUCT_CATEGORIES);
   const { data: businessData, loading: businessLoading } = useQuery(GET_BUSINESS_ACCOUNTS);
+  const { data: warehouseData, loading: warehousesLoading } = useQuery(GET_WAREHOUSES);
 
   const [createProduct, { loading: createLoading }] = useMutation(CREATE_PRODUCT, {
     onCompleted: () => {
@@ -77,6 +88,11 @@ function ItemForm() {
   });
 
   const loading = createLoading || unitsLoading || categoriesLoading || businessLoading;
+  const warehouses = warehouseData?.listAllWarehouse ?? [];
+  const defaults = getDefaultInvoiceLocationIds();
+  const defaultWarehouseId = String(defaults.warehouseId || '');
+  const hasWarehouse = warehouses.some((warehouse) => String(warehouse.id) === defaultWarehouseId);
+  const selectedWarehouseId = hasWarehouse ? defaultWarehouseId : warehouses[0]?.id ? String(warehouses[0].id) : defaultWarehouseId;
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -193,6 +209,26 @@ function ItemForm() {
             onChange={(event) => setSku(event.target.value)}
             placeholder="e.g., SKU-001"
           />
+        </label>
+
+        <label className="field">
+          <span className="label">Warehouse (default)</span>
+          {warehouses.length > 0 ? (
+            <select className="input" value={selectedWarehouseId} disabled aria-readonly="true">
+              {warehouses.map((warehouse) => (
+                <option key={warehouse.id} value={warehouse.id}>
+                  {warehouse.name ? `${warehouse.name} (#${warehouse.id})` : `Warehouse #${warehouse.id}`}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className="input"
+              value={warehousesLoading ? 'Loading…' : selectedWarehouseId ? `Warehouse #${selectedWarehouseId}` : 'Account default'}
+              disabled
+              readOnly
+            />
+          )}
         </label>
 
         {error && <div className="inline-error">{error}</div>}

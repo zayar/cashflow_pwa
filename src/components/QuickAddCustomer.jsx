@@ -30,6 +30,7 @@ const GET_BUSINESS = gql`
 function QuickAddCustomer({ onSave, onClose }) {
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
+  const [address, setAddress] = useState('');
   
   // Fetch business to get the correct base currency ID
   const { data: businessData, loading: businessLoading } = useQuery(GET_BUSINESS);
@@ -51,7 +52,9 @@ function QuickAddCustomer({ onSave, onClose }) {
     const input = {
       name: name.trim(),
       currencyId: baseCurrencyId,
-      notes: note.trim() || undefined
+      notes: note.trim() || undefined,
+      billingAddress: address.trim() || undefined,
+      shippingAddress: address.trim() || undefined
     };
     const { data } = await mutate({ variables: { input } });
     if (data?.createCustomer) {
@@ -75,6 +78,10 @@ function QuickAddCustomer({ onSave, onClose }) {
         <label className="field">
           <span className="label">Notes</span>
           <input className="input" value={note} onChange={(e) => setNote(e.target.value)} />
+        </label>
+        <label className="field">
+          <span className="label">Address (optional)</span>
+          <textarea className="input" rows={3} value={address} onChange={(e) => setAddress(e.target.value)} />
         </label>
         <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
           <button className="btn btn-secondary" type="button" onClick={onClose}>Cancel</button>
