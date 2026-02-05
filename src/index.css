@@ -917,7 +917,7 @@ textarea.input:focus {
 }
 
 .invoice-actions {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.3fr;
 }
 
 .action-list {
@@ -1518,8 +1518,11 @@ textarea.input:focus {
   z-index: 22;
   width: 58px;
   height: 58px;
+  padding: 0;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--ink) 72%, white 28%);
+  appearance: none;
+  -webkit-appearance: none;
   background:
     radial-gradient(130% 90% at 18% 12%, rgba(255, 255, 255, 0.16) 0%, transparent 48%),
     linear-gradient(150deg, #272d37 0%, #14181f 58%, #0b0d12 100%);
@@ -1530,10 +1533,26 @@ textarea.input:focus {
   place-items: center;
   box-shadow: 0 14px 28px rgba(10, 12, 15, 0.4);
   transition: transform 0.18s ease;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .fab:active {
   transform: scale(0.97);
+}
+
+.fab[disabled] {
+  opacity: 0.38;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.fab-send {
+  z-index: 26;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  width: 62px;
+  height: 62px;
+  border-radius: 999px;
 }
 
 .bottom-nav {

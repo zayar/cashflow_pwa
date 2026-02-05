@@ -119,6 +119,20 @@ function statusClass(status) {
   return 'badge-neutral';
 }
 
+function SendIcon() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3.4 11.2 20.2 4.6l-6.6 16.8-3-6.1-7.2-4.1Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path d="M10.6 15.3 20.2 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function InvoiceView() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -198,10 +212,14 @@ function InvoiceView() {
   }, [invoice?.id, invoice?.invoiceNumber]);
 
   const statusLabel = invoice?.currentStatus || 'Unknown';
-  const isDraft = (statusLabel || '').toLowerCase().includes('draft');
+  const normalizedStatus = (statusLabel || '').toLowerCase();
+  const isDraft = normalizedStatus.includes('draft');
+  const canShare = !isDraft;
+  const canEdit = isDraft;
 
   const handleShare = async () => {
     if (!invoice?.id) return;
+    if (!canShare) return;
     setStatus('');
     try {
       const share = await createInvoiceShareToken(invoice.id);
@@ -226,6 +244,12 @@ function InvoiceView() {
   const handlePrint = () => {
     setIsActionsOpen(false);
     window.print();
+  };
+
+  const handleEdit = () => {
+    if (!invoice?.id) return;
+    setIsActionsOpen(false);
+    navigate(`/invoices/${invoice.id}/edit?step=items`);
   };
 
   const handleConfirm = async () => {
@@ -488,6 +512,17 @@ function InvoiceView() {
         </section>
       )}
 
+      <button
+        className="fab fab-send"
+        type="button"
+        onClick={handleShare}
+        disabled={!canShare || saving}
+        aria-label="Send invoice link"
+        title={canShare ? 'Send invoice link' : 'Confirm invoice to enable sending'}
+      >
+        <SendIcon />
+      </button>
+
       <div className="sticky-actions invoice-actions">
         <button className="btn btn-secondary" type="button" onClick={() => setIsActionsOpen(true)}>
           Actions
@@ -495,34 +530,28 @@ function InvoiceView() {
         <button
           className="btn btn-primary"
           type="button"
-          onClick={() => navigate(`/invoices/${invoice.id}/edit?step=items`)}
+          onClick={() => setIsConfirmOpen(true)}
+          disabled={!isDraft || saving}
         >
-          Edit
+          {isDraft ? 'Confirm' : 'Confirmed'}
         </button>
       </div>
 
       {isActionsOpen && (
         <Modal title="Invoice actions" onClose={() => setIsActionsOpen(false)}>
           <div className="action-list">
-            <button className="btn btn-secondary btn-full" type="button" onClick={handleShare} disabled={saving}>
-              Share link
+            <button className="btn btn-secondary btn-full" type="button" onClick={handleEdit} disabled={!canEdit || saving}>
+              Edit invoice
             </button>
+
+            {canShare && (
+              <button className="btn btn-secondary btn-full" type="button" onClick={handleShare} disabled={saving}>
+                Share link
+              </button>
+            )}
             <button className="btn btn-secondary btn-full" type="button" onClick={handlePrint}>
               PDF / Print
             </button>
-
-            {isDraft && (
-              <button
-                className="btn btn-primary btn-full"
-                type="button"
-                onClick={() => {
-                  setIsConfirmOpen(true);
-                }}
-                disabled={saving}
-              >
-                Confirm invoice
-              </button>
-            )}
 
             <button
               className="btn btn-danger btn-full"
