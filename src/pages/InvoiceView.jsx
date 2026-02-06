@@ -24,6 +24,9 @@ const FIND_INVOICE = gql`
           currentStatus
           invoiceTotalAmount
           remainingBalance
+          branchId
+          warehouseId
+          currencyId
           customer {
             id
             name

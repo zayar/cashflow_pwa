@@ -11,21 +11,16 @@ function More() {
 
   return (
     <div className="stack">
-      <section className="card">
-        <p className="kicker">Workspace</p>
-        <h2 className="title" style={{ marginBottom: 6 }}>
-          More
-        </h2>
-        <p className="subtle">Manage preferences, exports, and account actions.</p>
-      </section>
-
       <section className="upgrade-card" aria-label="Upgrade to Cashflow Pro">
         <p className="kicker">Upgrade</p>
         <h3 className="title" style={{ marginBottom: 0 }}>
           Cashflow Pro
         </h3>
-        <p className="subtle">Unlock recurring invoices, smart reminders, and team permissions.</p>
-        <button className="btn btn-ghost" type="button">
+        <p className="subtle">
+          Unlock the full accounting suite with advanced reports, automation, smart reminders, and recurring
+          invoices.
+        </p>
+        <button className="btn btn-upgrade" type="button">
           Upgrade to Cashflow Pro
         </button>
       </section>
