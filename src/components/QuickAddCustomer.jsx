@@ -53,8 +53,8 @@ function QuickAddCustomer({ onSave, onClose }) {
       name: name.trim(),
       currencyId: baseCurrencyId,
       notes: note.trim() || undefined,
-      billingAddress: address.trim() || undefined,
-      shippingAddress: address.trim() || undefined
+      billingAddress: address.trim() ? { address: address.trim() } : undefined,
+      shippingAddress: address.trim() ? { address: address.trim() } : undefined
     };
     const { data } = await mutate({ variables: { input } });
     if (data?.createCustomer) {

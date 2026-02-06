@@ -13,8 +13,34 @@ const FIND_CUSTOMER = gql`
           name
           email
           phone
-          billingAddress
-          shippingAddress
+          billingAddress {
+            attention
+            address
+            city
+            country
+            state {
+              stateNameEn
+            }
+            township {
+              townshipNameEn
+            }
+            phone
+            email
+          }
+          shippingAddress {
+            attention
+            address
+            city
+            country
+            state {
+              stateNameEn
+            }
+            township {
+              townshipNameEn
+            }
+            phone
+            email
+          }
           totalOutstandingReceivable
         }
       }
@@ -48,6 +74,19 @@ const DELETE_CUSTOMER = gql`
 
 function formatCurrency(amount) {
   return `$${Number(amount || 0).toFixed(2)}`;
+}
+
+function formatAddress(address) {
+  if (!address) return '—';
+  const parts = [
+    address.attention,
+    address.address,
+    address.city,
+    address.state?.stateNameEn,
+    address.township?.townshipNameEn,
+    address.country
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : '—';
 }
 
 function ClientView() {
@@ -201,13 +240,13 @@ function ClientView() {
           <div className="field">
             <span className="label">Billing address</span>
             <p className="subtle" style={{ margin: 0 }}>
-              {customer.billingAddress || '—'}
+              {formatAddress(customer.billingAddress)}
             </p>
           </div>
           <div className="field">
             <span className="label">Shipping address</span>
             <p className="subtle" style={{ margin: 0 }}>
-              {customer.shippingAddress || '—'}
+              {formatAddress(customer.shippingAddress)}
             </p>
           </div>
         </div>

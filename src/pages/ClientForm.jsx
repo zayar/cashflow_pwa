@@ -33,8 +33,12 @@ const FIND_CUSTOMER = gql`
           name
           email
           phone
-          billingAddress
-          shippingAddress
+          billingAddress {
+            address
+          }
+          shippingAddress {
+            address
+          }
         }
       }
     }
@@ -94,8 +98,8 @@ function ClientForm() {
     setName(customer.name || '');
     setEmail(customer.email || '');
     setPhone(customer.phone || '');
-    setBillingAddress(customer.billingAddress || '');
-    setShippingAddress(customer.shippingAddress || '');
+    setBillingAddress(customer.billingAddress?.address || '');
+    setShippingAddress(customer.shippingAddress?.address || '');
     setIsHydrated(true);
   }, [customer, isEdit, isHydrated]);
 
@@ -128,8 +132,8 @@ function ClientForm() {
       name: name.trim(),
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
-      billingAddress: billingAddress.trim() || undefined,
-      shippingAddress: shippingAddress.trim() || undefined,
+      billingAddress: billingAddress.trim() ? { address: billingAddress.trim() } : undefined,
+      shippingAddress: shippingAddress.trim() ? { address: shippingAddress.trim() } : undefined,
       currencyId: baseCurrencyId,
       customerPaymentTerms: 'DueOnReceipt'
     };
