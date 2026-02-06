@@ -43,6 +43,17 @@ function More() {
         </button>
       </section>
 
+      <section className="card">
+        <p className="kicker">Banking</p>
+        <h3 className="title" style={{ marginBottom: 6 }}>
+          Bank Accounts
+        </h3>
+        <p className="subtle">Create and manage bank accounts for payments and balances.</p>
+        <button className="btn btn-secondary" type="button" onClick={() => navigate('/bank-accounts')}>
+          Manage bank accounts
+        </button>
+      </section>
+
       <section className="more-grid">
         <div className="feature-list">
           <div className="feature-row">

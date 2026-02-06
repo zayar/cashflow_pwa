@@ -51,6 +51,9 @@ function getPageCopy(pathname) {
     }
     return { title: 'Invoice Templates', kicker: 'Templates', backPath: '/more' };
   }
+  if (pathname.startsWith('/bank-accounts')) {
+    return { title: 'Bank Accounts', kicker: 'Settings', backPath: '/more' };
+  }
   if (pathname.startsWith('/more')) {
     return { title: 'More', kicker: 'Settings', backPath: '/' };
   }
@@ -77,6 +80,7 @@ function RootLayout() {
     location.pathname.startsWith('/items/new') ||
     location.pathname.startsWith('/clients/new') ||
     location.pathname.startsWith('/templates') ||
+    location.pathname.startsWith('/bank-accounts') ||
     isItemDetail ||
     isClientDetail;
 

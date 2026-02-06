@@ -18,6 +18,7 @@ import CustomerPickerPage from './pages/CustomerPicker';
 import ItemPickerPage from './pages/ItemPicker';
 import Templates from './pages/Templates';
 import TemplateEditor from './pages/TemplateEditor';
+import BankAccounts from './pages/BankAccounts';
 
 export function AppRoutes() {
   return useRoutes([
@@ -39,6 +40,7 @@ export function AppRoutes() {
         { path: 'clients/:id/edit', element: <ClientForm /> },
         { path: 'templates', element: <Templates /> },
         { path: 'templates/:documentType/:templateId/edit', element: <TemplateEditor /> },
+        { path: 'bank-accounts', element: <BankAccounts /> },
         { path: 'more', element: <More /> }
       ]
     },
