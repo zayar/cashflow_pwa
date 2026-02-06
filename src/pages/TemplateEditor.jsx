@@ -9,6 +9,7 @@ import {
   updateTemplate
 } from '../lib/templatesApi';
 import { completeUpload, resolveStorageAccessUrl, signUpload, uploadToSignedUrl } from '../lib/uploadApi';
+import TemplateInvoicePreview from '../components/TemplateInvoicePreview';
 
 const GET_BUSINESS = gql`
   query GetBusinessForTemplateEditor {
@@ -267,7 +268,23 @@ function TemplateEditor() {
     setStatus('QR removed');
   };
 
-  const primaryColor = config?.theme?.primaryColor || defaultConfig.theme.primaryColor;
+  const theme = config?.theme || {};
+  const primaryColor = theme.primaryColor || defaultConfig.theme.primaryColor;
+  const textColor = theme.textColor || defaultConfig.theme.textColor;
+  const borderColor = theme.borderColor || defaultConfig.theme.borderColor;
+  const tableHeaderBg = theme.tableHeaderBg || primaryColor;
+  const tableHeaderText = theme.tableHeaderText || '#ffffff';
+
+  const previewVars = useMemo(
+    () => ({
+      '--template-primary': primaryColor,
+      '--template-text': textColor,
+      '--template-border': borderColor,
+      '--template-table-header-bg': tableHeaderBg,
+      '--template-table-header-text': tableHeaderText
+    }),
+    [borderColor, primaryColor, tableHeaderBg, tableHeaderText, textColor]
+  );
 
   if (businessError) {
     return (
@@ -450,36 +467,8 @@ function TemplateEditor() {
         </div>
       </section>
 
-      <section className="card template-preview" style={{ '--template-primary': primaryColor }}>
-        <div className="template-preview-header">
-          <div className="template-preview-logo">
-            {logoUrl ? <img src={logoUrl} alt="Logo" /> : <span>Logo</span>}
-          </div>
-          <div className="template-preview-title">
-            <span className="template-preview-title-main">INVOICE</span>
-            <span className="template-preview-title-sub"># INV-0001</span>
-          </div>
-        </div>
-        <div className="template-preview-accent" />
-        <div className="template-preview-table">
-          <div className="template-preview-table-header">Item</div>
-          <div className="template-preview-table-header">Qty</div>
-          <div className="template-preview-table-header">Amount</div>
-          <div>Consulting</div>
-          <div>1</div>
-          <div>500,000</div>
-        </div>
-        <div className="template-preview-footer">
-          <div className="template-preview-qr">
-            {qrUrl ? <img src={qrUrl} alt="QR" /> : <span>QR</span>}
-          </div>
-          <div className="template-preview-footer-text">
-            <p className="subtle" style={{ margin: 0 }}>
-              Scan to pay
-            </p>
-            <p style={{ margin: 0, fontWeight: 700 }}>MMK 500,000</p>
-          </div>
-        </div>
+      <section className="card template-preview-card" style={previewVars}>
+        <TemplateInvoicePreview logoUrl={logoUrl} qrUrl={qrUrl} />
       </section>
 
       {(status || error) && (
