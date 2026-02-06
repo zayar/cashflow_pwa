@@ -30,6 +30,19 @@ function More() {
         </button>
       </section>
 
+      <section className="card">
+        <p className="kicker">Templates</p>
+        <h3 className="title" style={{ marginBottom: 6 }}>
+          Invoice Template
+        </h3>
+        <p className="subtle">
+          Add your logo, pick a brand color, and upload a payment QR for invoices.
+        </p>
+        <button className="btn btn-secondary" type="button" onClick={() => navigate('/templates')}>
+          Edit invoice template
+        </button>
+      </section>
+
       <section className="more-grid">
         <div className="feature-list">
           <div className="feature-row">

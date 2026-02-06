@@ -16,6 +16,8 @@ import ClientView from './pages/ClientView';
 import ItemView from './pages/ItemView';
 import CustomerPickerPage from './pages/CustomerPicker';
 import ItemPickerPage from './pages/ItemPicker';
+import Templates from './pages/Templates';
+import TemplateEditor from './pages/TemplateEditor';
 
 export function AppRoutes() {
   return useRoutes([
@@ -35,6 +37,8 @@ export function AppRoutes() {
         { path: 'clients/new', element: <ClientForm /> },
         { path: 'clients/:id', element: <ClientView /> },
         { path: 'clients/:id/edit', element: <ClientForm /> },
+        { path: 'templates', element: <Templates /> },
+        { path: 'templates/:documentType/:templateId/edit', element: <TemplateEditor /> },
         { path: 'more', element: <More /> }
       ]
     },

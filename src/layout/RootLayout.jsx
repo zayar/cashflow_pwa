@@ -45,6 +45,12 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/clients')) {
     return { title: 'Clients', kicker: 'Customers', backPath: '/' };
   }
+  if (pathname.startsWith('/templates')) {
+    if (pathname.endsWith('/edit')) {
+      return { title: 'Edit Template', kicker: 'Templates', backPath: '/templates' };
+    }
+    return { title: 'Invoice Templates', kicker: 'Templates', backPath: '/more' };
+  }
   if (pathname.startsWith('/more')) {
     return { title: 'More', kicker: 'Settings', backPath: '/' };
   }
@@ -70,6 +76,7 @@ function RootLayout() {
     location.pathname.startsWith('/invoices/') ||
     location.pathname.startsWith('/items/new') ||
     location.pathname.startsWith('/clients/new') ||
+    location.pathname.startsWith('/templates') ||
     isItemDetail ||
     isClientDetail;
 
