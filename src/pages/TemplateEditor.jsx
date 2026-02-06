@@ -414,20 +414,63 @@ function TemplateEditor() {
             </h3>
           </div>
         </div>
-        <div className="color-row">
-          <div className="color-swatch" style={{ background: primaryColor }} />
-          <input
-            className="color-input"
-            type="color"
-            value={primaryColor}
-            onChange={(event) =>
-              setConfig((prev) => ({
-                ...prev,
-                theme: { ...(prev?.theme || {}), primaryColor: event.target.value }
-              }))
-            }
-          />
-          <span className="meta-chip">{primaryColor.toUpperCase()}</span>
+        <div className="color-stack">
+          <label className="field">
+            <span className="label">Primary color</span>
+            <div className="color-row">
+              <div className="color-swatch" style={{ background: primaryColor }} />
+              <input
+                className="color-input"
+                type="color"
+                value={primaryColor}
+                onChange={(event) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    theme: { ...(prev?.theme || {}), primaryColor: event.target.value }
+                  }))
+                }
+              />
+              <span className="meta-chip">{primaryColor.toUpperCase()}</span>
+            </div>
+          </label>
+
+          <label className="field">
+            <span className="label">Table header bg</span>
+            <div className="color-row">
+              <div className="color-swatch" style={{ background: tableHeaderBg }} />
+              <input
+                className="color-input"
+                type="color"
+                value={tableHeaderBg}
+                onChange={(event) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    theme: { ...(prev?.theme || {}), tableHeaderBg: event.target.value }
+                  }))
+                }
+              />
+              <span className="meta-chip">{tableHeaderBg.toUpperCase()}</span>
+            </div>
+          </label>
+
+          <label className="field">
+            <span className="label">Table header text</span>
+            <div className="color-row">
+              <div className="color-swatch" style={{ background: tableHeaderText }} />
+              <input
+                className="color-input"
+                type="color"
+                value={tableHeaderText}
+                onChange={(event) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    theme: { ...(prev?.theme || {}), tableHeaderText: event.target.value }
+                  }))
+                }
+              />
+              <span className="meta-chip">{tableHeaderText.toUpperCase()}</span>
+            </div>
+          </label>
         </div>
       </section>
 
