@@ -188,9 +188,7 @@ function InvoiceView() {
   const { data: bankData, loading: banksLoading, error: banksError } = useQuery(LIST_BANK_ACCOUNTS, {
     fetchPolicy: 'cache-and-network'
   });
-  const { data: paymentModeData, loading: paymentModesLoading, error: paymentModesError } = useQuery(LIST_PAYMENT_MODES, {
-    fetchPolicy: 'cache-and-network'
-  });
+  const { data: paymentModeData } = useQuery(LIST_PAYMENT_MODES, { fetchPolicy: 'cache-and-network' });
 
   const {
     data,
@@ -354,7 +352,7 @@ function InvoiceView() {
     const normalizedDepositAccountId = Number(depositAccountId);
     const invoiceId = Number(invoice.id);
     const amount = Number(fullPaymentAmount);
-    const paymentModeId = Number(defaultPaymentModeId);
+    const paymentModeId = Number(defaultPaymentModeId) || 0;
 
     const hasRequiredIds =
       Number.isFinite(branchId) &&
@@ -372,11 +370,6 @@ function InvoiceView() {
 
     if (!hasRequiredIds) {
       setStatus('Unable to record payment. Missing branch, customer, currency, bank, or amount.');
-      return;
-    }
-
-    if (!paymentModeId) {
-      setStatus('No active payment mode is available.');
       return;
     }
 
@@ -747,12 +740,12 @@ function InvoiceView() {
               Select a bank account to record full payment for this invoice.
             </p>
 
-            {(banksLoading || paymentModesLoading) && <p className="subtle">Loading payment options...</p>}
+            {banksLoading && <p className="subtle">Loading payment options...</p>}
 
-            {(banksError || paymentModesError) && (
+            {banksError && (
               <section className="state-error" role="alert">
                 <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load payment options.</p>
-                <p style={{ margin: 0 }}>{banksError?.message || paymentModesError?.message}</p>
+                <p style={{ margin: 0 }}>{banksError?.message}</p>
               </section>
             )}
 
@@ -760,12 +753,6 @@ function InvoiceView() {
               <section className="state-empty" role="status">
                 <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>No bank accounts found.</p>
                 <p style={{ margin: 0 }}>Add a bank account from More {'>'} Bank Accounts first.</p>
-              </section>
-            )}
-
-            {!paymentModesLoading && !paymentModesError && !defaultPaymentModeId && (
-              <section className="state-error" role="alert">
-                <p style={{ margin: 0 }}>No active payment mode found for recording payment.</p>
               </section>
             )}
 
@@ -780,7 +767,7 @@ function InvoiceView() {
                       className="btn btn-secondary btn-full bank-select-option"
                       type="button"
                       onClick={() => handleRecordPayment(accountId)}
-                      disabled={saving || !defaultPaymentModeId}
+                      disabled={saving}
                     >
                       <span>{account?.name || `Bank #${account.id}`}</span>
                       {subtitle && <span className="bank-select-meta">{subtitle}</span>}
