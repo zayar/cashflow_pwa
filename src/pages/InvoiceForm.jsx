@@ -498,6 +498,26 @@ function InvoiceForm() {
     return 'Review totals, add optional note, then save invoice.';
   }, [hasCustomer, linesReady, step]);
 
+  useEffect(() => {
+    if (!isPreviewOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsPreviewOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isPreviewOpen]);
+
   return (
     <div className="invoice-page">
       <section className="flow-banner">
@@ -884,6 +904,9 @@ function InvoiceForm() {
       <div className={`sheet-backdrop ${isPreviewOpen ? 'open' : ''}`} onClick={() => setIsPreviewOpen(false)} />
       <section
         className={`sheet ${isPreviewOpen ? 'open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Invoice preview"
         aria-hidden={!isPreviewOpen}
         onClick={(event) => event.stopPropagation()}
       >

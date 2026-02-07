@@ -56,7 +56,8 @@ function Items() {
 
   const { data, loading, error, refetch } = useQuery(GET_PRODUCTS, {
     variables: { limit: 50 },
-    fetchPolicy: 'cache-and-network'
+    fetchPolicy: 'cache-first',
+    nextFetchPolicy: 'cache-first'
   });
 
   useEffect(() => {
@@ -151,18 +152,25 @@ function Items() {
 
       {error && (
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load items.</p>
-          <p style={{ marginTop: 0, marginBottom: 12 }}>{error.message}</p>
-          <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-            Try again
-          </button>
+          <p className="state-title">Could not load items.</p>
+          <p className="state-message">{error.message}</p>
+          <div className="state-actions">
+            <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
+              Try again
+            </button>
+          </div>
         </section>
       )}
 
       {!loading && !error && filteredProducts.length === 0 && (
-        <section className="state-empty">
-          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>No items found.</p>
-          <p style={{ margin: 0 }}>Use + New item to add products or services.</p>
+        <section className="state-empty" role="status">
+          <p className="state-title">No items found.</p>
+          <p className="state-message">Use + New item to add products or services.</p>
+          <div className="state-actions">
+            <Link to="/items/new" className="btn btn-primary">
+              + New item
+            </Link>
+          </div>
         </section>
       )}
 

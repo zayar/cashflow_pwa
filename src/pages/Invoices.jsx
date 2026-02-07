@@ -83,10 +83,11 @@ function Invoices() {
   const [tab, setTab] = useState('all');
   const [search, setSearch] = useState('');
 
-  const { data: businessData } = useQuery(BUSINESS_QUERY, { fetchPolicy: 'cache-and-network' });
+  const { data: businessData } = useQuery(BUSINESS_QUERY, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
   const { data, loading, error, refetch } = useQuery(INVOICES_QUERY, {
     variables: { limit: 20 },
-    fetchPolicy: 'cache-and-network'
+    fetchPolicy: 'cache-first',
+    nextFetchPolicy: 'cache-first'
   });
 
   const baseCurrency = businessData?.getBusiness?.baseCurrency;
@@ -167,18 +168,31 @@ function Invoices() {
 
       {error && (
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 700 }}>Could not load invoices.</p>
-          <p style={{ marginTop: 0, marginBottom: 12 }}>{error.message}</p>
-          <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-            Try again
-          </button>
+          <p className="state-title">Could not load invoices.</p>
+          <p className="state-message">{error.message}</p>
+          <div className="state-actions">
+            <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
+              Try again
+            </button>
+          </div>
         </section>
       )}
 
       {!loading && !error && filtered.length === 0 && (
-        <section className="state-empty">
-          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>No invoices match this filter.</p>
-          <p style={{ margin: 0 }}>Create a new invoice to get started.</p>
+        <section className="state-empty" role="status">
+          <p className="state-title">No invoices match this filter.</p>
+          <p className="state-message">Create a new invoice to get started.</p>
+          <div className="state-actions">
+            <Link
+              to="/invoices/new"
+              className="btn btn-primary"
+              onClick={() => {
+                dispatch({ type: 'reset' });
+              }}
+            >
+              + New invoice
+            </Link>
+          </div>
         </section>
       )}
 
