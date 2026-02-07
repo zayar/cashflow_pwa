@@ -24,9 +24,19 @@ const FIND_INVOICE = gql`
           currentStatus
           invoiceTotalAmount
           remainingBalance
-          branchId
-          warehouseId
-          currencyId
+          branch {
+            id
+            name
+          }
+          warehouse {
+            id
+            name
+          }
+          currency {
+            id
+            name
+            symbol
+          }
           customer {
             id
             name
@@ -98,9 +108,9 @@ function buildInvoiceInput(invoice) {
 
   return {
     customerId: Number(invoice.customer?.id),
-    branchId: Number(invoice.branchId ?? defaults.branchId),
-    warehouseId: Number(invoice.warehouseId ?? defaults.warehouseId),
-    currencyId: Number(invoice.currencyId ?? fallbackCurrencyId),
+    branchId: Number(invoice.branch?.id ?? defaults.branchId),
+    warehouseId: Number(invoice.warehouse?.id ?? defaults.warehouseId),
+    currencyId: Number(invoice.currency?.id ?? fallbackCurrencyId),
     invoiceDate: isoDate,
     invoicePaymentTerms: invoice.invoicePaymentTerms || 'DueOnReceipt',
     currentStatus: invoice.currentStatus,
@@ -182,8 +192,8 @@ function InvoiceView() {
   const warehouses = locationData?.listAllWarehouse ?? [];
 
   const defaults = useMemo(() => getDefaultInvoiceLocationIds(), []);
-  const fallbackBranchId = invoice?.branchId ?? defaults.branchId;
-  const fallbackWarehouseId = invoice?.warehouseId ?? defaults.warehouseId;
+  const fallbackBranchId = invoice?.branch?.id ?? defaults.branchId;
+  const fallbackWarehouseId = invoice?.warehouse?.id ?? defaults.warehouseId;
 
   const branchName = useMemo(() => {
     if (!fallbackBranchId) return '';
