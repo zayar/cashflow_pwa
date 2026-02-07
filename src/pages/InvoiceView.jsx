@@ -54,19 +54,6 @@ const FIND_INVOICE = gql`
   }
 `;
 
-const GET_LOCATIONS = gql`
-  query GetLocations {
-    listAllBranch {
-      id
-      name
-    }
-    listAllWarehouse {
-      id
-      name
-    }
-  }
-`;
-
 const GET_BUSINESS = gql`
   query GetBusinessForInvoiceView {
     getBusiness {
@@ -95,16 +82,6 @@ const LIST_BANK_ACCOUNTS = gql`
           symbol
         }
       }
-    }
-  }
-`;
-
-const LIST_PAYMENT_MODES = gql`
-  query ListPaymentModesForInvoice {
-    listAllPaymentMode {
-      id
-      name
-      isActive
     }
   }
 `;
@@ -183,12 +160,13 @@ function InvoiceView() {
   const isRecordingPaymentRef = useRef(false);
   const [paymentCompletedLocally, setPaymentCompletedLocally] = useState(false);
 
-  const { data: businessData } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-and-network' });
-  const { data: locationData } = useQuery(GET_LOCATIONS, { fetchPolicy: 'cache-and-network' });
+  const { data: businessData } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
+  const shouldLoadPaymentAccounts = isRecordPaymentOpen;
   const { data: bankData, loading: banksLoading, error: banksError } = useQuery(LIST_BANK_ACCOUNTS, {
-    fetchPolicy: 'cache-and-network'
+    skip: !shouldLoadPaymentAccounts,
+    fetchPolicy: 'cache-first',
+    nextFetchPolicy: 'cache-first'
   });
-  const { data: paymentModeData } = useQuery(LIST_PAYMENT_MODES, { fetchPolicy: 'cache-and-network' });
 
   const {
     data,
@@ -197,7 +175,8 @@ function InvoiceView() {
     refetch: refetchInvoice
   } = useQuery(FIND_INVOICE, {
     variables: { limit },
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-first',
+    nextFetchPolicy: 'cache-first',
     errorPolicy: 'all'
   });
 
@@ -220,24 +199,12 @@ function InvoiceView() {
     return trimmed.split('--')[0] || trimmed;
   }, [accountLabel]);
 
-  const branches = locationData?.listAllBranch ?? [];
-  const warehouses = locationData?.listAllWarehouse ?? [];
-
   const defaults = useMemo(() => getDefaultInvoiceLocationIds(), []);
   const fallbackBranchId = invoice?.branch?.id ?? defaults.branchId;
   const fallbackWarehouseId = invoice?.warehouse?.id ?? defaults.warehouseId;
 
-  const branchName = useMemo(() => {
-    if (!fallbackBranchId) return '';
-    const match = branches.find((branch) => String(branch.id) === String(fallbackBranchId));
-    return match?.name || `Branch #${fallbackBranchId}`;
-  }, [branches, fallbackBranchId]);
-
-  const warehouseName = useMemo(() => {
-    if (!fallbackWarehouseId) return '';
-    const match = warehouses.find((warehouse) => String(warehouse.id) === String(fallbackWarehouseId));
-    return match?.name || `Warehouse #${fallbackWarehouseId}`;
-  }, [fallbackWarehouseId, warehouses]);
+  const branchName = invoice?.branch?.name || (fallbackBranchId ? `Branch #${fallbackBranchId}` : '');
+  const warehouseName = invoice?.warehouse?.name || (fallbackWarehouseId ? `Warehouse #${fallbackWarehouseId}` : '');
 
   const paymentTermsLabel = formatPaymentTerms(invoice?.invoicePaymentTerms);
   const dueDate = computeDueDate(invoice?.invoiceDate, invoice?.invoicePaymentTerms);
@@ -273,15 +240,6 @@ function InvoiceView() {
     const rows = bankData?.listBankingAccount?.listBankingAccount || [];
     return rows.filter((account) => account?.detailType === 'Bank' && account?.isActive !== false);
   }, [bankData]);
-
-  const activePaymentModes = useMemo(() => {
-    return (paymentModeData?.listAllPaymentMode || []).filter((mode) => mode?.isActive !== false);
-  }, [paymentModeData]);
-
-  const defaultPaymentModeId = useMemo(() => {
-    const bankTransfer = activePaymentModes.find((mode) => String(mode?.name || '').toLowerCase().includes('bank'));
-    return Number(bankTransfer?.id || activePaymentModes[0]?.id || 0);
-  }, [activePaymentModes]);
 
   useEffect(() => {
     setPaymentCompletedLocally(false);
@@ -353,7 +311,7 @@ function InvoiceView() {
     const normalizedDepositAccountId = Number(depositAccountId);
     const invoiceId = Number(invoice.id);
     const amount = Number(fullPaymentAmount);
-    const paymentModeId = Number(defaultPaymentModeId) || 0;
+    const paymentModeId = 0;
 
     const hasRequiredIds =
       Number.isFinite(branchId) &&
@@ -468,10 +426,8 @@ function InvoiceView() {
     return (
       <div className="stack">
         <section className="state-empty" role="status">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Invoice not found in recent invoices.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>
-            Tap load more to search further back, or return to invoices.
-          </p>
+          <p className="state-title">Invoice not found in recent invoices.</p>
+          <p className="state-message">Tap load more to search further back, or return to invoices.</p>
           <div className="toolbar" style={{ justifyContent: 'center', gap: 10 }}>
             {canLoadMore && (
               <button
@@ -495,11 +451,13 @@ function InvoiceView() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Could not load this invoice.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>{error?.message || 'Invoice not found.'}</p>
-          <button className="btn btn-secondary" type="button" onClick={() => refetchInvoice()}>
-            Try again
-          </button>
+          <p className="state-title">Could not load this invoice.</p>
+          <p className="state-message">{error?.message || 'Invoice not found.'}</p>
+          <div className="state-actions">
+            <button className="btn btn-secondary" type="button" onClick={() => refetchInvoice()}>
+              Try again
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -759,19 +717,23 @@ function InvoiceView() {
               Select a bank account to record full payment for this invoice.
             </p>
 
-            {banksLoading && <p className="subtle">Loading payment options...</p>}
+            {banksLoading && (
+              <section className="state-loading" role="status" aria-live="polite">
+                <p className="state-message">Loading payment options...</p>
+              </section>
+            )}
 
             {banksError && (
               <section className="state-error" role="alert">
-                <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load payment options.</p>
-                <p style={{ margin: 0 }}>{banksError?.message}</p>
+                <p className="state-title">Could not load payment options.</p>
+                <p className="state-message">{banksError?.message}</p>
               </section>
             )}
 
             {!banksLoading && !banksError && bankAccounts.length === 0 && (
               <section className="state-empty" role="status">
-                <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>No bank accounts found.</p>
-                <p style={{ margin: 0 }}>Add a bank account from More {'>'} Bank Accounts first.</p>
+                <p className="state-title">No bank accounts found.</p>
+                <p className="state-message">Add a bank account from More {'>'} Bank Accounts first.</p>
               </section>
             )}
 

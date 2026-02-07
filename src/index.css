@@ -222,6 +222,15 @@ button {
   padding: var(--space-4);
 }
 
+.card,
+.section-card,
+.surface-card,
+.invoice-panel,
+.flow-banner,
+.list-card {
+  animation: rise-fade 240ms ease both;
+}
+
 .surface-card {
   box-shadow: var(--shadow-soft);
 }
@@ -564,10 +573,30 @@ textarea.input:focus {
   background: color-mix(in srgb, var(--surface) 76%, var(--bg-accent) 24%);
 }
 
+.state-title {
+  margin: 0 0 8px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.state-message {
+  margin: 0;
+}
+
+.state-actions {
+  margin-top: 12px;
+  display: inline-flex;
+  gap: 8px;
+}
+
 .state-error {
   border-color: color-mix(in srgb, var(--danger) 35%, white 65%);
   color: #8f3232;
   background: #fff7f7;
+}
+
+.state-error .state-title {
+  color: #7d2626;
 }
 
 .state-loading {
@@ -1739,6 +1768,17 @@ textarea.input:focus {
   }
 }
 
+@keyframes rise-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (min-width: 720px) {
   .content {
     padding: var(--space-6);
@@ -1830,6 +1870,17 @@ textarea.input:focus {
   .step {
     padding-left: 7px;
     padding-right: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
