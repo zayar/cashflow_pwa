@@ -143,7 +143,6 @@ function InvoiceForm() {
     loading: locationsLoading,
     error: locationsError
   } = useQuery(GET_INVOICE_LOCATIONS, {
-    skip: !isLocationOpen,
     fetchPolicy: 'cache-and-network',
     errorPolicy: 'all'
   });
@@ -166,6 +165,23 @@ function InvoiceForm() {
 
   const baseCurrency = businessData?.getBusiness?.baseCurrency;
   const baseCurrencyId = toPositiveInt(baseCurrency?.id);
+  const branches = locationData?.listAllBranch ?? [];
+  const warehouses = locationData?.listAllWarehouse ?? [];
+
+  const selectedBranchId = toPositiveInt(invoice.branchId);
+  const selectedWarehouseId = toPositiveInt(invoice.warehouseId);
+  const selectedCurrencyId = toPositiveInt(invoice.currencyId || baseCurrencyId);
+
+  const hasBranchSelection = selectedBranchId > 0;
+  const hasWarehouseSelection = selectedWarehouseId > 0;
+  const hasCurrencySelection = selectedCurrencyId > 0;
+  const hasValidBranchSelection =
+    hasBranchSelection &&
+    (branches.length === 0 || branches.some((branch) => toPositiveInt(branch.id) === selectedBranchId));
+  const hasValidWarehouseSelection =
+    hasWarehouseSelection &&
+    (warehouses.length === 0 || warehouses.some((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId));
+  const hasValidCurrencySelection = hasCurrencySelection && (!baseCurrencyId || selectedCurrencyId === baseCurrencyId);
 
   const openLocationSettings = () => {
     setLocationInputError('');
@@ -183,9 +199,6 @@ function InvoiceForm() {
     dispatch({ type: 'setField', field: 'currencyId', value: baseCurrencyId });
     saveDefaultInvoiceCurrencyId(baseCurrencyId);
   }, [baseCurrencyId, dispatch, invoice.currencyId]);
-
-  const branches = locationData?.listAllBranch ?? [];
-  const warehouses = locationData?.listAllWarehouse ?? [];
 
   useEffect(() => {
     if (!isLocationOpen) return;
@@ -267,18 +280,21 @@ function InvoiceForm() {
     setStatus('');
     if (!validateBeforeSave()) return;
 
-    const branchId = Number(invoice.branchId);
-    const warehouseId = Number(invoice.warehouseId);
-    const currencyId = baseCurrencyId || Number(invoice.currencyId);
-    const validBranchId = Number.isFinite(branchId) && branchId > 0;
-    const validWarehouseId = Number.isFinite(warehouseId) && warehouseId > 0;
-    const validCurrencyId = Number.isFinite(currencyId) && currencyId > 0;
-
-    if (!validBranchId || !validWarehouseId || !validCurrencyId) {
+    if (!hasBranchSelection || !hasWarehouseSelection || !hasCurrencySelection) {
       setStatus('Choose invoice defaults (branch, warehouse, currency) to save invoices.');
       openLocationSettings();
       return;
     }
+
+    if (!hasValidBranchSelection || !hasValidWarehouseSelection || !hasValidCurrencySelection) {
+      setStatus('Selected defaults are no longer valid. Please choose branch, warehouse, and currency again.');
+      openLocationSettings();
+      return;
+    }
+
+    const branchId = selectedBranchId;
+    const warehouseId = selectedWarehouseId;
+    const currencyId = selectedCurrencyId;
 
     const isoDate = invoice.invoiceDate
       ? new Date(`${invoice.invoiceDate}T00:00:00Z`).toISOString()
