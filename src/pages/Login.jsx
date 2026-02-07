@@ -58,7 +58,7 @@ function Login() {
           <h1 className="heading" style={{ marginBottom: 6 }}>
             Welcome back
           </h1>
-          <p className="subtle">Sign in to create and share invoices quickly.</p>
+          <p className="subtle">Secure sign in to create, send, and track invoices faster.</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -94,6 +94,8 @@ function Login() {
           <button className="btn btn-primary btn-full" type="submit" disabled={loading}>
             {loading ? 'Signing in...' : 'Log in'}
           </button>
+
+          <p className="auth-trust">Your data is encrypted and securely transmitted.</p>
 
           {(message || error) && (
             <div className={`auth-state ${error ? 'auth-state-error' : 'auth-state-success'}`} role="status" aria-live="polite">

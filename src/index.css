@@ -1602,6 +1602,89 @@ textarea.input:focus {
   color: #141f2f;
 }
 
+.welcome-hero-shell {
+  width: 100%;
+  max-width: 410px;
+  height: clamp(300px, 44vh, 360px);
+  margin-bottom: 14px;
+  position: relative;
+}
+
+.welcome-title {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 6.6vw, 34px);
+  font-weight: 800;
+  color: #1e293b;
+  text-align: center;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.welcome-copy {
+  margin: 0;
+  margin-bottom: 10px;
+  max-width: 330px;
+  font-size: 15px;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.55;
+}
+
+.welcome-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 12px 24px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid color-mix(in srgb, var(--border) 82%, white 18%);
+  background: rgba(245, 249, 255, 0.72);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+}
+
+.welcome-primary-btn {
+  width: 100%;
+  min-height: 56px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(30, 41, 59, 0.3);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.welcome-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(30, 41, 59, 0.35);
+}
+
+.welcome-primary-btn:active {
+  transform: translateY(0);
+}
+
+.welcome-actions-subline {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: #6f829a;
+}
+
+.welcome-secondary-link {
+  color: #0f2f5a;
+  font-weight: 800;
+}
+
+.welcome-powered {
+  text-align: center;
+  margin-top: 14px;
+  margin-bottom: 0;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
 .auth-form {
   padding: 18px 20px 22px;
   display: grid;
@@ -1633,6 +1716,14 @@ textarea.input:focus {
   text-align: center;
   font-size: 13px;
   color: var(--text-muted);
+}
+
+.auth-trust {
+  margin: -4px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: #5f738d;
+  font-weight: 600;
 }
 
 .auth-link {
@@ -1905,6 +1996,11 @@ textarea.input:focus {
     padding-right: 12px;
   }
 
+  .welcome-actions {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
   .btn {
     font-size: 13px;
   }
@@ -1912,6 +2008,16 @@ textarea.input:focus {
   .step {
     padding-left: 7px;
     padding-right: 7px;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 

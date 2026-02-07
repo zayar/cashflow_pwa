@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from '../lib/auth';
 import BrandLogo from '../components/BrandLogo';
@@ -67,17 +67,11 @@ function Welcome() {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '0 24px',
+        padding: '0 24px 12px',
         zIndex: 1
       }}>
         {/* Hero Illustration */}
-        <div style={{
-          width: '100%',
-          maxWidth: 410,
-          height: 360,
-          marginBottom: 18,
-          position: 'relative'
-        }}>
+        <div className="welcome-hero-shell">
           {/* Main portrait card */}
           <div style={{
             position: 'absolute',
@@ -192,80 +186,30 @@ function Welcome() {
         </div>
 
         {/* Headline */}
-        <h1 style={{
-          fontSize: 30,
-          fontWeight: 800,
-          color: '#1e293b',
-          textAlign: 'center',
-          lineHeight: 1.2,
-          marginBottom: 10,
-          letterSpacing: '-0.5px'
-        }}>
+        <h1 className="welcome-title">
           Fast and easy<br />invoice solution.
         </h1>
 
-        <p style={{
-          fontSize: 15,
-          color: '#64748b',
-          textAlign: 'center',
-          lineHeight: 1.55,
-          margin: 0,
-          marginBottom: 14,
-          maxWidth: 320
-        }}>
+        <p className="welcome-copy">
           Create, send, and track professional invoices in seconds. Get paid faster with Cashflow.
         </p>
       </div>
 
       {/* Bottom Action */}
-      <div style={{
-        padding: '12px 24px 18px',
-        zIndex: 1
-      }}>
-        <button
-          onClick={() => navigate('/login')}
-          style={{
-            width: '100%',
-            padding: '18px 24px',
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-            color: 'white',
-            border: 'none',
-            borderRadius: 16,
-            fontSize: 17,
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 10px 30px rgba(30, 41, 59, 0.3)',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 15px 35px rgba(30, 41, 59, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 10px 30px rgba(30, 41, 59, 0.3)';
-          }}
-        >
+      <div className="welcome-actions">
+        <button onClick={() => navigate('/login')} className="welcome-primary-btn" type="button">
           Get Started
         </button>
-
-        <p style={{
-          textAlign: 'center',
-          marginTop: 20,
-          fontSize: 13,
-          color: '#94a3b8'
-        }}>
-          Powered by Cashflow
+        <p className="welcome-actions-subline">
+          Already have an account?{' '}
+          <Link to="/login" className="welcome-secondary-link">
+            Log in
+          </Link>
+        </p>
+        <p className="welcome-powered">
+          Powered by Piti
         </p>
       </div>
-
-      {/* CSS Animations */}
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-        }
-      `}</style>
     </div>
   );
 }
