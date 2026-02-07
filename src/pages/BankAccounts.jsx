@@ -85,11 +85,11 @@ function BankAccounts() {
     loading: accountsLoading,
     error: accountsError,
     refetch: refetchAccounts
-  } = useQuery(LIST_BANK_ACCOUNTS, { fetchPolicy: 'cache-and-network' });
+  } = useQuery(LIST_BANK_ACCOUNTS, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
 
-  const { data: currencyData } = useQuery(LIST_CURRENCIES, { fetchPolicy: 'cache-and-network' });
-  const { data: branchData } = useQuery(LIST_BRANCHES, { fetchPolicy: 'cache-and-network' });
-  const { data: businessData } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-and-network' });
+  const { data: currencyData } = useQuery(LIST_CURRENCIES, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
+  const { data: branchData } = useQuery(LIST_BRANCHES, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
+  const { data: businessData } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
 
   const [createAccount, { loading: creating }] = useMutation(CREATE_ACCOUNT, {
     errorPolicy: 'all'
@@ -215,11 +215,13 @@ function BankAccounts() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load bank accounts.</p>
-          <p style={{ marginTop: 0, marginBottom: 12 }}>{accountsError.message}</p>
-          <button className="btn btn-secondary" type="button" onClick={() => refetchAccounts()}>
-            Try again
-          </button>
+          <p className="state-title">Could not load bank accounts.</p>
+          <p className="state-message">{accountsError.message}</p>
+          <div className="state-actions">
+            <button className="btn btn-secondary" type="button" onClick={() => refetchAccounts()}>
+              Try again
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -253,8 +255,13 @@ function BankAccounts() {
 
       {bankAccounts.length === 0 && (
         <section className="state-empty" role="status">
-          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>No bank accounts yet.</p>
-          <p style={{ margin: 0 }}>Add one to start tracking balances and payments.</p>
+          <p className="state-title">No bank accounts yet.</p>
+          <p className="state-message">Add one to start tracking balances and payments.</p>
+          <div className="state-actions">
+            <button className="btn btn-primary" type="button" onClick={openSheet}>
+              Add bank account
+            </button>
+          </div>
         </section>
       )}
 

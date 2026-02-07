@@ -1282,6 +1282,48 @@ textarea.input:focus {
   padding: 12px;
 }
 
+.readiness-card {
+  border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-soft) 72%, white 28%);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.readiness-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.readiness-item {
+  min-height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.readiness-item.ok {
+  border-color: color-mix(in srgb, var(--success) 42%, white 58%);
+  background: #effcf5;
+  color: #0d7249;
+}
+
+.readiness-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .preview-chip {
   min-height: var(--tap);
   border-radius: 14px;

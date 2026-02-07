@@ -47,7 +47,7 @@ function Templates() {
     data: businessData,
     loading: businessLoading,
     error: businessError
-  } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-and-network' });
+  } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
   const businessId = businessData?.getBusiness?.id;
 
   const [templates, setTemplates] = useState([]);
@@ -164,8 +164,8 @@ function Templates() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load business data.</p>
-          <p style={{ marginTop: 0, marginBottom: 12 }}>{businessError.message}</p>
+          <p className="state-title">Could not load business data.</p>
+          <p className="state-message">{businessError.message}</p>
         </section>
       </div>
     );
@@ -199,18 +199,25 @@ function Templates() {
 
       {error && (
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load templates.</p>
-          <p style={{ marginTop: 0, marginBottom: 12 }}>{error}</p>
-          <button className="btn btn-secondary" type="button" onClick={fetchTemplates}>
-            Try again
-          </button>
+          <p className="state-title">Could not load templates.</p>
+          <p className="state-message">{error}</p>
+          <div className="state-actions">
+            <button className="btn btn-secondary" type="button" onClick={fetchTemplates}>
+              Try again
+            </button>
+          </div>
         </section>
       )}
 
       {!error && templates.length === 0 && (
         <section className="state-empty" role="status">
-          <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>No templates yet.</p>
-          <p style={{ margin: 0 }}>Create one to customize how invoices look on PDF and printouts.</p>
+          <p className="state-title">No templates yet.</p>
+          <p className="state-message">Create one to customize how invoices look on PDF and printouts.</p>
+          <div className="state-actions">
+            <button className="btn btn-primary" type="button" onClick={handleNewTemplate} disabled={loading}>
+              Create template
+            </button>
+          </div>
         </section>
       )}
 

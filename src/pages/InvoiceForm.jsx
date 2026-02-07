@@ -134,7 +134,8 @@ function InvoiceForm() {
     loading: businessLoading,
     error: businessError
   } = useQuery(GET_BUSINESS_DEFAULTS, {
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-first',
+    nextFetchPolicy: 'cache-first',
     errorPolicy: 'all'
   });
 
@@ -143,7 +144,8 @@ function InvoiceForm() {
     loading: locationsLoading,
     error: locationsError
   } = useQuery(GET_INVOICE_LOCATIONS, {
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-first',
+    nextFetchPolicy: 'cache-first',
     errorPolicy: 'all'
   });
 
@@ -183,6 +185,7 @@ function InvoiceForm() {
     (warehouses.length === 0 || warehouses.some((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId));
   const hasValidCurrencySelection = hasCurrencySelection && (!baseCurrencyId || selectedCurrencyId === baseCurrencyId);
   const defaultsReady = hasValidBranchSelection && hasValidWarehouseSelection && hasValidCurrencySelection;
+  const reviewReady = hasCustomer && linesReady && defaultsReady;
 
   const selectedBranchName = useMemo(() => {
     if (!selectedBranchId) return '';
@@ -408,11 +411,37 @@ function InvoiceForm() {
       return;
     }
 
+    if (!reviewReady) {
+      if (!hasCustomer) {
+        setStep(0);
+        setStatus('Select a customer before saving.');
+        return;
+      }
+      if (!linesReady) {
+        setStep(1);
+        setStatus('Add at least one complete line item before saving.');
+        return;
+      }
+      openLocationSettings();
+      setStatus('Set branch, warehouse, and currency defaults before saving.');
+      return;
+    }
+
     await handleSave();
   };
 
   const primaryLabel =
-    step === 0 ? 'Continue to items' : step === 1 ? 'Continue to review' : saving ? 'Saving...' : 'Save invoice';
+    step === 0
+      ? 'Continue to items'
+      : step === 1
+        ? 'Continue to review'
+        : saving
+          ? 'Saving...'
+          : reviewReady
+            ? 'Save invoice'
+            : !defaultsReady
+              ? 'Set defaults'
+              : 'Complete required info';
 
   const canShare = step === 2 && Boolean(invoice.invoiceId);
 
@@ -628,6 +657,33 @@ function InvoiceForm() {
           </h3>
           <p className="section-hint">Confirm totals and add an optional note before saving.</p>
 
+          <section className="readiness-card" role="status" aria-live="polite">
+            <div className="readiness-grid">
+              <div className={`readiness-item ${hasCustomer ? 'ok' : ''}`}>Customer</div>
+              <div className={`readiness-item ${linesReady ? 'ok' : ''}`}>Items</div>
+              <div className={`readiness-item ${defaultsReady ? 'ok' : ''}`}>Defaults</div>
+            </div>
+            {!reviewReady && (
+              <div className="readiness-actions">
+                {!hasCustomer && (
+                  <button className="btn btn-secondary" type="button" onClick={() => setStep(0)}>
+                    Fix customer
+                  </button>
+                )}
+                {hasCustomer && !linesReady && (
+                  <button className="btn btn-secondary" type="button" onClick={() => setStep(1)}>
+                    Fix items
+                  </button>
+                )}
+                {!defaultsReady && (
+                  <button className="btn btn-secondary" type="button" onClick={openLocationSettings}>
+                    Set defaults
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+
           <label className="field">
             <span className="label">Notes</span>
             <textarea
@@ -678,9 +734,19 @@ function InvoiceForm() {
 
       {(status || saveError) && (
         <section className={saveError ? 'state-error' : 'surface-card'} role="status" aria-live="polite">
-          <p style={{ margin: 0 }}>{saveError ? saveErrorMessage : status}</p>
+          {saveError ? (
+            <>
+              <p className="state-title">Could not save invoice.</p>
+              <p className="state-message">{saveErrorMessage}</p>
+            </>
+          ) : (
+            <>
+              <p className="state-title">Update</p>
+              <p className="state-message">{status}</p>
+            </>
+          )}
           {saveError && hasLocationNotFoundError && (
-            <div className="toolbar" style={{ marginTop: 12 }}>
+            <div className="state-actions">
               <button className="btn btn-secondary" type="button" onClick={openLocationSettings}>
                 Set invoice defaults
               </button>
@@ -696,20 +762,28 @@ function InvoiceForm() {
               Cashflow Lite uses your existing Branch + Warehouse + Currency. Select valid defaults so invoices can be created.
             </p>
 
-            {locationsLoading && <p className="subtle">Loading branches and warehouses…</p>}
+            {locationsLoading && (
+              <section className="state-loading" role="status" aria-live="polite">
+                <p className="state-message">Loading branches and warehouses...</p>
+              </section>
+            )}
             {locationsError && (
-              <div className="state-error" role="alert">
-                <p style={{ margin: 0 }}>
-                  Couldn&apos;t load locations from the server. Enter the IDs manually.
-                </p>
-              </div>
+              <section className="state-error" role="alert">
+                <p className="state-title">Couldn&apos;t load locations.</p>
+                <p className="state-message">Enter branch and warehouse IDs manually.</p>
+              </section>
             )}
 
-            {businessLoading && <p className="subtle">Loading currency…</p>}
+            {businessLoading && (
+              <section className="state-loading" role="status" aria-live="polite">
+                <p className="state-message">Loading currency...</p>
+              </section>
+            )}
             {businessError && (
-              <div className="state-error" role="alert">
-                <p style={{ margin: 0 }}>Couldn&apos;t load currency from the server. Enter the currency ID manually.</p>
-              </div>
+              <section className="state-error" role="alert">
+                <p className="state-title">Couldn&apos;t load currency.</p>
+                <p className="state-message">Enter currency ID manually.</p>
+              </section>
             )}
 
             <label className="field">
