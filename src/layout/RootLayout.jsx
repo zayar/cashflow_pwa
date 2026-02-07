@@ -54,6 +54,9 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/bank-accounts')) {
     return { title: 'Bank Accounts', kicker: 'Settings', backPath: '/more' };
   }
+  if (pathname.startsWith('/reports')) {
+    return { title: 'Reports', kicker: 'Insights', backPath: '/' };
+  }
   if (pathname.startsWith('/more')) {
     return { title: 'More', kicker: 'Settings', backPath: '/' };
   }
@@ -83,6 +86,7 @@ function RootLayout() {
     location.pathname.startsWith('/bank-accounts') ||
     isItemDetail ||
     isClientDetail;
+  const hideFab = location.pathname.startsWith('/reports');
 
   const pageCopy = useMemo(() => getPageCopy(location.pathname), [location.pathname]);
 
@@ -149,7 +153,7 @@ function RootLayout() {
         <Outlet />
       </main>
 
-      {!isEditorPage && <Fab />}
+      {!isEditorPage && !hideFab && <Fab />}
       {!isEditorPage && <BottomNav activePath={location.pathname} />}
     </div>
   );

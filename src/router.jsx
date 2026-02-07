@@ -8,6 +8,7 @@ const Invoices = lazy(() => import('./pages/Invoices'));
 const Items = lazy(() => import('./pages/Items'));
 const Clients = lazy(() => import('./pages/Clients'));
 const More = lazy(() => import('./pages/More'));
+const Reports = lazy(() => import('./pages/Reports'));
 const Login = lazy(() => import('./pages/Login'));
 const InvoiceForm = lazy(() => import('./pages/InvoiceForm'));
 const InvoiceView = lazy(() => import('./pages/InvoiceView'));
@@ -47,6 +48,7 @@ export function AppRoutes() {
         { path: 'templates', element: suspense(<Templates />) },
         { path: 'templates/:documentType/:templateId/edit', element: suspense(<TemplateEditor />) },
         { path: 'bank-accounts', element: suspense(<BankAccounts />) },
+        { path: 'reports', element: suspense(<Reports />) },
         { path: 'more', element: suspense(<More />) }
       ]
     },

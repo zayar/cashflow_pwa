@@ -40,10 +40,21 @@ function MoreIcon() {
   );
 }
 
+function ReportsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 19h16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M7 16v-4M12 16V8M17 16V11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M6.7 7.8 12 5l5.3 2.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 const navItems = [
   { to: '/', label: 'Invoices', icon: InvoiceIcon },
   { to: '/items', label: 'Items', icon: BoxIcon },
   { to: '/clients', label: 'Clients', icon: UsersIcon },
+  { to: '/reports', label: 'Reports', icon: ReportsIcon },
   { to: '/more', label: 'More', icon: MoreIcon }
 ];
 
