@@ -266,6 +266,7 @@ function InvoiceView() {
   const canRecordPayment = isConfirmed && hasBalanceDue && !paymentCompletedLocally;
   const canShare = !isDraft;
   const canEdit = isDraft;
+  const canDelete = isDraft;
   const fullPaymentAmount = remainingBalance;
 
   const bankAccounts = useMemo(() => {
@@ -316,7 +317,7 @@ function InvoiceView() {
   };
 
   const handleEdit = () => {
-    if (!invoice?.id) return;
+    if (!invoice?.id || !isDraft) return;
     setIsActionsOpen(false);
     navigate(`/invoices/${invoice.id}/edit?step=items`);
   };
@@ -437,6 +438,13 @@ function InvoiceView() {
         : 'Confirmed';
 
   const primaryActionClassName = isDraft ? 'btn btn-primary' : canRecordPayment ? 'btn btn-record-payment' : 'btn btn-primary';
+  const nextActionHint = isDraft
+    ? 'Next step: confirm this draft invoice.'
+    : canRecordPayment
+      ? 'Next step: record full payment to settle this invoice.'
+      : showPaidState
+        ? 'Payment complete. This invoice is settled.'
+        : 'This invoice is confirmed.';
 
   if (loading && !data) {
     return (
@@ -641,6 +649,13 @@ function InvoiceView() {
         </section>
       )}
 
+      <section className="surface-card flow-note-card" aria-label="Next action">
+        <p className="kicker">Next action</p>
+        <p style={{ margin: 0 }} className="subtle">
+          {nextActionHint}
+        </p>
+      </section>
+
       <button
         className="fab fab-send"
         type="button"
@@ -677,9 +692,11 @@ function InvoiceView() {
       {isActionsOpen && (
         <Modal title="Invoice actions" onClose={() => setIsActionsOpen(false)}>
           <div className="action-list">
-            <button className="btn btn-secondary btn-full" type="button" onClick={handleEdit} disabled={!canEdit || saving}>
-              Edit invoice
-            </button>
+            {canEdit && (
+              <button className="btn btn-secondary btn-full" type="button" onClick={handleEdit} disabled={saving}>
+                Edit invoice
+              </button>
+            )}
 
             {canShare && (
               <button className="btn btn-secondary btn-full" type="button" onClick={handleShare} disabled={saving}>
@@ -701,16 +718,18 @@ function InvoiceView() {
               PDF / Print
             </button>
 
-            <button
-              className="btn btn-danger btn-full"
-              type="button"
-              onClick={() => {
-                setIsDeleteOpen(true);
-              }}
-              disabled={!isDraft || saving}
-            >
-              Delete invoice
-            </button>
+            {canDelete && (
+              <button
+                className="btn btn-danger btn-full"
+                type="button"
+                onClick={() => {
+                  setIsDeleteOpen(true);
+                }}
+                disabled={saving}
+              >
+                Delete invoice
+              </button>
+            )}
           </div>
         </Modal>
       )}

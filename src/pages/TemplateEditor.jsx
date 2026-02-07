@@ -337,7 +337,7 @@ function TemplateEditor() {
             <h2 className="title" style={{ marginBottom: 4 }}>
               Template Editor
             </h2>
-            <p className="subtle">Changes apply to invoice PDF and print previews.</p>
+            <p className="subtle">Mobile-first editor for invoice branding. Changes apply instantly to the preview.</p>
           </div>
           {isDefault && <span className="badge badge-success">Default</span>}
         </div>
@@ -511,6 +511,14 @@ function TemplateEditor() {
       </section>
 
       <section className="card template-preview-card" style={previewVars}>
+        <div className="card-header" style={{ marginBottom: 10 }}>
+          <div>
+            <p className="kicker">Preview</p>
+            <h3 className="title" style={{ marginBottom: 0 }}>
+              Live invoice preview
+            </h3>
+          </div>
+        </div>
         <TemplateInvoicePreview logoUrl={logoUrl} qrUrl={qrUrl} />
       </section>
 
@@ -522,7 +530,7 @@ function TemplateEditor() {
 
       <div className="sticky-actions">
         <button className="btn btn-secondary" type="button" onClick={handleReset} disabled={!dirty || loading}>
-          Reset
+          Discard changes
         </button>
         <button className="btn btn-primary" type="button" onClick={handleSave} disabled={!dirty || loading}>
           Save changes

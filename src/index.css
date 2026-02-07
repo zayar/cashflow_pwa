@@ -650,6 +650,39 @@ textarea.input:focus {
   margin-top: 12px;
 }
 
+.flow-health {
+  margin-top: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-soft) 70%, white 30%);
+  padding: 10px;
+}
+
+.flow-health-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.health-chip {
+  min-height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.health-chip.ok {
+  border-color: color-mix(in srgb, var(--success) 42%, white 58%);
+  background: #effcf5;
+  color: #0d7249;
+}
+
 .step {
   min-height: var(--tap);
   border-radius: 13px;
@@ -1214,6 +1247,12 @@ textarea.input:focus {
   border-top: 1px dashed #bfd4eb;
 }
 
+.flow-note-card {
+  border: 1px dashed color-mix(in srgb, var(--border-strong) 78%, white 22%);
+  background: color-mix(in srgb, var(--surface-soft) 72%, white 28%);
+  padding: 12px;
+}
+
 .preview-chip {
   min-height: var(--tap);
   border-radius: 14px;
@@ -1544,6 +1583,12 @@ textarea.input:focus {
   gap: 8px;
 }
 
+.upgrade-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .feature-list {
   display: grid;
   gap: 8px;
@@ -1559,6 +1604,36 @@ textarea.input:focus {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.feature-row .btn {
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+.bank-balance {
+  margin: 8px 0 2px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.bank-caption {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.template-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .fab {

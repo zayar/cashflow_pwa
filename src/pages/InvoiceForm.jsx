@@ -182,6 +182,27 @@ function InvoiceForm() {
     hasWarehouseSelection &&
     (warehouses.length === 0 || warehouses.some((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId));
   const hasValidCurrencySelection = hasCurrencySelection && (!baseCurrencyId || selectedCurrencyId === baseCurrencyId);
+  const defaultsReady = hasValidBranchSelection && hasValidWarehouseSelection && hasValidCurrencySelection;
+
+  const selectedBranchName = useMemo(() => {
+    if (!selectedBranchId) return '';
+    const selected = branches.find((branch) => toPositiveInt(branch.id) === selectedBranchId);
+    return selected?.name || `Branch #${selectedBranchId}`;
+  }, [branches, selectedBranchId]);
+
+  const selectedWarehouseName = useMemo(() => {
+    if (!selectedWarehouseId) return '';
+    const selected = warehouses.find((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId);
+    return selected?.name || `Warehouse #${selectedWarehouseId}`;
+  }, [selectedWarehouseId, warehouses]);
+
+  const selectedCurrencyLabel = useMemo(() => {
+    if (!selectedCurrencyId) return 'Currency not set';
+    if (baseCurrency?.name && (!baseCurrencyId || selectedCurrencyId === baseCurrencyId)) {
+      return `${baseCurrency.name}${baseCurrency.symbol ? ` (${baseCurrency.symbol})` : ''}`;
+    }
+    return `Currency #${selectedCurrencyId}`;
+  }, [baseCurrency?.name, baseCurrency?.symbol, baseCurrencyId, selectedCurrencyId]);
 
   const openLocationSettings = () => {
     setLocationInputError('');
@@ -436,6 +457,18 @@ function InvoiceForm() {
     }
   }, [hasLocationNotFoundError, isLocationOpen, saveError]);
 
+  const stepGuide = useMemo(() => {
+    if (step === 0) {
+      return hasCustomer
+        ? 'Customer selected. Continue to items when ready.'
+        : 'Choose customer and verify branch, warehouse, and currency.';
+    }
+    if (step === 1) {
+      return linesReady ? 'Items ready. Continue to review and save.' : 'Add at least one complete line item.';
+    }
+    return 'Review totals, add optional note, then save invoice.';
+  }, [hasCustomer, linesReady, step]);
+
   return (
     <div className="invoice-page">
       <section className="flow-banner">
@@ -466,6 +499,15 @@ function InvoiceForm() {
               </button>
             );
           })}
+        </div>
+
+        <div className="flow-health" role="status" aria-live="polite">
+          <div className="flow-health-grid">
+            <span className={`health-chip ${hasCustomer ? 'ok' : ''}`}>Customer</span>
+            <span className={`health-chip ${linesReady ? 'ok' : ''}`}>Items</span>
+            <span className={`health-chip ${defaultsReady ? 'ok' : ''}`}>Defaults</span>
+          </div>
+          <p className="subtle" style={{ marginTop: 8 }}>{stepGuide}</p>
         </div>
       </section>
 
@@ -509,20 +551,13 @@ function InvoiceForm() {
 
           <div className="default-location-row" role="status" aria-live="polite">
             <span className="meta-chip">
-              Branch: {invoice.branchId ? `#${invoice.branchId}` : 'Account default'}
+              Branch: {selectedBranchName || 'Not set'}
             </span>
             <span className="meta-chip">
-              Warehouse: {invoice.warehouseId ? `#${invoice.warehouseId}` : 'Account default'}
+              Warehouse: {selectedWarehouseName || 'Not set'}
             </span>
             <span className="meta-chip">
-              Currency:{' '}
-              {baseCurrency?.name
-                ? `${baseCurrency.symbol || ''}${baseCurrency.symbol ? ' ' : ''}${baseCurrency.name} (#${
-                    invoice.currencyId || baseCurrencyId || '--'
-                  })`
-                : invoice.currencyId
-                  ? `#${invoice.currencyId}`
-                  : 'Account default'}
+              Currency: {selectedCurrencyLabel}
             </span>
             <button
               className="btn btn-ghost"
@@ -631,6 +666,13 @@ function InvoiceForm() {
           >
             Preview invoice {currency(totals.total)}
           </button>
+
+          <div className="surface-card flow-note-card">
+            <p className="kicker">Next after save</p>
+            <p className="subtle">
+              Confirm the invoice from details, then use Record Payment to settle the remaining balance.
+            </p>
+          </div>
         </section>
       )}
 

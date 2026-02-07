@@ -14,39 +14,54 @@ function More() {
       <section className="upgrade-card" aria-label="Upgrade to Cashflow Pro">
         <p className="kicker">Upgrade</p>
         <h3 className="title" style={{ marginBottom: 0 }}>
-          Cashflow Pro
+          Unlock Cashflow Pro
         </h3>
         <p className="subtle">
-          Unlock the full accounting suite with advanced reports, automation, smart reminders, and recurring
-          invoices.
+          Move from basic invoicing to the full accounting suite with reports, automation, reminders, and recurring
+          billing.
         </p>
+        <div className="upgrade-points" aria-label="Pro features">
+          <span className="meta-chip">Advanced reports</span>
+          <span className="meta-chip">Smart reminders</span>
+          <span className="meta-chip">Recurring invoices</span>
+        </div>
         <button className="btn btn-upgrade" type="button">
           Upgrade to Cashflow Pro
         </button>
       </section>
 
       <section className="card">
-        <p className="kicker">Templates</p>
+        <p className="kicker">Get Paid Faster</p>
         <h3 className="title" style={{ marginBottom: 6 }}>
-          Invoice Template
+          Payment setup
         </h3>
-        <p className="subtle">
-          Add your logo, pick a brand color, and upload a payment QR for invoices.
-        </p>
-        <button className="btn btn-secondary" type="button" onClick={() => navigate('/templates')}>
-          Edit invoice template
-        </button>
-      </section>
+        <p className="subtle">Set your invoice look and payment accounts once, then reuse them for every invoice.</p>
 
-      <section className="card">
-        <p className="kicker">Banking</p>
-        <h3 className="title" style={{ marginBottom: 6 }}>
-          Bank Accounts
-        </h3>
-        <p className="subtle">Create and manage bank accounts for payments and balances.</p>
-        <button className="btn btn-secondary" type="button" onClick={() => navigate('/bank-accounts')}>
-          Manage bank accounts
-        </button>
+        <div className="task-list" style={{ marginTop: 12 }}>
+          <div className="feature-row">
+            <div>
+              <p style={{ margin: 0, fontWeight: 700 }}>Invoice template</p>
+              <p className="subtle" style={{ fontSize: 13 }}>
+                Logo, colors, and payment QR in one place.
+              </p>
+            </div>
+            <button className="btn btn-secondary" type="button" onClick={() => navigate('/templates')}>
+              Edit
+            </button>
+          </div>
+
+          <div className="feature-row">
+            <div>
+              <p style={{ margin: 0, fontWeight: 700 }}>Bank accounts</p>
+              <p className="subtle" style={{ fontSize: 13 }}>
+                Choose where recorded payments are deposited.
+              </p>
+            </div>
+            <button className="btn btn-secondary" type="button" onClick={() => navigate('/bank-accounts')}>
+              Manage
+            </button>
+          </div>
+        </div>
       </section>
 
       <section className="more-grid">
@@ -70,6 +85,11 @@ function More() {
             </div>
             <span className="meta-chip">PWA</span>
           </div>
+        </div>
+
+        <div className="surface-card">
+          <p className="kicker">Account</p>
+          <p className="subtle">You can sign back in anytime to continue where you left off.</p>
         </div>
 
         <button onClick={handleLogout} className="btn btn-danger btn-full" type="button">

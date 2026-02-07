@@ -179,11 +179,11 @@ function Templates() {
             <p className="kicker">Templates</p>
             <h2 className="title">Invoice Templates</h2>
             <p className="subtle" style={{ marginTop: 4 }}>
-              Add your logo, choose a brand color, and attach a payment QR.
+              Keep your invoice style consistent with logo, colors, and payment QR.
             </p>
           </div>
           <button className="btn btn-primary" type="button" onClick={handleNewTemplate} disabled={loading}>
-            + New template
+            + Create template
           </button>
         </div>
 
@@ -229,24 +229,26 @@ function Templates() {
               </div>
 
               <div className="toolbar" style={{ marginTop: 12 }}>
-                <button
-                  className="btn btn-secondary"
-                  type="button"
-                  onClick={() => navigate(`/templates/${DOCUMENT_TYPE}/${template.id}/edit`)}
-                >
-                  Edit
-                </button>
-                <button className="btn btn-ghost" type="button" onClick={() => handleDuplicate(template)}>
-                  Duplicate
-                </button>
-                <button
-                  className="btn btn-ghost"
-                  type="button"
-                  onClick={() => handleSetDefault(template)}
-                  disabled={template.is_default}
-                >
-                  Set default
-                </button>
+                <div className="template-list-actions">
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={() => navigate(`/templates/${DOCUMENT_TYPE}/${template.id}/edit`)}
+                  >
+                    Edit
+                  </button>
+                  <button className="btn btn-ghost" type="button" onClick={() => handleDuplicate(template)}>
+                    Duplicate
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    type="button"
+                    onClick={() => handleSetDefault(template)}
+                    disabled={template.is_default}
+                  >
+                    Set default
+                  </button>
+                </div>
               </div>
             </li>
           ))}

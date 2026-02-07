@@ -114,6 +114,12 @@ function BankAccounts() {
     return rows.filter((account) => account.detailType === 'Bank');
   }, [accountsData]);
 
+  const formatBalance = (account) => {
+    const amount = Number(account?.balance || 0);
+    const symbol = account?.currency?.symbol || '';
+    return `${symbol ? `${symbol} ` : ''}${amount.toLocaleString()}`;
+  };
+
   const sortedCurrencies = useMemo(() => {
     if (!currencies.length) return [];
     const mmkIndex = currencies.findIndex((currency) => {
@@ -227,7 +233,7 @@ function BankAccounts() {
             <p className="kicker">Settings</p>
             <h2 className="title">Bank Accounts</h2>
             <p className="subtle" style={{ marginTop: 4 }}>
-              Track bank balances and set default currencies.
+              Manage deposit accounts used by Record Payment.
             </p>
           </div>
           <button className="btn btn-primary" type="button" onClick={openSheet}>
@@ -256,7 +262,7 @@ function BankAccounts() {
         <ul className="list" aria-live="polite">
           {bankAccounts.map((account) => (
             <li key={account.id} className="list-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: 800 }}>{account.name}</p>
                   <p className="subtle" style={{ marginTop: 4, marginBottom: 0 }}>
@@ -273,6 +279,8 @@ function BankAccounts() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span className="meta-chip">Bank</span>
+                  <p className="bank-balance">{formatBalance(account)}</p>
+                  <p className="bank-caption">Available balance</p>
                 </div>
               </div>
             </li>
@@ -297,6 +305,9 @@ function BankAccounts() {
         </div>
 
         <div className="form-grid">
+          <p className="subtle" style={{ marginTop: 0 }}>
+            This bank appears in invoice payment selection.
+          </p>
           <label className="field">
             <span className="label">Account name</span>
             <input
