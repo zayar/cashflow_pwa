@@ -410,7 +410,7 @@ function InvoiceView() {
   };
 
   const handleDelete = async () => {
-    if (!invoice?.id) return;
+    if (!invoice?.id || !isDraft) return;
     setStatus('');
     try {
       await deleteInvoice({ variables: { id: invoice.id } });
@@ -707,7 +707,7 @@ function InvoiceView() {
               onClick={() => {
                 setIsDeleteOpen(true);
               }}
-              disabled={saving}
+              disabled={!isDraft || saving}
             >
               Delete invoice
             </button>
@@ -796,7 +796,7 @@ function InvoiceView() {
               <button className="btn btn-secondary" type="button" onClick={() => setIsDeleteOpen(false)}>
                 Cancel
               </button>
-              <button className="btn btn-danger" type="button" onClick={handleDelete} disabled={saving}>
+              <button className="btn btn-danger" type="button" onClick={handleDelete} disabled={!isDraft || saving}>
                 {saving ? 'Deleting…' : 'Delete'}
               </button>
             </div>
