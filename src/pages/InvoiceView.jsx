@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
@@ -80,12 +80,61 @@ const GET_BUSINESS = gql`
   }
 `;
 
+const LIST_BANK_ACCOUNTS = gql`
+  query ListBankingAccountForInvoice {
+    listBankingAccount {
+      listBankingAccount {
+        id
+        name
+        detailType
+        isActive
+        accountNumber
+        currency {
+          id
+          name
+          symbol
+        }
+      }
+    }
+  }
+`;
+
+const LIST_PAYMENT_MODES = gql`
+  query ListPaymentModesForInvoice {
+    listAllPaymentMode {
+      id
+      name
+      isActive
+    }
+  }
+`;
+
 const CONFIRM_INVOICE = gql`
   mutation ConfirmInvoice($id: ID!) {
     confirmSalesInvoice(id: $id) {
       id
       invoiceNumber
       currentStatus
+    }
+  }
+`;
+
+const CREATE_CUSTOMER_PAYMENT = gql`
+  mutation CreateCustomerPaymentFromInvoice($input: NewCustomerPayment!) {
+    createCustomerPayment(input: $input) {
+      id
+      amount
+      paymentDate
+      paymentNumber
+      paidInvoices {
+        id
+        paidAmount
+        invoice {
+          id
+          currentStatus
+          remainingBalance
+        }
+      }
     }
   }
 `;
@@ -127,12 +176,21 @@ function InvoiceView() {
   const [status, setStatus] = useState('');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [limit, setLimit] = useState(80);
   const isConfirmingRef = useRef(false);
+  const isRecordingPaymentRef = useRef(false);
+  const [paymentCompletedLocally, setPaymentCompletedLocally] = useState(false);
 
   const { data: businessData } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-and-network' });
   const { data: locationData } = useQuery(GET_LOCATIONS, { fetchPolicy: 'cache-and-network' });
+  const { data: bankData, loading: banksLoading, error: banksError } = useQuery(LIST_BANK_ACCOUNTS, {
+    fetchPolicy: 'cache-and-network'
+  });
+  const { data: paymentModeData, loading: paymentModesLoading, error: paymentModesError } = useQuery(LIST_PAYMENT_MODES, {
+    fetchPolicy: 'cache-and-network'
+  });
 
   const {
     data,
@@ -146,6 +204,7 @@ function InvoiceView() {
   });
 
   const [confirmInvoice, confirmState] = useMutation(CONFIRM_INVOICE);
+  const [createCustomerPayment, paymentState] = useMutation(CREATE_CUSTOMER_PAYMENT);
   const [deleteInvoice, deleteState] = useMutation(DELETE_INVOICE);
 
   const invoice = useMemo(() => {
@@ -202,8 +261,32 @@ function InvoiceView() {
   const statusLabel = invoice?.currentStatus || 'Unknown';
   const normalizedStatus = (statusLabel || '').toLowerCase();
   const isDraft = normalizedStatus.includes('draft');
+  const isConfirmed = normalizedStatus.includes('confirmed');
+  const remainingBalance = Math.max(0, Number(invoice?.remainingBalance || 0));
+  const hasBalanceDue = remainingBalance > 0;
+  const isPaid = isConfirmed && !hasBalanceDue;
+  const canRecordPayment = isConfirmed && hasBalanceDue && !paymentCompletedLocally;
   const canShare = !isDraft;
   const canEdit = isDraft;
+  const fullPaymentAmount = remainingBalance;
+
+  const bankAccounts = useMemo(() => {
+    const rows = bankData?.listBankingAccount?.listBankingAccount || [];
+    return rows.filter((account) => account?.detailType === 'Bank' && account?.isActive !== false);
+  }, [bankData]);
+
+  const activePaymentModes = useMemo(() => {
+    return (paymentModeData?.listAllPaymentMode || []).filter((mode) => mode?.isActive !== false);
+  }, [paymentModeData]);
+
+  const defaultPaymentModeId = useMemo(() => {
+    const bankTransfer = activePaymentModes.find((mode) => String(mode?.name || '').toLowerCase().includes('bank'));
+    return Number(bankTransfer?.id || activePaymentModes[0]?.id || 0);
+  }, [activePaymentModes]);
+
+  useEffect(() => {
+    setPaymentCompletedLocally(false);
+  }, [invoice?.id]);
 
   const handleShare = async () => {
     if (!invoice?.id) return;
@@ -261,6 +344,78 @@ function InvoiceView() {
     }
   };
 
+  const handleRecordPayment = async (depositAccountId) => {
+    if (!invoice?.id || !canRecordPayment) return;
+    if (isRecordingPaymentRef.current) return;
+
+    const branchId = Number(invoice.branch?.id || fallbackBranchId);
+    const customerId = Number(invoice.customer?.id);
+    const currencyId = Number(invoice.currency?.id || baseCurrency?.id);
+    const normalizedDepositAccountId = Number(depositAccountId);
+    const invoiceId = Number(invoice.id);
+    const amount = Number(fullPaymentAmount);
+    const paymentModeId = Number(defaultPaymentModeId);
+
+    const hasRequiredIds =
+      Number.isFinite(branchId) &&
+      branchId > 0 &&
+      Number.isFinite(customerId) &&
+      customerId > 0 &&
+      Number.isFinite(currencyId) &&
+      currencyId > 0 &&
+      Number.isFinite(normalizedDepositAccountId) &&
+      normalizedDepositAccountId > 0 &&
+      Number.isFinite(invoiceId) &&
+      invoiceId > 0 &&
+      Number.isFinite(amount) &&
+      amount > 0;
+
+    if (!hasRequiredIds) {
+      setStatus('Unable to record payment. Missing branch, customer, currency, bank, or amount.');
+      return;
+    }
+
+    if (!paymentModeId) {
+      setStatus('No active payment mode is available.');
+      return;
+    }
+
+    isRecordingPaymentRef.current = true;
+    setStatus('');
+    try {
+      await createCustomerPayment({
+        variables: {
+          input: {
+            branchId,
+            customerId,
+            currencyId,
+            amount,
+            paymentDate: new Date().toISOString(),
+            depositAccountId: normalizedDepositAccountId,
+            paymentModeId,
+            exchangeRate: 1,
+            bankCharges: 0,
+            paidInvoices: [
+              {
+                invoiceId,
+                paidAmount: amount
+              }
+            ]
+          }
+        }
+      });
+      setPaymentCompletedLocally(true);
+      setIsRecordPaymentOpen(false);
+      setIsActionsOpen(false);
+      await refetchInvoice();
+      setStatus('Payment recorded.');
+    } catch (err) {
+      setStatus(err.message || 'Failed to record payment.');
+    } finally {
+      isRecordingPaymentRef.current = false;
+    }
+  };
+
   const handleDelete = async () => {
     if (!invoice?.id) return;
     setStatus('');
@@ -272,7 +427,23 @@ function InvoiceView() {
     }
   };
 
-  const saving = confirmState.loading || deleteState.loading || isConfirmingRef.current;
+  const isRecordingPayment = paymentState.loading || isRecordingPaymentRef.current;
+  const saving = confirmState.loading || deleteState.loading || isConfirmingRef.current || isRecordingPayment;
+  const showPaidState = isPaid || paymentCompletedLocally;
+
+  const primaryActionLabel = isDraft
+    ? saving
+      ? 'Confirming...'
+      : 'Confirm'
+    : canRecordPayment
+      ? isRecordingPayment
+        ? 'Recording...'
+        : 'Record Payment'
+      : showPaidState
+        ? 'Paid'
+        : 'Confirmed';
+
+  const primaryActionClassName = isDraft ? 'btn btn-primary' : canRecordPayment ? 'btn btn-record-payment' : 'btn btn-primary';
 
   if (loading && !data) {
     return (
@@ -493,12 +664,20 @@ function InvoiceView() {
           Actions
         </button>
         <button
-          className="btn btn-primary"
+          className={primaryActionClassName}
           type="button"
-          onClick={() => setIsConfirmOpen(true)}
-          disabled={!isDraft || saving}
+          onClick={() => {
+            if (isDraft) {
+              setIsConfirmOpen(true);
+              return;
+            }
+            if (canRecordPayment) {
+              setIsRecordPaymentOpen(true);
+            }
+          }}
+          disabled={saving || (!isDraft && !canRecordPayment)}
         >
-          {isDraft ? 'Confirm' : 'Confirmed'}
+          {primaryActionLabel}
         </button>
       </div>
 
@@ -512,6 +691,17 @@ function InvoiceView() {
             {canShare && (
               <button className="btn btn-secondary btn-full" type="button" onClick={handleShare} disabled={saving}>
                 Share link
+              </button>
+            )}
+
+            {canRecordPayment && (
+              <button
+                className="btn btn-record-payment btn-full"
+                type="button"
+                onClick={() => setIsRecordPaymentOpen(true)}
+                disabled={saving}
+              >
+                {isRecordingPayment ? 'Recording...' : 'Record Payment'}
               </button>
             )}
             <button className="btn btn-secondary btn-full" type="button" onClick={handlePrint}>
@@ -544,6 +734,65 @@ function InvoiceView() {
               </button>
               <button className="btn btn-primary" type="button" onClick={handleConfirm} disabled={saving}>
                 {saving ? 'Confirming…' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {isRecordPaymentOpen && (
+        <Modal title="Record payment" onClose={() => setIsRecordPaymentOpen(false)}>
+          <div className="form-grid">
+            <p className="subtle" style={{ marginTop: 0 }}>
+              Select a bank account to record full payment for this invoice.
+            </p>
+
+            {(banksLoading || paymentModesLoading) && <p className="subtle">Loading payment options...</p>}
+
+            {(banksError || paymentModesError) && (
+              <section className="state-error" role="alert">
+                <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load payment options.</p>
+                <p style={{ margin: 0 }}>{banksError?.message || paymentModesError?.message}</p>
+              </section>
+            )}
+
+            {!banksLoading && !banksError && bankAccounts.length === 0 && (
+              <section className="state-empty" role="status">
+                <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>No bank accounts found.</p>
+                <p style={{ margin: 0 }}>Add a bank account from More {'>'} Bank Accounts first.</p>
+              </section>
+            )}
+
+            {!paymentModesLoading && !paymentModesError && !defaultPaymentModeId && (
+              <section className="state-error" role="alert">
+                <p style={{ margin: 0 }}>No active payment mode found for recording payment.</p>
+              </section>
+            )}
+
+            {bankAccounts.length > 0 && (
+              <div className="action-list">
+                {bankAccounts.map((account) => {
+                  const accountId = Number(account?.id || 0);
+                  const subtitle = [account?.accountNumber, account?.currency?.symbol].filter(Boolean).join(' · ');
+                  return (
+                    <button
+                      key={account.id}
+                      className="btn btn-secondary btn-full bank-select-option"
+                      type="button"
+                      onClick={() => handleRecordPayment(accountId)}
+                      disabled={saving || !defaultPaymentModeId}
+                    >
+                      <span>{account?.name || `Bank #${account.id}`}</span>
+                      {subtitle && <span className="bank-select-meta">{subtitle}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" type="button" onClick={() => setIsRecordPaymentOpen(false)} disabled={saving}>
+                Cancel
               </button>
             </div>
           </div>
