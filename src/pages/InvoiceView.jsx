@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
-import { getDefaultInvoiceCurrencyId, getDefaultInvoiceLocationIds, getUsername } from '../lib/auth';
+import { getDefaultInvoiceLocationIds, getUsername } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import {
   computeDueDate,
@@ -80,9 +80,9 @@ const GET_BUSINESS = gql`
   }
 `;
 
-const UPDATE_INVOICE = gql`
-  mutation UpdateInvoice($id: ID!, $input: NewSalesInvoice!) {
-    updateSalesInvoice(id: $id, input: $input) {
+const CONFIRM_INVOICE = gql`
+  mutation ConfirmInvoice($id: ID!) {
+    confirmSalesInvoice(id: $id) {
       id
       invoiceNumber
       currentStatus
@@ -98,32 +98,6 @@ const DELETE_INVOICE = gql`
     }
   }
 `;
-
-function buildInvoiceInput(invoice) {
-  if (!invoice) return null;
-
-  const defaults = getDefaultInvoiceLocationIds();
-  const fallbackCurrencyId = getDefaultInvoiceCurrencyId();
-  const isoDate = invoice.invoiceDate || new Date().toISOString();
-
-  return {
-    customerId: Number(invoice.customer?.id),
-    branchId: Number(invoice.branch?.id ?? defaults.branchId),
-    warehouseId: Number(invoice.warehouse?.id ?? defaults.warehouseId),
-    currencyId: Number(invoice.currency?.id ?? fallbackCurrencyId),
-    invoiceDate: isoDate,
-    invoicePaymentTerms: invoice.invoicePaymentTerms || 'DueOnReceipt',
-    currentStatus: invoice.currentStatus,
-    referenceNumber: invoice.referenceNumber || undefined,
-    isTaxInclusive: false,
-    details: (invoice.details || []).map((line) => ({
-      name: line.name,
-      detailQty: Number(line.detailQty) || 0,
-      detailUnitRate: Number(line.detailUnitRate) || 0,
-      detailDiscount: Number(line.detailDiscount) || 0
-    }))
-  };
-}
 
 function statusClass(status) {
   const normalized = (status || '').toLowerCase();
@@ -155,6 +129,7 @@ function InvoiceView() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [limit, setLimit] = useState(80);
+  const isConfirmingRef = useRef(false);
 
   const { data: businessData } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-and-network' });
   const { data: locationData } = useQuery(GET_LOCATIONS, { fetchPolicy: 'cache-and-network' });
@@ -170,7 +145,7 @@ function InvoiceView() {
     errorPolicy: 'all'
   });
 
-  const [updateInvoice, updateState] = useMutation(UPDATE_INVOICE);
+  const [confirmInvoice, confirmState] = useMutation(CONFIRM_INVOICE);
   const [deleteInvoice, deleteState] = useMutation(DELETE_INVOICE);
 
   const invoice = useMemo(() => {
@@ -266,46 +241,23 @@ function InvoiceView() {
   };
 
   const handleConfirm = async () => {
-    if (!invoice?.id) return;
-    const input = buildInvoiceInput(invoice);
-    if (!input) return;
-
-    const requiredOk =
-      Number.isFinite(input.customerId) &&
-      input.customerId > 0 &&
-      Number.isFinite(input.branchId) &&
-      input.branchId > 0 &&
-      Number.isFinite(input.warehouseId) &&
-      input.warehouseId > 0 &&
-      Number.isFinite(input.currencyId) &&
-      input.currencyId > 0 &&
-      Array.isArray(input.details) &&
-      input.details.length > 0;
-
-    if (!requiredOk) {
-      setStatus('Missing invoice defaults (branch/warehouse/currency). Open Edit and set defaults, then confirm.');
-      setIsConfirmOpen(false);
-      setIsActionsOpen(false);
+    if (!invoice?.id || !isDraft) return;
+    if (isConfirmingRef.current) {
       return;
     }
 
     setStatus('');
+    isConfirmingRef.current = true;
     try {
-      await updateInvoice({
-        variables: {
-          id: invoice.id,
-          input: {
-            ...input,
-            currentStatus: 'Confirmed'
-          }
-        }
-      });
+      await confirmInvoice({ variables: { id: invoice.id } });
       setIsConfirmOpen(false);
       setIsActionsOpen(false);
       await refetchInvoice();
       setStatus('Invoice confirmed.');
     } catch (err) {
       setStatus(err.message || 'Failed to confirm invoice.');
+    } finally {
+      isConfirmingRef.current = false;
     }
   };
 
@@ -320,7 +272,7 @@ function InvoiceView() {
     }
   };
 
-  const saving = updateState.loading || deleteState.loading;
+  const saving = confirmState.loading || deleteState.loading || isConfirmingRef.current;
 
   if (loading && !data) {
     return (
