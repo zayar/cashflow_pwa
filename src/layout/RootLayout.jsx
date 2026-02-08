@@ -54,6 +54,9 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/bank-accounts')) {
     return { title: 'Bank Accounts', kicker: 'Settings', backPath: '/more' };
   }
+  if (pathname.startsWith('/more/integrations/telegram')) {
+    return { title: 'Telegram Connect', kicker: 'Integrations', backPath: '/more' };
+  }
   if (pathname.startsWith('/reports')) {
     return { title: 'Reports', kicker: 'Insights', backPath: '/' };
   }
@@ -84,6 +87,7 @@ function RootLayout() {
     location.pathname.startsWith('/clients/new') ||
     location.pathname.startsWith('/templates') ||
     location.pathname.startsWith('/bank-accounts') ||
+    location.pathname.startsWith('/more/integrations') ||
     isItemDetail ||
     isClientDetail;
   const hideFab = location.pathname.startsWith('/reports');

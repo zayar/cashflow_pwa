@@ -85,6 +85,22 @@ function More() {
             </div>
             <span className="meta-chip">PWA</span>
           </div>
+
+          <div className="feature-row">
+            <div>
+              <p style={{ margin: 0, fontWeight: 700 }}>Telegram Connect</p>
+              <p className="subtle" style={{ fontSize: 13 }}>
+                Generate one-time /link code for this business
+              </p>
+            </div>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              onClick={() => navigate('/more/integrations/telegram')}
+            >
+              Open
+            </button>
+          </div>
         </div>
 
         <div className="surface-card">

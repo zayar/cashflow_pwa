@@ -22,6 +22,7 @@ const ItemPickerPage = lazy(() => import('./pages/ItemPicker'));
 const Templates = lazy(() => import('./pages/Templates'));
 const TemplateEditor = lazy(() => import('./pages/TemplateEditor'));
 const BankAccounts = lazy(() => import('./pages/BankAccounts'));
+const TelegramConnect = lazy(() => import('./pages/TelegramConnect'));
 
 function suspense(element) {
   return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
@@ -48,6 +49,7 @@ export function AppRoutes() {
         { path: 'templates', element: suspense(<Templates />) },
         { path: 'templates/:documentType/:templateId/edit', element: suspense(<TemplateEditor />) },
         { path: 'bank-accounts', element: suspense(<BankAccounts />) },
+        { path: 'more/integrations/telegram', element: suspense(<TelegramConnect />) },
         { path: 'reports', element: suspense(<Reports />) },
         { path: 'more', element: suspense(<More />) }
       ]

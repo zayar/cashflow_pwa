@@ -1736,6 +1736,57 @@ textarea.input:focus {
   gap: 12px;
 }
 
+.telegram-connect-card {
+  display: grid;
+  gap: 12px;
+}
+
+.telegram-steps {
+  border: 1px dashed color-mix(in srgb, var(--border-strong) 72%, white 28%);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.telegram-step {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.telegram-code-panel {
+  border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-soft) 76%, white 24%);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.telegram-code-label {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.telegram-code-value {
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, white 20%);
+  background: white;
+  padding: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 14px;
+  color: #0f1d33;
+  word-break: break-word;
+}
+
 .reports-page {
   gap: 12px;
 }
