@@ -54,6 +54,7 @@ function Reports() {
   const [activeTab, setActiveTab] = useState('paid');
   const [year, setYear] = useState(() => new Date().getFullYear());
   const swipeStartX = useRef(null);
+  const now = useMemo(() => new Date(), []);
 
   const { data, loading, error, refetch } = useQuery(REPORTS_QUERY, {
     variables: { limit: 400 },
@@ -69,17 +70,21 @@ function Reports() {
   const baseCurrency = data?.getBusiness?.baseCurrency;
 
   const yearOptions = useMemo(() => {
-    const current = new Date().getFullYear();
+    const current = now.getFullYear();
     const yearSet = new Set([current, current - 1, current - 2]);
 
     invoices.forEach((invoice) => {
       const date = parseInvoiceDate(invoice?.invoiceDate);
       if (!date) return;
-      yearSet.add(date.getFullYear());
+      if (date <= now) {
+        yearSet.add(date.getFullYear());
+      }
     });
 
-    return Array.from(yearSet).sort((a, b) => b - a);
-  }, [invoices]);
+    return Array.from(yearSet)
+      .filter((item) => item <= current)
+      .sort((a, b) => b - a);
+  }, [invoices, now]);
 
   useEffect(() => {
     if (yearOptions.length === 0) return;
@@ -91,9 +96,9 @@ function Reports() {
   const selectedYearInvoices = useMemo(() => {
     return invoices.filter((invoice) => {
       const date = parseInvoiceDate(invoice?.invoiceDate);
-      return date && date.getFullYear() === year;
+      return date && date <= now && date.getFullYear() === year;
     });
-  }, [invoices, year]);
+  }, [invoices, now, year]);
 
   const monthlyCards = useMemo(() => {
     const buckets = Array.from({ length: 12 }, (_, monthIndex) => ({
@@ -138,6 +143,7 @@ function Reports() {
         itemCount: month.items.size,
         itemQty: month.itemQty
       }))
+      .filter((month) => month.invoiceCount > 0)
       .reverse();
   }, [selectedYearInvoices, year]);
 
