@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
+import { useI18n } from '../i18n';
 
 const FIND_PRODUCT = gql`
   query FindProduct($limit: Int = 80) {
@@ -51,6 +52,7 @@ function formatCurrency(amount) {
 function ItemView() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t } = useI18n();
 
   const [limit, setLimit] = useState(80);
   const [status, setStatus] = useState('');
@@ -100,7 +102,7 @@ function ItemView() {
       await deleteProduct({ variables: { id: product.id } });
       navigate('/items', { replace: true, state: { deleted: true } });
     } catch (err) {
-      setStatus(err.message || 'Failed to delete item.');
+      setStatus(err.message || t('itemView.failedDelete'));
     }
   };
 
@@ -128,9 +130,9 @@ function ItemView() {
     return (
       <div className="stack">
         <section className="state-empty" role="status">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Item not found in recent items.</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('itemView.notFoundTitle')}</p>
           <p style={{ marginTop: 0, marginBottom: 14 }}>
-            Tap load more to search further back, or return to items.
+            {t('itemView.notFoundMessage')}
           </p>
           <div className="toolbar" style={{ justifyContent: 'center', gap: 10 }}>
             {canLoadMore && (
@@ -139,11 +141,11 @@ function ItemView() {
                 type="button"
                 onClick={() => setLimit((prev) => Math.min(prev * 2, 640))}
               >
-                Load more
+                {t('common.loadMore')}
               </button>
             )}
             <button className="btn btn-primary" type="button" onClick={() => navigate('/items')}>
-              Back to items
+              {t('itemView.backToItems')}
             </button>
           </div>
         </section>
@@ -155,10 +157,10 @@ function ItemView() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Could not load this item.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>{error?.message || 'Item not found.'}</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('itemView.couldNotLoadTitle')}</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>{error?.message || t('itemView.itemNotFound')}</p>
           <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-            Try again
+            {t('common.tryAgain')}
           </button>
         </section>
       </div>
@@ -170,29 +172,31 @@ function ItemView() {
       <section className="card">
         <div className="card-header">
           <div>
-            <p className="kicker">Catalog</p>
-            <h2 className="title">{product.name || 'Item'}</h2>
+            <p className="kicker">{t('itemView.kicker')}</p>
+            <h2 className="title">{product.name || t('pages.itemView.title')}</h2>
           </div>
           <span className={`badge ${product.isActive ? 'badge-success' : 'badge-neutral'}`}>
-            {product.isActive ? 'Active' : 'Inactive'}
+            {product.isActive ? t('itemView.active') : t('itemView.inactive')}
           </span>
         </div>
         <div className="list-meta">
           {product.sku && <span className="meta-chip">SKU: {product.sku}</span>}
-          <span className="meta-chip">Item ID {product.id}</span>
+          <span className="meta-chip">
+            {t('itemView.itemId')} {product.id}
+          </span>
         </div>
       </section>
 
       <section className="surface-card">
         <div className="form-grid">
           <div className="field">
-            <span className="label">Sales price</span>
+            <span className="label">{t('itemView.salesPrice')}</span>
             <p className="subtle" style={{ margin: 0 }}>
               {formatCurrency(product.salesPrice)}
             </p>
           </div>
           <div className="field">
-            <span className="label">Purchase price</span>
+            <span className="label">{t('itemView.purchasePrice')}</span>
             <p className="subtle" style={{ margin: 0 }}>
               {formatCurrency(product.purchasePrice)}
             </p>
@@ -208,18 +212,18 @@ function ItemView() {
 
       <div className="sticky-actions invoice-actions">
         <button className="btn btn-secondary" type="button" onClick={() => setIsActionsOpen(true)}>
-          Actions
+          {t('common.actions')}
         </button>
         <button className="btn btn-primary" type="button" onClick={handleEdit}>
-          Edit
+          {t('common.edit')}
         </button>
       </div>
 
       {isActionsOpen && (
-        <Modal title="Item actions" onClose={() => setIsActionsOpen(false)}>
+        <Modal title={t('itemView.itemActionsTitle')} onClose={() => setIsActionsOpen(false)}>
           <div className="action-list">
             <button className="btn btn-secondary btn-full" type="button" onClick={handleEdit}>
-              Edit item
+              {t('itemView.editItem')}
             </button>
             <button
               className="btn btn-danger btn-full"
@@ -230,11 +234,11 @@ function ItemView() {
               }}
               disabled={!canDelete || saving}
             >
-              Delete item
+              {t('itemView.deleteItem')}
             </button>
             {!canDelete && (
               <p className="subtle" style={{ margin: 0 }}>
-                Delete is disabled because this item has transactions.
+                {t('itemView.deleteDisabledReason')}
               </p>
             )}
           </div>
@@ -242,19 +246,19 @@ function ItemView() {
       )}
 
       {isDeleteOpen && (
-        <Modal title="Delete item" onClose={() => setIsDeleteOpen(false)}>
+        <Modal title={t('itemView.deleteTitle')} onClose={() => setIsDeleteOpen(false)}>
           <div className="form-grid">
             <p className="subtle" style={{ marginTop: 0 }}>
               {canDelete
-                ? 'This can’t be undone. The item will be removed permanently.'
-                : 'This item has transactions. Deleting is disabled.'}
+                ? t('itemView.deleteCopyAllowed')
+                : t('itemView.deleteCopyBlocked')}
             </p>
             <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
               <button className="btn btn-secondary" type="button" onClick={() => setIsDeleteOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button className="btn btn-danger" type="button" onClick={handleDelete} disabled={!canDelete || saving}>
-                {saving ? 'Deleting…' : 'Delete'}
+                {saving ? t('invoiceView.deleting') : t('common.delete')}
               </button>
             </div>
           </div>

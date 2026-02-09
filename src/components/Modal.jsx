@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import { useI18n } from '../i18n';
 
 function getFocusableElements(container) {
   if (!container) return [];
@@ -10,6 +11,7 @@ function getFocusableElements(container) {
 }
 
 function Modal({ title, onClose, children }) {
+  const { t } = useI18n();
   const dialogTitleId = useId();
   const containerRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -73,8 +75,8 @@ function Modal({ title, onClose, children }) {
           <h3 className="title" style={{ margin: 0 }} id={dialogTitleId}>
             {title}
           </h3>
-          <button onClick={onClose} aria-label="Close" className="btn btn-secondary" type="button" ref={closeButtonRef}>
-            Close
+          <button onClick={onClose} aria-label={t('common.close')} className="btn btn-secondary" type="button" ref={closeButtonRef}>
+            {t('common.close')}
           </button>
         </div>
         {children}

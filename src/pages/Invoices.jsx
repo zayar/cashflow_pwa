@@ -3,6 +3,7 @@ import { gql, useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { useInvoiceDraft } from '../state/invoiceDraft';
 import { formatInvoiceNumberShort, formatMoney, formatShortDate } from '../lib/formatters';
+import { useI18n } from '../i18n';
 
 const INVOICES_QUERY = gql`
   query PaginateInvoices($limit: Int = 20) {
@@ -38,9 +39,9 @@ const BUSINESS_QUERY = gql`
 `;
 
 const tabs = [
-  { key: 'all', label: 'All' },
-  { key: 'outstanding', label: 'Outstanding' },
-  { key: 'paid', label: 'Paid' }
+  { key: 'all', labelKey: 'invoices.tabs.all' },
+  { key: 'outstanding', labelKey: 'invoices.tabs.outstanding' },
+  { key: 'paid', labelKey: 'invoices.tabs.paid' }
 ];
 
 function statusClass(status) {
@@ -79,6 +80,7 @@ function LoadingInvoices() {
 }
 
 function Invoices() {
+  const { t } = useI18n();
   const { dispatch } = useInvoiceDraft();
   const [tab, setTab] = useState('all');
   const [search, setSearch] = useState('');
@@ -118,8 +120,8 @@ function Invoices() {
       <section className="card">
         <div className="card-header">
           <div>
-            <p className="kicker">Invoice List</p>
-            <h2 className="title">Recent invoices</h2>
+            <p className="kicker">{t('invoices.cardKicker')}</p>
+            <h2 className="title">{t('invoices.cardTitle')}</h2>
           </div>
           <Link
             to="/invoices/new"
@@ -128,7 +130,7 @@ function Invoices() {
               dispatch({ type: 'reset' });
             }}
           >
-            + New invoice
+            {t('invoices.newInvoice')}
           </Link>
         </div>
 
@@ -136,14 +138,14 @@ function Invoices() {
           <SearchIcon />
           <input
             className="input"
-            placeholder="Search invoice # or client"
+            placeholder={t('invoices.searchPlaceholder')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
 
         <div className="toolbar" style={{ marginTop: 10, justifyContent: 'space-between' }}>
-          <div className="pill-tabs" role="tablist" aria-label="Invoice filters">
+          <div className="pill-tabs" role="tablist" aria-label={t('invoices.filterAria')}>
             {tabs.map((currentTab) => (
               <button
                 key={currentTab.key}
@@ -153,13 +155,13 @@ function Invoices() {
                 role="tab"
                 aria-selected={tab === currentTab.key}
               >
-                {currentTab.label}
+                {t(currentTab.labelKey)}
               </button>
             ))}
           </div>
 
           <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-            Refresh
+            {t('common.refresh')}
           </button>
         </div>
       </section>
@@ -168,11 +170,11 @@ function Invoices() {
 
       {error && (
         <section className="state-error" role="alert">
-          <p className="state-title">Could not load invoices.</p>
+          <p className="state-title">{t('invoices.couldNotLoad')}</p>
           <p className="state-message">{error.message}</p>
           <div className="state-actions">
             <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-              Try again
+              {t('common.tryAgain')}
             </button>
           </div>
         </section>
@@ -180,8 +182,8 @@ function Invoices() {
 
       {!loading && !error && filtered.length === 0 && (
         <section className="state-empty" role="status">
-          <p className="state-title">No invoices match this filter.</p>
-          <p className="state-message">Create a new invoice to get started.</p>
+          <p className="state-title">{t('invoices.emptyTitle')}</p>
+          <p className="state-message">{t('invoices.emptyMessage')}</p>
           <div className="state-actions">
             <Link
               to="/invoices/new"
@@ -190,7 +192,7 @@ function Invoices() {
                 dispatch({ type: 'reset' });
               }}
             >
-              + New invoice
+              {t('invoices.newInvoice')}
             </Link>
           </div>
         </section>
@@ -203,21 +205,23 @@ function Invoices() {
               <Link to={`/invoices/${invoice.id}`} className="list-link">
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: 800 }}>
-                    {formatInvoiceNumberShort(invoice.invoiceNumber) || `Invoice ${invoice.id}`}
+                    {formatInvoiceNumberShort(invoice.invoiceNumber) || `${t('pages.invoiceView.title')} ${invoice.id}`}
                   </p>
                   <p className="subtle" style={{ marginTop: 2, marginBottom: 8 }}>
-                    {invoice.customer?.name || 'No client selected'}
+                    {invoice.customer?.name || t('invoices.noClientSelected')}
                   </p>
                   <div className="list-meta">
-                    <span className="meta-chip">{formatShortDate(invoice.invoiceDate) || 'No date'}</span>
-                    <span className="meta-chip">Balance: {formatMoney(invoice.remainingBalance, baseCurrency)}</span>
+                    <span className="meta-chip">{formatShortDate(invoice.invoiceDate) || t('invoices.noDate')}</span>
+                    <span className="meta-chip">
+                      {t('invoices.balance')}: {formatMoney(invoice.remainingBalance, baseCurrency)}
+                    </span>
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <p style={{ margin: 0, fontWeight: 800 }}>{formatMoney(invoice.invoiceTotalAmount, baseCurrency)}</p>
                   <span className={`badge ${statusClass(invoice.currentStatus)}`}>
-                    {invoice.currentStatus || 'Unknown'}
+                    {invoice.currentStatus || t('invoices.unknown')}
                   </span>
                 </div>
               </Link>

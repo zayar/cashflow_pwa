@@ -4,71 +4,73 @@ import BottomNav from '../components/BottomNav';
 import Fab from '../components/Fab';
 import BrandLogo from '../components/BrandLogo';
 import { clearToken, getToken, getUsername } from '../lib/auth';
+import { useI18n } from '../i18n';
 
 function getPageCopy(pathname) {
   if (pathname.startsWith('/invoices/new')) {
-    return { title: 'Create Invoice', kicker: 'Guided Flow', backPath: '/' };
+    return { titleKey: 'pages.invoiceNew.title', kickerKey: 'pages.invoiceNew.kicker', backPath: '/' };
   }
   const invoiceMatch = pathname.match(/^\/invoices\/([^/]+)/);
   const invoiceId = invoiceMatch?.[1] || '';
   if (invoiceId && pathname.endsWith('/edit')) {
-    return { title: 'Edit Invoice', kicker: 'Guided Flow', backPath: `/invoices/${invoiceId}` };
+    return { titleKey: 'pages.invoiceEdit.title', kickerKey: 'pages.invoiceEdit.kicker', backPath: `/invoices/${invoiceId}` };
   }
   if (invoiceId) {
-    return { title: 'Invoice', kicker: 'Invoice', backPath: '/' };
+    return { titleKey: 'pages.invoiceView.title', kickerKey: 'pages.invoiceView.kicker', backPath: '/' };
   }
   if (pathname.startsWith('/items/new')) {
-    return { title: 'Create Item', kicker: 'Catalog', backPath: '/items' };
+    return { titleKey: 'pages.itemNew.title', kickerKey: 'pages.itemNew.kicker', backPath: '/items' };
   }
   const itemMatch = pathname.match(/^\/items\/([^/]+)/);
   const itemId = itemMatch?.[1] || '';
   if (itemId && itemId !== 'new' && pathname.endsWith('/edit')) {
-    return { title: 'Edit Item', kicker: 'Catalog', backPath: `/items/${itemId}` };
+    return { titleKey: 'pages.itemEdit.title', kickerKey: 'pages.itemEdit.kicker', backPath: `/items/${itemId}` };
   }
   if (itemId && itemId !== 'new') {
-    return { title: 'Item', kicker: 'Catalog', backPath: '/items' };
+    return { titleKey: 'pages.itemView.title', kickerKey: 'pages.itemView.kicker', backPath: '/items' };
   }
   if (pathname.startsWith('/clients/new')) {
-    return { title: 'Create Client', kicker: 'Customers', backPath: '/clients' };
+    return { titleKey: 'pages.clientNew.title', kickerKey: 'pages.clientNew.kicker', backPath: '/clients' };
   }
   const clientMatch = pathname.match(/^\/clients\/([^/]+)/);
   const clientId = clientMatch?.[1] || '';
   if (clientId && clientId !== 'new' && pathname.endsWith('/edit')) {
-    return { title: 'Edit Client', kicker: 'Customers', backPath: `/clients/${clientId}` };
+    return { titleKey: 'pages.clientEdit.title', kickerKey: 'pages.clientEdit.kicker', backPath: `/clients/${clientId}` };
   }
   if (clientId && clientId !== 'new') {
-    return { title: 'Client', kicker: 'Customers', backPath: '/clients' };
+    return { titleKey: 'pages.clientView.title', kickerKey: 'pages.clientView.kicker', backPath: '/clients' };
   }
   if (pathname.startsWith('/items')) {
-    return { title: 'Items', kicker: 'Catalog', backPath: '/' };
+    return { titleKey: 'pages.items.title', kickerKey: 'pages.items.kicker', backPath: '/' };
   }
   if (pathname.startsWith('/clients')) {
-    return { title: 'Clients', kicker: 'Customers', backPath: '/' };
+    return { titleKey: 'pages.clients.title', kickerKey: 'pages.clients.kicker', backPath: '/' };
   }
   if (pathname.startsWith('/templates')) {
     if (pathname.endsWith('/edit')) {
-      return { title: 'Edit Template', kicker: 'Templates', backPath: '/templates' };
+      return { titleKey: 'pages.templateEdit.title', kickerKey: 'pages.templateEdit.kicker', backPath: '/templates' };
     }
-    return { title: 'Invoice Templates', kicker: 'Templates', backPath: '/more' };
+    return { titleKey: 'pages.templates.title', kickerKey: 'pages.templates.kicker', backPath: '/more' };
   }
   if (pathname.startsWith('/bank-accounts')) {
-    return { title: 'Bank Accounts', kicker: 'Settings', backPath: '/more' };
+    return { titleKey: 'pages.bankAccounts.title', kickerKey: 'pages.bankAccounts.kicker', backPath: '/more' };
   }
   if (pathname.startsWith('/more/integrations/telegram')) {
-    return { title: 'Telegram Connect', kicker: 'Integrations', backPath: '/more' };
+    return { titleKey: 'pages.telegramConnect.title', kickerKey: 'pages.telegramConnect.kicker', backPath: '/more' };
   }
   if (pathname.startsWith('/reports')) {
-    return { title: 'Reports', kicker: 'Insights', backPath: '/' };
+    return { titleKey: 'pages.reports.title', kickerKey: 'pages.reports.kicker', backPath: '/' };
   }
   if (pathname.startsWith('/more')) {
-    return { title: 'More', kicker: 'Settings', backPath: '/' };
+    return { titleKey: 'pages.more.title', kickerKey: 'pages.more.kicker', backPath: '/' };
   }
-  return { title: 'Invoices', kicker: 'Dashboard', backPath: '/' };
+  return { titleKey: 'pages.invoices.title', kickerKey: 'pages.invoices.kicker', backPath: '/' };
 }
 
 function RootLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   const [token, setToken] = useState('');
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -129,23 +131,23 @@ function RootLayout() {
               <BrandLogo variant="mark" className="brand-mark-svg" />
             </div>
             <div className="brand-copy">
-              <p className="brand-kicker">{pageCopy.kicker}</p>
-              <h1 className="heading">{pageCopy.title}</h1>
+              <p className="brand-kicker">{t(pageCopy.kickerKey)}</p>
+              <h1 className="heading">{t(pageCopy.titleKey)}</h1>
             </div>
           </div>
 
           <div className="topbar-actions">
             {isEditorPage ? (
-              <Link to={pageCopy.backPath} className="btn btn-secondary" aria-label="Back">
-                Back
+              <Link to={pageCopy.backPath} className="btn btn-secondary" aria-label={t('common.back')}>
+                {t('common.back')}
               </Link>
             ) : (
               <>
-                <span className="user-chip" title={username || 'User'}>
-                  Hi, {username || 'User'}
+                <span className="user-chip" title={username || t('common.user')}>
+                  {t('topbar.hiUser', { name: username || t('common.user') })}
                 </span>
                 <button type="button" className="btn btn-danger" onClick={handleLogout}>
-                  Logout
+                  {t('topbar.logout')}
                 </button>
               </>
             )}

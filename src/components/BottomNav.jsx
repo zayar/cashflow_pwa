@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useI18n } from '../i18n';
 
 function InvoiceIcon() {
   return (
@@ -51,14 +52,15 @@ function ReportsIcon() {
 }
 
 const navItems = [
-  { to: '/', label: 'Invoices', icon: InvoiceIcon },
-  { to: '/items', label: 'Items', icon: BoxIcon },
-  { to: '/clients', label: 'Clients', icon: UsersIcon },
-  { to: '/reports', label: 'Reports', icon: ReportsIcon },
-  { to: '/more', label: 'More', icon: MoreIcon }
+  { to: '/', labelKey: 'nav.invoices', icon: InvoiceIcon },
+  { to: '/items', labelKey: 'nav.items', icon: BoxIcon },
+  { to: '/clients', labelKey: 'nav.clients', icon: UsersIcon },
+  { to: '/reports', labelKey: 'nav.reports', icon: ReportsIcon },
+  { to: '/more', labelKey: 'nav.more', icon: MoreIcon }
 ];
 
 function BottomNav({ activePath }) {
+  const { t } = useI18n();
   return (
     <nav className="bottom-nav" aria-label="Primary navigation">
       {navItems.map((item) => {
@@ -73,7 +75,7 @@ function BottomNav({ activePath }) {
             <span className="nav-pill" aria-hidden="true">
               <Icon />
             </span>
-            <span>{item.label}</span>
+            <span>{t(item.labelKey)}</span>
           </Link>
         );
       })}

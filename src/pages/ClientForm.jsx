@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useI18n } from '../i18n';
 
 const CREATE_CUSTOMER = gql`
   mutation CreateCustomer($input: NewCustomer!) {
@@ -62,6 +63,7 @@ function ClientForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
+  const { t } = useI18n();
   const [limit, setLimit] = useState(80);
   const [isHydrated, setIsHydrated] = useState(!isEdit);
   const [name, setName] = useState('');
@@ -118,13 +120,13 @@ function ClientForm() {
     setError('');
 
     if (!name.trim()) {
-      setError('Customer name is required.');
+      setError(t('clientForm.customerNameRequired'));
       return;
     }
 
     const baseCurrencyId = businessData?.getBusiness?.baseCurrency?.id;
     if (!baseCurrencyId) {
-      setError('Unable to fetch business currency. Please try again.');
+      setError(t('clientForm.unableFetchCurrency'));
       return;
     }
 
@@ -147,7 +149,7 @@ function ClientForm() {
         navigate('/clients', { replace: true, state: { created: true } });
       }
     } catch (mutationError) {
-      setError(mutationError.message || 'Failed to save client.');
+      setError(mutationError.message || t('clientForm.failedSave'));
     }
   };
 
@@ -172,10 +174,10 @@ function ClientForm() {
     return (
       <div className="stack">
         <section className="state-empty" role="status">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Client not found in recent clients.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>Return to clients and refresh, then try again.</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('clientForm.notFoundTitle')}</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>{t('clientForm.notFoundMessage')}</p>
           <button className="btn btn-secondary" type="button" onClick={() => refetchCustomer()}>
-            Try again
+            {t('common.tryAgain')}
           </button>
         </section>
       </div>
@@ -186,10 +188,10 @@ function ClientForm() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Could not load this client.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>{customerError?.message || 'Client not found.'}</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('clientForm.couldNotLoadTitle')}</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>{customerError?.message || t('clientForm.clientNotFound')}</p>
           <button className="btn btn-secondary" type="button" onClick={() => refetchCustomer()}>
-            Try again
+            {t('common.tryAgain')}
           </button>
         </section>
       </div>
@@ -199,18 +201,18 @@ function ClientForm() {
   return (
     <div className="invoice-page">
       <section className="flow-banner">
-        <p className="kicker">Customers</p>
+        <p className="kicker">{t('clientForm.bannerKicker')}</p>
         <h2 className="title" style={{ marginBottom: 6 }}>
-          {isEdit ? 'Edit client' : 'Add a new client'}
+          {isEdit ? t('clientForm.bannerTitleEdit') : t('clientForm.bannerTitleNew')}
         </h2>
         <p className="subtle">
-          {isEdit ? 'Update customer details for this client.' : 'Create a customer profile so invoicing takes only a few taps.'}
+          {isEdit ? t('clientForm.bannerCopyEdit') : t('clientForm.bannerCopyNew')}
         </p>
       </section>
 
       <form className="invoice-panel" onSubmit={handleSubmit}>
         <label className="field">
-          <span className="label">Customer name *</span>
+          <span className="label">{t('clientForm.customerName')}</span>
           <input
             className="input"
             value={name}
@@ -220,7 +222,7 @@ function ClientForm() {
         </label>
 
         <label className="field">
-          <span className="label">Email</span>
+          <span className="label">{t('clientForm.email')}</span>
           <input
             className="input"
             type="email"
@@ -230,7 +232,7 @@ function ClientForm() {
         </label>
 
         <label className="field">
-          <span className="label">Phone</span>
+          <span className="label">{t('clientForm.phone')}</span>
           <input
             className="input"
             type="tel"
@@ -240,7 +242,7 @@ function ClientForm() {
         </label>
 
         <label className="field">
-          <span className="label">Billing address (optional)</span>
+          <span className="label">{t('clientForm.billingAddressOptional')}</span>
           <textarea
             className="input"
             rows={3}
@@ -250,7 +252,7 @@ function ClientForm() {
         </label>
 
         <label className="field">
-          <span className="label">Shipping address (optional)</span>
+          <span className="label">{t('clientForm.shippingAddressOptional')}</span>
           <textarea
             className="input"
             rows={3}
@@ -267,10 +269,10 @@ function ClientForm() {
             className="btn btn-secondary"
             onClick={() => navigate(isEdit ? `/clients/${id}` : '/clients')}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Saving...' : isEdit ? 'Save changes' : 'Save client'}
+            {loading ? t('common.saving') : isEdit ? t('clientForm.saveChanges') : t('clientForm.saveClient')}
           </button>
         </div>
       </form>

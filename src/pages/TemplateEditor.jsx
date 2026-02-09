@@ -1,6 +1,7 @@
 import { gql, useQuery } from '@apollo/client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useI18n } from '../i18n';
 import {
   DOCUMENT_TYPES,
   getTemplate,
@@ -55,12 +56,12 @@ function mergeConfig(parsed) {
   };
 }
 
-function validateImage(file) {
-  if (!file) return 'Select an image to upload.';
+function validateImage(file, t) {
+  if (!file) return t('templateEditor.selectImage');
   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-  if (!isJpgOrPng) return 'You can only upload JPG/PNG files.';
+  if (!isJpgOrPng) return t('templateEditor.onlyJpgPng');
   const isLt1M = file.size / 1024 / 1024 < 1;
-  if (!isLt1M) return 'Image must be smaller than 1MB.';
+  if (!isLt1M) return t('templateEditor.imageTooLarge');
   return '';
 }
 
@@ -68,6 +69,7 @@ function TemplateEditor() {
   const navigate = useNavigate();
   const { templateId, documentType: documentTypeParam } = useParams();
   const documentType = documentTypeParam || 'invoice';
+  const { t } = useI18n();
 
   const {
     data: businessData,
@@ -118,7 +120,7 @@ function TemplateEditor() {
         })
       );
     } catch (e) {
-      setError(e?.message || 'Failed to load template');
+      setError(e?.message || t('templateEditor.failedLoad'));
     } finally {
       setLoading(false);
     }
@@ -159,9 +161,9 @@ function TemplateEditor() {
       });
       setTemplate(updated);
       setSavedSnapshot(JSON.stringify({ name, isDefault, config }));
-      setStatus('Saved');
+      setStatus(t('templateEditor.saved'));
     } catch (e) {
-      setError(e?.message || 'Save failed');
+      setError(e?.message || t('templateEditor.saveFailed'));
     } finally {
       setLoading(false);
     }
@@ -174,9 +176,9 @@ function TemplateEditor() {
       setName(parsed.name || '');
       setIsDefault(Boolean(parsed.isDefault));
       setConfig(parsed.config || defaultConfig);
-      setStatus('Changes reverted');
+      setStatus(t('templateEditor.changesReverted'));
     } catch {
-      setError('Failed to revert changes');
+      setError(t('templateEditor.revertFailed'));
     }
   };
 
@@ -187,17 +189,17 @@ function TemplateEditor() {
     try {
       await setDefaultTemplate(template.id, businessId);
       setIsDefault(true);
-      setStatus('Set as default');
+      setStatus(t('templateEditor.setAsDefault'));
       await loadTemplate();
     } catch (e) {
-      setError(e?.message || 'Failed to set default');
+      setError(e?.message || t('templateEditor.failedSetDefault'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleUpload = async ({ file, target }) => {
-    const validationError = validateImage(file);
+    const validationError = validateImage(file, t);
     if (validationError) {
       setError(validationError);
       return;
@@ -225,7 +227,7 @@ function TemplateEditor() {
           ...prev,
           header: { ...(prev?.header || {}), logoUrl: raw }
         }));
-        setStatus('Logo uploaded');
+        setStatus(t('templateEditor.logoUploaded'));
       }
 
       if (target === 'qr') {
@@ -233,10 +235,10 @@ function TemplateEditor() {
           ...prev,
           footer: { ...(prev?.footer || {}), qrImageUrl: raw }
         }));
-        setStatus('QR uploaded');
+        setStatus(t('templateEditor.qrUploaded'));
       }
     } catch (e) {
-      setError(e?.message || 'Upload failed');
+      setError(e?.message || t('templateEditor.uploadFailed'));
     } finally {
       setLoading(false);
     }
@@ -251,21 +253,21 @@ function TemplateEditor() {
   };
 
   const handleRemoveLogo = () => {
-    if (!window.confirm('Remove the current logo?')) return;
+    if (!window.confirm(t('templateEditor.removeLogoConfirm'))) return;
     setConfig((prev) => ({
       ...prev,
       header: { ...(prev?.header || {}), logoUrl: '' }
     }));
-    setStatus('Logo removed');
+    setStatus(t('templateEditor.logoRemoved'));
   };
 
   const handleRemoveQr = () => {
-    if (!window.confirm('Remove the QR image?')) return;
+    if (!window.confirm(t('templateEditor.removeQrConfirm'))) return;
     setConfig((prev) => ({
       ...prev,
       footer: { ...(prev?.footer || {}), qrImageUrl: '' }
     }));
-    setStatus('QR removed');
+    setStatus(t('templateEditor.qrRemoved'));
   };
 
   const theme = config?.theme || {};
@@ -290,7 +292,7 @@ function TemplateEditor() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Could not load business data.</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('templateEditor.couldNotLoadBusiness')}</p>
           <p style={{ marginTop: 0, marginBottom: 14 }}>{businessError.message}</p>
         </section>
       </div>
@@ -318,10 +320,10 @@ function TemplateEditor() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Could not load this template.</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('templateEditor.couldNotLoadTemplate')}</p>
           <p style={{ marginTop: 0, marginBottom: 14 }}>{error}</p>
           <button className="btn btn-secondary" type="button" onClick={loadTemplate}>
-            Try again
+            {t('common.tryAgain')}
           </button>
         </section>
       </div>
@@ -335,16 +337,16 @@ function TemplateEditor() {
           <div>
             <p className="kicker">{label}</p>
             <h2 className="title" style={{ marginBottom: 4 }}>
-              Template Editor
+              {t('templateEditor.title')}
             </h2>
-            <p className="subtle">Mobile-first editor for invoice branding. Changes apply instantly to the preview.</p>
+            <p className="subtle">{t('templateEditor.subtitle')}</p>
           </div>
-          {isDefault && <span className="badge badge-success">Default</span>}
+          {isDefault && <span className="badge badge-success">{t('common.default')}</span>}
         </div>
 
         <div className="form-grid">
           <label className="field">
-            <span className="label">Template name</span>
+            <span className="label">{t('templateEditor.templateName')}</span>
             <input className="input" value={name} onChange={(event) => setName(event.target.value)} />
           </label>
 
@@ -355,7 +357,7 @@ function TemplateEditor() {
               onClick={() => navigate('/templates')}
               disabled={loading}
             >
-              Back to templates
+              {t('templateEditor.backToTemplates')}
             </button>
             <button
               className="btn btn-ghost"
@@ -363,7 +365,7 @@ function TemplateEditor() {
               onClick={handleSetDefault}
               disabled={loading || isDefault}
             >
-              Set default
+              {t('common.setDefault')}
             </button>
           </div>
         </div>
@@ -372,23 +374,23 @@ function TemplateEditor() {
       <section className="card">
         <div className="card-header">
           <div>
-            <p className="kicker">Branding</p>
+            <p className="kicker">{t('templateEditor.branding')}</p>
             <h3 className="title" style={{ marginBottom: 0 }}>
-              Logo
+              {t('templateEditor.logo')}
             </h3>
           </div>
         </div>
         <div className="upload-card">
-          <div className="upload-preview" aria-label="Logo preview">
-            {logoUrl ? <img src={logoUrl} alt="Logo" /> : <span>No logo</span>}
+          <div className="upload-preview" aria-label={t('templateEditor.logoPreviewAria')}>
+            {logoUrl ? <img src={logoUrl} alt={t('templateEditor.logo')} /> : <span>{t('templateEditor.noLogo')}</span>}
           </div>
           <div className="upload-meta">
             <p className="subtle" style={{ margin: 0 }}>
-              Upload a transparent PNG or JPG under 1MB.
+              {t('templateEditor.uploadHint')}
             </p>
             <div className="upload-actions">
               <label className="btn btn-secondary">
-                {logoUrl ? 'Replace' : 'Upload'}
+                {logoUrl ? t('templateEditor.replace') : t('templateEditor.upload')}
                 <input
                   className="file-input"
                   type="file"
@@ -398,7 +400,7 @@ function TemplateEditor() {
                 />
               </label>
               <button className="btn btn-ghost" type="button" onClick={handleRemoveLogo} disabled={!logoUrl || loading}>
-                Remove
+                {t('common.remove')}
               </button>
             </div>
           </div>
@@ -408,15 +410,15 @@ function TemplateEditor() {
       <section className="card">
         <div className="card-header">
           <div>
-            <p className="kicker">Colors</p>
+            <p className="kicker">{t('templateEditor.colors')}</p>
             <h3 className="title" style={{ marginBottom: 0 }}>
-              Primary color
+              {t('templateEditor.primaryColor')}
             </h3>
           </div>
         </div>
         <div className="color-stack">
           <label className="field">
-            <span className="label">Primary color</span>
+            <span className="label">{t('templateEditor.primaryColor')}</span>
             <div className="color-row">
               <div className="color-swatch" style={{ background: primaryColor }} />
               <input
@@ -435,7 +437,7 @@ function TemplateEditor() {
           </label>
 
           <label className="field">
-            <span className="label">Table header bg</span>
+            <span className="label">{t('templateEditor.tableHeaderBg')}</span>
             <div className="color-row">
               <div className="color-swatch" style={{ background: tableHeaderBg }} />
               <input
@@ -454,7 +456,7 @@ function TemplateEditor() {
           </label>
 
           <label className="field">
-            <span className="label">Table header text</span>
+            <span className="label">{t('templateEditor.tableHeaderText')}</span>
             <div className="color-row">
               <div className="color-swatch" style={{ background: tableHeaderText }} />
               <input
@@ -477,23 +479,23 @@ function TemplateEditor() {
       <section className="card">
         <div className="card-header">
           <div>
-            <p className="kicker">Payment</p>
+            <p className="kicker">{t('templateEditor.payment')}</p>
             <h3 className="title" style={{ marginBottom: 0 }}>
-              QR code
+              {t('templateEditor.qrCode')}
             </h3>
           </div>
         </div>
         <div className="upload-card">
-          <div className="upload-preview upload-preview-qr" aria-label="QR preview">
-            {qrUrl ? <img src={qrUrl} alt="QR" /> : <span>No QR</span>}
+          <div className="upload-preview upload-preview-qr" aria-label={t('templateEditor.qrPreviewAria')}>
+            {qrUrl ? <img src={qrUrl} alt="QR" /> : <span>{t('templateEditor.noQr')}</span>}
           </div>
           <div className="upload-meta">
             <p className="subtle" style={{ margin: 0 }}>
-              This QR appears next to the invoice notes.
+              {t('templateEditor.qrHint')}
             </p>
             <div className="upload-actions">
               <label className="btn btn-secondary">
-                {qrUrl ? 'Replace' : 'Upload'}
+                {qrUrl ? t('templateEditor.replace') : t('templateEditor.upload')}
                 <input
                   className="file-input"
                   type="file"
@@ -503,7 +505,7 @@ function TemplateEditor() {
                 />
               </label>
               <button className="btn btn-ghost" type="button" onClick={handleRemoveQr} disabled={!qrUrl || loading}>
-                Remove
+                {t('common.remove')}
               </button>
             </div>
           </div>
@@ -513,9 +515,9 @@ function TemplateEditor() {
       <section className="card template-preview-card" style={previewVars}>
         <div className="card-header" style={{ marginBottom: 10 }}>
           <div>
-            <p className="kicker">Preview</p>
+            <p className="kicker">{t('templateEditor.preview')}</p>
             <h3 className="title" style={{ marginBottom: 0 }}>
-              Live invoice preview
+              {t('templateEditor.livePreview')}
             </h3>
           </div>
         </div>
@@ -530,10 +532,10 @@ function TemplateEditor() {
 
       <div className="sticky-actions">
         <button className="btn btn-secondary" type="button" onClick={handleReset} disabled={!dirty || loading}>
-          Discard changes
+          {t('templateEditor.discardChanges')}
         </button>
         <button className="btn btn-primary" type="button" onClick={handleSave} disabled={!dirty || loading}>
-          Save changes
+          {t('templateEditor.saveChanges')}
         </button>
       </div>
 

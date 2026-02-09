@@ -2,9 +2,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from '../lib/auth';
 import BrandLogo from '../components/BrandLogo';
+import { useI18n } from '../i18n';
 
 function Welcome() {
   const navigate = useNavigate();
+  const { t } = useI18n();
+  const titleLines = String(t('welcome.title') || '').split('\n').filter(Boolean);
 
   // If already logged in, redirect to invoices
   useEffect(() => {
@@ -88,7 +91,7 @@ function Welcome() {
           }}>
             <img
               src="/hero-girl-real.jpg"
-              alt="Portrait of a confident business owner"
+              alt={t('welcome.heroAlt')}
               onError={(event) => {
                 event.currentTarget.src = '/hero-girl.svg';
               }}
@@ -187,27 +190,29 @@ function Welcome() {
 
         {/* Headline */}
         <h1 className="welcome-title">
-          Fast and easy<br />invoice solution.
+          {titleLines[0] || t('welcome.title')}
+          {titleLines.length > 1 ? <br /> : null}
+          {titleLines.length > 1 ? titleLines[1] : null}
         </h1>
 
         <p className="welcome-copy">
-          Create, send, and track professional invoices in seconds. Get paid faster with Cashflow.
+          {t('welcome.copy')}
         </p>
       </div>
 
       {/* Bottom Action */}
       <div className="welcome-actions">
         <button onClick={() => navigate('/login')} className="welcome-primary-btn" type="button">
-          Get Started
+          {t('welcome.getStarted')}
         </button>
         <p className="welcome-actions-subline">
-          Already have an account?{' '}
+          {t('welcome.alreadyHaveAccount')}{' '}
           <Link to="/login" className="welcome-secondary-link">
-            Log in
+            {t('welcome.logIn')}
           </Link>
         </p>
         <p className="welcome-powered">
-          Powered by Piti
+          {t('welcome.poweredBy')}
         </p>
       </div>
     </div>

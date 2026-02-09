@@ -5,6 +5,7 @@ import PickerHeader from './PickerHeader';
 import QuickAddCustomer from './QuickAddCustomer';
 import { useInvoiceDraft } from '../state/invoiceDraft';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
+import { useI18n } from '../i18n';
 
 const LIST_CUSTOMERS = gql`
   query ListCustomers($name: String) {
@@ -25,6 +26,7 @@ function SearchIcon() {
 }
 
 function CustomerPicker() {
+  const { t } = useI18n();
   const { dispatch } = useInvoiceDraft();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -56,11 +58,11 @@ function CustomerPicker() {
   return (
     <div className="picker-page">
       <PickerHeader
-        title="Choose client"
+        title={t('picker.chooseClient')}
         backTo={returnTo}
         rightAction={
           <button className="btn btn-primary" type="button" onClick={() => setShowAdd(true)}>
-            + Add
+            {t('picker.add')}
           </button>
         }
       />
@@ -70,7 +72,7 @@ function CustomerPicker() {
           <SearchIcon />
           <input
             className="input"
-            placeholder="Search clients"
+            placeholder={t('picker.searchClients')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -91,7 +93,7 @@ function CustomerPicker() {
 
         {error && (
           <div className="state-error" role="alert">
-            <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load clients.</p>
+            <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>{t('clients.couldNotLoad')}</p>
             <p style={{ marginTop: 0, marginBottom: 0 }}>{error.message}</p>
           </div>
         )}
@@ -101,7 +103,7 @@ function CustomerPicker() {
             {customers.map((customer) => (
               <button key={customer.id} type="button" className="picker-item" onClick={() => handleSelect(customer)}>
                 <div className="picker-item-title">{customer.name}</div>
-                <span className="meta-chip">Select</span>
+                <span className="meta-chip">{t('picker.select')}</span>
               </button>
             ))}
           </div>
@@ -109,7 +111,7 @@ function CustomerPicker() {
 
         {!loading && !error && customers.length === 0 && (
           <p className="empty" style={{ marginTop: 10 }}>
-            No clients found. Add one in seconds.
+            {t('picker.noClientsFound')}
           </p>
         )}
       </section>

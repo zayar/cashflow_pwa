@@ -7,6 +7,7 @@ import './index.css';
 import { createApolloClient } from './lib/apollo';
 import { buildInvoiceShareUrl } from './lib/shareApi';
 import { InvoiceDraftProvider } from './state/invoiceDraft';
+import { I18nProvider } from './i18n';
 
 const root = document.getElementById('root');
 
@@ -29,9 +30,11 @@ ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <ApolloProvider client={client}>
       <InvoiceDraftProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <I18nProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </I18nProvider>
       </InvoiceDraftProvider>
     </ApolloProvider>
   </React.StrictMode>

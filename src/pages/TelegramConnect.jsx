@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getActiveTelegramLinkCode, generateTelegramLinkCode } from '../lib/telegramLinkApi';
+import { useI18n } from '../i18n';
 
 const formatDateTime = (epochMs) => {
   if (!epochMs) return '-';
@@ -17,6 +18,7 @@ const formatDateTime = (epochMs) => {
 };
 
 function TelegramConnect() {
+  const { t } = useI18n();
   const [activeCode, setActiveCode] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -29,7 +31,7 @@ function TelegramConnect() {
       const payload = await getActiveTelegramLinkCode();
       setActiveCode(payload);
     } catch (err) {
-      setErrorMessage(err?.message || 'Failed to load Telegram link code.');
+      setErrorMessage(err?.message || t('telegram.failedLoad'));
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +51,7 @@ function TelegramConnect() {
       const created = await generateTelegramLinkCode();
       setActiveCode(created);
     } catch (err) {
-      setErrorMessage(err?.message || 'Unable to generate code. Please try again.');
+      setErrorMessage(err?.message || t('telegram.generateFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -71,33 +73,33 @@ function TelegramConnect() {
         document.execCommand('copy');
         document.body.removeChild(area);
       }
-      setCopyMessage('Copied Telegram command.');
+      setCopyMessage(t('telegram.copied'));
     } catch (err) {
-      setCopyMessage('Copy failed. Please copy manually.');
+      setCopyMessage(t('telegram.copyFailed'));
     }
   };
 
   return (
     <div className="stack">
       <section className="card telegram-connect-card">
-        <p className="kicker">Integrations</p>
-        <h3 className="title">Connect Telegram</h3>
-        <p className="subtle">This code expires in 30 minutes.</p>
+        <p className="kicker">{t('telegram.kicker')}</p>
+        <h3 className="title">{t('telegram.title')}</h3>
+        <p className="subtle">{t('telegram.subtitle')}</p>
 
         <div className="telegram-steps">
-          <p className="telegram-step">Step 1: Copy command</p>
-          <p className="telegram-step">Step 2: Open Telegram and send it to Cashflow bot</p>
-          <p className="telegram-step">Step 3: Done</p>
+          <p className="telegram-step">{t('telegram.step1')}</p>
+          <p className="telegram-step">{t('telegram.step2')}</p>
+          <p className="telegram-step">{t('telegram.step3')}</p>
         </div>
 
         {isLoading ? (
-          <p className="subtle">Loading active code...</p>
+          <p className="subtle">{t('telegram.loadingActive')}</p>
         ) : (
           <div className="telegram-code-panel">
-            <p className="telegram-code-label">Telegram command</p>
-            <p className="telegram-code-value">{activeCode?.telegramCommand || 'No active code yet.'}</p>
+            <p className="telegram-code-label">{t('telegram.commandLabel')}</p>
+            <p className="telegram-code-value">{activeCode?.telegramCommand || t('telegram.noActiveCode')}</p>
             <p className="subtle" style={{ fontSize: 13 }}>
-              Expires: {activeCode ? expiresLabel : '-'}
+              {t('telegram.expires')}: {activeCode ? expiresLabel : '-'}
             </p>
           </div>
         )}
@@ -107,7 +109,7 @@ function TelegramConnect() {
 
         <div className="toolbar">
           <button type="button" className="btn btn-primary" onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? 'Generating...' : activeCode ? 'Generate New Code' : 'Generate Code'}
+            {isGenerating ? t('telegram.generating') : activeCode ? t('telegram.generateNew') : t('telegram.generate')}
           </button>
           <button
             type="button"
@@ -115,10 +117,10 @@ function TelegramConnect() {
             onClick={handleCopy}
             disabled={!activeCode?.telegramCommand || isGenerating}
           >
-            Copy Telegram Command
+            {t('telegram.copyCommand')}
           </button>
           <button type="button" className="btn btn-ghost" onClick={loadActiveCode} disabled={isGenerating}>
-            Refresh
+            {t('common.refresh')}
           </button>
         </div>
       </section>

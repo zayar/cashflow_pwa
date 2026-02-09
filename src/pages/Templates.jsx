@@ -1,6 +1,7 @@
 import { gql, useQuery } from '@apollo/client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../i18n';
 import {
   createTemplate,
   listTemplates,
@@ -43,6 +44,7 @@ const defaultConfig = {
 
 function Templates() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const {
     data: businessData,
     loading: businessLoading,
@@ -69,15 +71,15 @@ function Templates() {
       const rows = await listTemplates(DOCUMENT_TYPE, businessId);
       setTemplates(rows);
     } catch (e) {
-      setError(e?.message || 'Failed to load templates');
+      setError(e?.message || t('templates.failedLoad'));
     } finally {
       setLoading(false);
     }
-  }, [businessId]);
+  }, [businessId, t]);
 
   useEffect(() => {
     fetchTemplates();
-  }, [fetchTemplates]);
+  }, [businessId]);
 
   const activeDefault = useMemo(() => templates.find((t) => t.is_default), [templates]);
 
@@ -86,7 +88,7 @@ function Templates() {
     setLoading(true);
     setError('');
     try {
-      const baseName = activeDefault?.name || 'Invoice Template';
+      const baseName = activeDefault?.name || t('templates.invoiceTemplate');
       const config = activeDefault ? safeParseConfigString(activeDefault.config_json) : defaultConfig;
       const created = await createTemplate({
         documentType: DOCUMENT_TYPE,
@@ -95,14 +97,14 @@ function Templates() {
         config,
         businessId
       });
-      setStatus('Template created');
+      setStatus(t('templates.templateCreated'));
       if (created?.id) {
         navigate(`/templates/${DOCUMENT_TYPE}/${created.id}/edit`);
       } else {
         await fetchTemplates();
       }
     } catch (e) {
-      setError(e?.message || 'Failed to create template');
+      setError(e?.message || t('templates.failedCreate'));
     } finally {
       setLoading(false);
     }
@@ -121,10 +123,10 @@ function Templates() {
         config,
         businessId
       });
-      setStatus('Template duplicated');
+      setStatus(t('templates.templateDuplicated'));
       await fetchTemplates();
     } catch (e) {
-      setError(e?.message || 'Failed to duplicate template');
+      setError(e?.message || t('templates.failedDuplicate'));
     } finally {
       setLoading(false);
     }
@@ -136,10 +138,10 @@ function Templates() {
     setError('');
     try {
       await setDefaultTemplate(row.id, businessId);
-      setStatus('Default template updated');
+      setStatus(t('templates.defaultUpdated'));
       await fetchTemplates();
     } catch (e) {
-      setError(e?.message || 'Failed to set default');
+      setError(e?.message || t('templates.failedSetDefault'));
     } finally {
       setLoading(false);
     }
@@ -164,7 +166,7 @@ function Templates() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p className="state-title">Could not load business data.</p>
+          <p className="state-title">{t('templates.couldNotLoadBusiness')}</p>
           <p className="state-message">{businessError.message}</p>
         </section>
       </div>
@@ -176,21 +178,21 @@ function Templates() {
       <section className="card">
         <div className="card-header">
           <div>
-            <p className="kicker">Templates</p>
-            <h2 className="title">Invoice Templates</h2>
+            <p className="kicker">{t('templates.kicker')}</p>
+            <h2 className="title">{t('templates.title')}</h2>
             <p className="subtle" style={{ marginTop: 4 }}>
-              Keep your invoice style consistent with logo, colors, and payment QR.
+              {t('templates.subtitle')}
             </p>
           </div>
           <button className="btn btn-primary" type="button" onClick={handleNewTemplate} disabled={loading}>
-            + Create template
+            {t('templates.create')}
           </button>
         </div>
 
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-          <span className="subtle">{templates.length} templates</span>
+          <span className="subtle">{t('templates.count', { count: templates.length })}</span>
           <button className="btn btn-secondary" type="button" onClick={fetchTemplates} disabled={loading}>
-            Refresh
+            {t('common.refresh')}
           </button>
         </div>
 
@@ -199,11 +201,11 @@ function Templates() {
 
       {error && (
         <section className="state-error" role="alert">
-          <p className="state-title">Could not load templates.</p>
+          <p className="state-title">{t('templates.couldNotLoad')}</p>
           <p className="state-message">{error}</p>
           <div className="state-actions">
             <button className="btn btn-secondary" type="button" onClick={fetchTemplates}>
-              Try again
+              {t('common.tryAgain')}
             </button>
           </div>
         </section>
@@ -211,11 +213,11 @@ function Templates() {
 
       {!error && templates.length === 0 && (
         <section className="state-empty" role="status">
-          <p className="state-title">No templates yet.</p>
-          <p className="state-message">Create one to customize how invoices look on PDF and printouts.</p>
+          <p className="state-title">{t('templates.emptyTitle')}</p>
+          <p className="state-message">{t('templates.emptyMessage')}</p>
           <div className="state-actions">
             <button className="btn btn-primary" type="button" onClick={handleNewTemplate} disabled={loading}>
-              Create template
+              {t('templates.createTemplate')}
             </button>
           </div>
         </section>
@@ -227,10 +229,10 @@ function Templates() {
             <li key={template.id} className="list-card">
               <div className="template-list-row">
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: 0, fontWeight: 800 }}>{template.name || 'Invoice Template'}</p>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{template.name || t('templates.invoiceTemplate')}</p>
                   <div className="list-meta" style={{ marginTop: 6 }}>
-                    {template.is_default && <span className="badge badge-success">Default</span>}
-                    <span className="meta-chip">Updated {formatShortDate(template.updated_at)}</span>
+                    {template.is_default && <span className="badge badge-success">{t('common.default')}</span>}
+                    <span className="meta-chip">{t('templates.updated', { date: formatShortDate(template.updated_at) })}</span>
                   </div>
                 </div>
               </div>
@@ -242,10 +244,10 @@ function Templates() {
                     type="button"
                     onClick={() => navigate(`/templates/${DOCUMENT_TYPE}/${template.id}/edit`)}
                   >
-                    Edit
+                    {t('common.edit')}
                   </button>
                   <button className="btn btn-ghost" type="button" onClick={() => handleDuplicate(template)}>
-                    Duplicate
+                    {t('common.duplicate')}
                   </button>
                   <button
                     className="btn btn-ghost"
@@ -253,7 +255,7 @@ function Templates() {
                     onClick={() => handleSetDefault(template)}
                     disabled={template.is_default}
                   >
-                    Set default
+                    {t('common.setDefault')}
                   </button>
                 </div>
               </div>

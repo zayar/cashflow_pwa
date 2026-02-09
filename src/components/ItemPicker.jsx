@@ -5,6 +5,7 @@ import PickerHeader from './PickerHeader';
 import QuickAddItem from './QuickAddItem';
 import { useInvoiceDraft } from '../state/invoiceDraft';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
+import { useI18n } from '../i18n';
 
 const SEARCH_PRODUCTS = gql`
   query SearchProducts($name: String) {
@@ -50,6 +51,7 @@ function SearchIcon() {
 }
 
 function ItemPicker() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const lineId = params.get('lineId');
@@ -97,11 +99,11 @@ function ItemPicker() {
   return (
     <div className="picker-page">
       <PickerHeader
-        title="Choose item"
+        title={t('picker.chooseItem')}
         backTo={`${returnTo}?step=${returnStep}`}
         rightAction={
           <button className="btn btn-primary" type="button" onClick={() => setShowAdd(true)}>
-            + Add
+            {t('picker.add')}
           </button>
         }
       />
@@ -111,7 +113,7 @@ function ItemPicker() {
           <SearchIcon />
           <input
             className="input"
-            placeholder="Search items"
+            placeholder={t('picker.searchItems')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -120,7 +122,7 @@ function ItemPicker() {
 
       {recentItems.length > 0 && (
         <section className="picker-section">
-          <p className="picker-section-title">Recent items</p>
+          <p className="picker-section-title">{t('picker.recentItems')}</p>
           <div className="picker-list">
             {recentItems.map((item) => (
               <button key={item.id} type="button" className="picker-item" onClick={() => handleSelect(item)}>
@@ -133,7 +135,7 @@ function ItemPicker() {
       )}
 
       <section className="picker-section">
-        <p className="picker-section-title">Saved items</p>
+        <p className="picker-section-title">{t('picker.savedItems')}</p>
 
         {loading && !data && (
           <div className="state-loading" style={{ marginTop: 8 }}>
@@ -150,7 +152,7 @@ function ItemPicker() {
 
         {error && (
           <div className="state-error" role="alert">
-            <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Could not load items.</p>
+            <p style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>{t('items.couldNotLoad')}</p>
             <p style={{ marginTop: 0, marginBottom: 0 }}>{error.message}</p>
           </div>
         )}
@@ -168,7 +170,7 @@ function ItemPicker() {
 
         {!loading && !error && items.length === 0 && (
           <p className="empty" style={{ marginTop: 10 }}>
-            No items found. Add one quickly.
+            {t('picker.noItemsFound')}
           </p>
         )}
       </section>
