@@ -95,33 +95,6 @@ const LIST_CUSTOMERS = gql`
   }
 `;
 
-const PAGINATE_SUPPLIERS = gql`
-  query PaginateSupplierForExpense($limit: Int = 20, $after: String, $name: String, $isActive: Boolean) {
-    paginateSupplier(limit: $limit, after: $after, name: $name, isActive: $isActive) {
-      edges {
-        cursor
-        node {
-          id
-          name
-        }
-      }
-      pageInfo {
-        endCursor
-        hasNextPage
-      }
-    }
-  }
-`;
-
-const CREATE_SUPPLIER = gql`
-  mutation QuickAddSupplier($input: NewSupplier!) {
-    createSupplier(input: $input) {
-      id
-      name
-    }
-  }
-`;
-
 const CREATE_EXPENSE = gql`
   mutation CreateExpenseForPwa($input: NewExpense!) {
     createExpense(input: $input) {
@@ -173,15 +146,12 @@ function ExpenseForm({ mode = 'create', expense = null }) {
   const [showBranchPicker, setShowBranchPicker] = useState(false);
   const [showExpenseAccountPicker, setShowExpenseAccountPicker] = useState(false);
   const [showPaidThroughPicker, setShowPaidThroughPicker] = useState(false);
-  const [showSupplierPicker, setShowSupplierPicker] = useState(false);
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
-  const [showQuickAddSupplier, setShowQuickAddSupplier] = useState(false);
   const [showQuickAddCustomer, setShowQuickAddCustomer] = useState(false);
 
   const [branchId, setBranchId] = useState(() => toPositiveInt(expense?.branch?.id) || getDefaultInvoiceLocationIds().branchId);
   const [expenseAccountId, setExpenseAccountId] = useState(() => toPositiveInt(expense?.expenseAccount?.id));
   const [paidThroughId, setPaidThroughId] = useState(() => toPositiveInt(expense?.assetAccount?.id));
-  const [supplier, setSupplier] = useState(() => (expense?.supplier?.id ? expense.supplier : null));
   const [customer, setCustomer] = useState(() => (expense?.customer?.id ? expense.customer : null));
 
   const [expenseDate, setExpenseDate] = useState(() => toDateInputValue(expense?.expenseDate) || toDateInputValue(new Date()));
@@ -263,22 +233,6 @@ function ExpenseForm({ mode = 'create', expense = null }) {
   const [updateExpense, updateState] = useMutation(UPDATE_EXPENSE);
   const saving = createState.loading || updateState.loading;
 
-  const [supplierSearch, setSupplierSearch] = useState('');
-  const supplierDebounced = useDebouncedValue(supplierSearch, 250);
-  const supplierQuery = useQuery(PAGINATE_SUPPLIERS, {
-    variables: { limit: 20, after: undefined, name: '', isActive: true },
-    fetchPolicy: 'cache-and-network',
-    skip: !showSupplierPicker
-  });
-  useEffect(() => {
-    if (!showSupplierPicker) return;
-    supplierQuery.refetch({ limit: 20, after: undefined, name: supplierDebounced || '', isActive: true });
-  }, [showSupplierPicker, supplierDebounced]); // eslint-disable-line react-hooks/exhaustive-deps
-  const suppliers = useMemo(
-    () => supplierQuery.data?.paginateSupplier?.edges?.map((edge) => edge?.node).filter(Boolean) ?? [],
-    [supplierQuery.data]
-  );
-
   const [customerSearch, setCustomerSearch] = useState('');
   const customerDebounced = useDebouncedValue(customerSearch, 250);
   const customerQuery = useQuery(LIST_CUSTOMERS, {
@@ -291,8 +245,6 @@ function ExpenseForm({ mode = 'create', expense = null }) {
     customerQuery.refetch({ name: customerDebounced || '' });
   }, [showCustomerPicker, customerDebounced]); // eslint-disable-line react-hooks/exhaustive-deps
   const customers = useMemo(() => customerQuery.data?.listCustomer ?? [], [customerQuery.data]);
-
-  const [createSupplier, createSupplierState] = useMutation(CREATE_SUPPLIER);
 
   const taxOptions = useMemo(() => {
     const taxes = (taxData?.listAllTax ?? []).filter((tax) => tax?.isActive !== false).map((tax) => ({ ...tax, id: `I${tax.id}` }));
@@ -359,7 +311,7 @@ function ExpenseForm({ mode = 'create', expense = null }) {
       currencyId: currId,
       exchangeRate: normalizedExchangeRate,
       amount: Number(amount),
-      supplierId: supplier?.id ? toPositiveInt(supplier.id) : 0,
+      supplierId: 0,
       customerId: customer?.id ? toPositiveInt(customer.id) : 0,
       referenceNumber: referenceNumber.trim() || '',
       bankCharges: bankCharges.trim() ? Number(bankCharges) : 0,
@@ -518,19 +470,6 @@ function ExpenseForm({ mode = 'create', expense = null }) {
               <span className="meta-chip">{t('common.open')}</span>
             </button>
             {fieldErrors.paidThroughId && <div className="inline-error">{fieldErrors.paidThroughId}</div>}
-          </label>
-
-          <label className="field">
-            <span className="label">{t('expenseForm.supplierLabel')}</span>
-            <button
-              type="button"
-              className="input"
-              onClick={() => setShowSupplierPicker(true)}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <span>{supplier?.name || t('expenseForm.supplierOptional')}</span>
-              <span className="meta-chip">{t('common.open')}</span>
-            </button>
           </label>
 
           <label className="field">
@@ -762,76 +701,6 @@ function ExpenseForm({ mode = 'create', expense = null }) {
         />
       )}
 
-      {showSupplierPicker && (
-        <Modal title={t('expenseForm.pickSupplierTitle')} onClose={() => setShowSupplierPicker(false)}>
-          <div className="form-grid">
-            <div className="search-wrap">
-              <SearchIcon />
-              <input
-                className="input"
-                placeholder={t('expenseForm.searchSuppliers')}
-                value={supplierSearch}
-                onChange={(event) => setSupplierSearch(event.target.value)}
-              />
-            </div>
-
-            <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-              <button
-                className="btn btn-secondary"
-                type="button"
-                onClick={() => {
-                  setSupplier(null);
-                  setShowSupplierPicker(false);
-                }}
-              >
-                {t('expenseForm.clear')}
-              </button>
-              <button className="btn btn-primary" type="button" onClick={() => setShowQuickAddSupplier(true)}>
-                {t('picker.add')}
-              </button>
-            </div>
-
-            {supplierQuery.loading && !supplierQuery.data && (
-              <section className="state-loading" role="status" aria-live="polite">
-                <p className="state-message">{t('expenseForm.loadingSuppliers')}</p>
-              </section>
-            )}
-
-            {supplierQuery.error && (
-              <section className="state-error" role="alert">
-                <p className="state-title">{t('expenseForm.supplierLoadFail')}</p>
-                <p className="state-message">{supplierQuery.error.message}</p>
-              </section>
-            )}
-
-            {!supplierQuery.error && (
-              <div className="picker-list">
-                {suppliers.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className="picker-item"
-                    onClick={() => {
-                      setSupplier(s);
-                      setShowSupplierPicker(false);
-                    }}
-                  >
-                    <div className="picker-item-title">{s.name}</div>
-                    <span className="meta-chip">{t('picker.select')}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {!supplierQuery.loading && !supplierQuery.error && suppliers.length === 0 && (
-              <p className="empty" style={{ marginTop: 10 }}>
-                {t('expenseForm.noSuppliersFound')}
-              </p>
-            )}
-          </div>
-        </Modal>
-      )}
-
       {showCustomerPicker && (
         <Modal title={t('expenseForm.pickCustomerTitle')} onClose={() => setShowCustomerPicker(false)}>
           <div className="form-grid">
@@ -902,33 +771,6 @@ function ExpenseForm({ mode = 'create', expense = null }) {
         </Modal>
       )}
 
-      {showQuickAddSupplier && (
-        <Modal title={t('expenseForm.quickAddSupplierTitle')} onClose={() => setShowQuickAddSupplier(false)}>
-          <QuickAddSupplier
-            baseCurrencyId={baseCurrencyId}
-            onClose={() => setShowQuickAddSupplier(false)}
-            loading={createSupplierState.loading}
-            error={createSupplierState.error}
-            onSave={async ({ name }) => {
-              if (!name) return;
-              const input = {
-                name: String(name).trim(),
-                currencyId: baseCurrencyId,
-                notes: ''
-              };
-              const { data } = await createSupplier({ variables: { input } });
-              const created = data?.createSupplier;
-              if (created?.id) {
-                setSupplier(created);
-                setShowQuickAddSupplier(false);
-                setShowSupplierPicker(false);
-                setStatus(t('expenseForm.supplierCreated'));
-              }
-            }}
-          />
-        </Modal>
-      )}
-
       {showQuickAddCustomer && (
         <QuickAddCustomer
           onClose={() => setShowQuickAddCustomer(false)}
@@ -994,41 +836,6 @@ function AccountPickerModal({ title, placeholder, accounts, onSelect, onClose })
         )}
       </div>
     </Modal>
-  );
-}
-
-function QuickAddSupplier({ baseCurrencyId, onSave, onClose }) {
-  const { t } = useI18n();
-  const [name, setName] = useState('');
-  const [localError, setLocalError] = useState('');
-
-  const handleSave = async () => {
-    if (!name.trim()) return;
-    if (!baseCurrencyId) return;
-    setLocalError('');
-    try {
-      await onSave({ name: name.trim() });
-    } catch (err) {
-      setLocalError(err?.message || t('expenseForm.supplierCreateFailed'));
-    }
-  };
-
-  return (
-    <div className="form-grid">
-      <label className="field">
-        <span className="label">{t('fields.nameRequired')}</span>
-        <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-      </label>
-      {localError && <div className="inline-error">{localError}</div>}
-      <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
-        <button className="btn btn-secondary" type="button" onClick={onClose}>
-          {t('common.cancel')}
-        </button>
-        <button className="btn btn-primary" type="button" onClick={handleSave} disabled={!name.trim() || !baseCurrencyId}>
-          {t('common.save')}
-        </button>
-      </div>
-    </div>
   );
 }
 
