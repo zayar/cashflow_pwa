@@ -1003,11 +1003,17 @@ function AccountPickerModal({ title, placeholder, accounts, onSelect, onClose })
 function QuickAddSupplier({ baseCurrencyId, onSave, onClose }) {
   const { t } = useI18n();
   const [name, setName] = useState('');
+  const [localError, setLocalError] = useState('');
 
   const handleSave = async () => {
     if (!name.trim()) return;
     if (!baseCurrencyId) return;
-    await onSave({ name: name.trim() });
+    setLocalError('');
+    try {
+      await onSave({ name: name.trim() });
+    } catch (err) {
+      setLocalError(err?.message || t('expenseForm.supplierCreateFailed'));
+    }
   };
 
   return (
@@ -1016,6 +1022,7 @@ function QuickAddSupplier({ baseCurrencyId, onSave, onClose }) {
         <span className="label">{t('fields.nameRequired')}</span>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
       </label>
+      {localError && <div className="inline-error">{localError}</div>}
       <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
         <button className="btn btn-secondary" type="button" onClick={onClose}>
           {t('common.cancel')}

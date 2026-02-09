@@ -252,6 +252,7 @@ export default {
     supplierLoadFail: 'Could not load suppliers.',
     noSuppliersFound: 'No suppliers found. Add one in seconds.',
     quickAddSupplierTitle: 'Quick add supplier',
+    supplierCreateFailed: 'Failed to create supplier.',
     supplierCreated: 'Supplier created.',
     pickCustomerTitle: 'Select customer',
     searchCustomers: 'Search customers',

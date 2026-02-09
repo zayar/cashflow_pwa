@@ -252,6 +252,7 @@ export default {
     supplierLoadFail: 'ပေးသူများကို မတင်နိုင်ပါ။',
     noSuppliersFound: 'ပေးသူ မတွေ့ပါ။ စက္ကန့်အနည်းငယ်အတွင်း ထည့်နိုင်ပါတယ်။',
     quickAddSupplierTitle: 'ပေးသူကို အမြန်ထည့်ရန်',
+    supplierCreateFailed: 'ပေးသူကို မဖန်တီးနိုင်ပါ။',
     supplierCreated: 'ပေးသူကို ဖန်တီးပြီးပါပြီ။',
     pickCustomerTitle: 'ဖောက်သည် ရွေးပါ',
     searchCustomers: 'ဖောက်သည် ရှာရန်',
