@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getDefaultInvoiceLocationIds } from '../lib/auth';
+import { useI18n } from '../i18n';
 
 const CREATE_PRODUCT = gql`
   mutation CreateProduct($input: NewProduct!) {
@@ -96,6 +97,7 @@ function ItemForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
+  const { t } = useI18n();
   const [limit, setLimit] = useState(120);
   const [isHydrated, setIsHydrated] = useState(!isEdit);
   const [name, setName] = useState('');
@@ -158,21 +160,21 @@ function ItemForm() {
     setError('');
 
     if (!name.trim()) {
-      setError('Item name is required.');
+      setError(t('itemForm.itemNameRequired'));
       return;
     }
 
     const activeUnits = unitsData?.listAllProductUnit?.filter((unit) => unit.isActive) || [];
     const defaultUnitId = activeUnits[0]?.id;
     if (!defaultUnitId) {
-      setError('No active unit found. Please configure units in the main application.');
+      setError(t('itemForm.noActiveUnit'));
       return;
     }
 
     const activeCategories = categoriesData?.listAllProductCategory?.filter((category) => category.isActive) || [];
     const defaultCategoryId = activeCategories[0]?.id;
     if (!defaultCategoryId) {
-      setError('No active category found. Please configure categories in the main application.');
+      setError(t('itemForm.noActiveCategory'));
       return;
     }
 
@@ -182,7 +184,7 @@ function ItemForm() {
     const defaultInventoryAccount = accounts.find((account) => account.detailType === 'Stock' && account.isActive);
 
     if (!defaultSalesAccount || !defaultPurchaseAccount) {
-      setError('Required accounts not found. Please configure accounts in the main application.');
+      setError(t('itemForm.missingAccounts'));
       return;
     }
 
@@ -216,7 +218,7 @@ function ItemForm() {
         navigate('/items', { replace: true, state: { created: true } });
       }
     } catch (mutationError) {
-      const message = mutationError.message || 'Failed to save item';
+      const message = mutationError.message || t('itemForm.failedSave');
       setError(message);
     }
   };
@@ -242,10 +244,10 @@ function ItemForm() {
     return (
       <div className="stack">
         <section className="state-empty" role="status">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Item not found in recent items.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>Return to items and refresh, then try again.</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('itemForm.notFoundTitle')}</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>{t('itemForm.notFoundMessage')}</p>
           <button className="btn btn-secondary" type="button" onClick={() => refetchProduct()}>
-            Try again
+            {t('common.tryAgain')}
           </button>
         </section>
       </div>
@@ -256,10 +258,10 @@ function ItemForm() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Could not load this item.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>{productError?.message || 'Item not found.'}</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('itemForm.couldNotLoadTitle')}</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>{productError?.message || t('itemForm.itemNotFound')}</p>
           <button className="btn btn-secondary" type="button" onClick={() => refetchProduct()}>
-            Try again
+            {t('common.tryAgain')}
           </button>
         </section>
       </div>
@@ -269,32 +271,30 @@ function ItemForm() {
   return (
     <div className="invoice-page">
       <section className="flow-banner">
-        <p className="kicker">Catalog</p>
+        <p className="kicker">{t('itemForm.bannerKicker')}</p>
         <h2 className="title" style={{ marginBottom: 6 }}>
-          {isEdit ? 'Edit item' : 'Add a new item'}
+          {isEdit ? t('itemForm.bannerTitleEdit') : t('itemForm.bannerTitleNew')}
         </h2>
         <p className="subtle">
-          {isEdit
-            ? 'Update item details like name and prices.'
-            : 'Save common products or services so invoice creation is faster.'}
+          {isEdit ? t('itemForm.bannerCopyEdit') : t('itemForm.bannerCopyNew')}
         </p>
       </section>
 
       <form className="invoice-panel" onSubmit={handleSubmit}>
         <label className="field">
-          <span className="label">Item name *</span>
+          <span className="label">{t('itemForm.itemName')}</span>
           <input
             className="input"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="e.g., Monthly Consulting"
+            placeholder={t('itemForm.itemNamePlaceholder')}
             autoFocus
           />
         </label>
 
         <div className="invoice-meta-grid">
           <label className="field">
-            <span className="label">Sales price</span>
+            <span className="label">{t('itemForm.salesPrice')}</span>
             <input
               className="input"
               type="number"
@@ -307,7 +307,7 @@ function ItemForm() {
           </label>
 
           <label className="field">
-            <span className="label">Purchase price</span>
+            <span className="label">{t('itemForm.purchasePrice')}</span>
             <input
               className="input"
               type="number"
@@ -321,29 +321,29 @@ function ItemForm() {
         </div>
 
         <label className="field">
-          <span className="label">SKU (optional)</span>
+          <span className="label">{t('itemForm.skuOptional')}</span>
           <input
             className="input"
             value={sku}
             onChange={(event) => setSku(event.target.value)}
-            placeholder="e.g., SKU-001"
+            placeholder={t('itemForm.skuPlaceholder')}
           />
         </label>
 
         <label className="field">
-          <span className="label">Warehouse (default)</span>
+          <span className="label">{t('itemForm.warehouseDefault')}</span>
           {warehouses.length > 0 ? (
             <select className="input" value={selectedWarehouseId} disabled aria-readonly="true">
               {warehouses.map((warehouse) => (
                 <option key={warehouse.id} value={warehouse.id}>
-                  {warehouse.name ? `${warehouse.name} (#${warehouse.id})` : `Warehouse #${warehouse.id}`}
+                  {warehouse.name ? `${warehouse.name} (#${warehouse.id})` : `#${warehouse.id}`}
                 </option>
               ))}
             </select>
           ) : (
             <input
               className="input"
-              value={warehousesLoading ? 'Loading…' : selectedWarehouseId ? `Warehouse #${selectedWarehouseId}` : 'Account default'}
+              value={warehousesLoading ? t('itemForm.loading') : selectedWarehouseId ? `#${selectedWarehouseId}` : t('itemForm.accountDefault')}
               disabled
               readOnly
             />
@@ -354,10 +354,10 @@ function ItemForm() {
 
         <div className="sticky-actions">
           <button type="button" className="btn btn-secondary" onClick={() => navigate(isEdit ? `/items/${id}` : '/items')}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Saving...' : isEdit ? 'Save changes' : 'Save item'}
+            {loading ? t('common.saving') : isEdit ? t('itemForm.saveChanges') : t('itemForm.saveItem')}
           </button>
         </div>
       </form>

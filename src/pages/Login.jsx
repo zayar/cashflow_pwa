@@ -3,6 +3,7 @@ import { gql, useMutation } from '@apollo/client';
 import { useNavigate, Link } from 'react-router-dom';
 import BrandLogo from '../components/BrandLogo';
 import { setToken, setUsername, getToken } from '../lib/auth';
+import { useI18n } from '../i18n';
 
 const LOGIN_MUTATION = gql`
   mutation Login($username: String!, $password: String!) {
@@ -16,6 +17,7 @@ const LOGIN_MUTATION = gql`
 
 function Login() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [form, setForm] = useState({ username: '', password: '' });
   const [login, { loading, error }] = useMutation(LOGIN_MUTATION);
   const [message, setMessage] = useState('');
@@ -40,11 +42,11 @@ function Login() {
       if (info?.token) {
         setToken(info.token);
         if (info.name) setUsername(info.name);
-        setMessage('Signed in. Redirecting...');
+        setMessage(t('login.signedInRedirecting'));
         setTimeout(() => navigate('/', { replace: true }), 450);
       }
     } catch (err) {
-      setMessage(err.message || 'Login failed.');
+      setMessage(err.message || t('login.loginFailed'));
     }
   };
 
@@ -56,28 +58,28 @@ function Login() {
             <BrandLogo variant="full" className="auth-brand-logo" title="Cashflow Lite" decorative={false} />
           </div>
           <h1 className="heading" style={{ marginBottom: 6 }}>
-            Welcome back
+            {t('login.title')}
           </h1>
-          <p className="subtle">Secure sign in to create, send, and track invoices faster.</p>
+          <p className="subtle">{t('login.subtitle')}</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="field" htmlFor="username">
-            <span className="label">Username</span>
+            <span className="label">{t('login.username')}</span>
             <input
               id="username"
               name="username"
               value={form.username}
               onChange={handleChange}
               className="input"
-              placeholder="Enter your username"
+              placeholder={t('login.usernamePlaceholder')}
               autoComplete="username"
               required
             />
           </label>
 
           <label className="field" htmlFor="password">
-            <span className="label">Password</span>
+            <span className="label">{t('login.password')}</span>
             <input
               id="password"
               name="password"
@@ -85,17 +87,17 @@ function Login() {
               value={form.password}
               onChange={handleChange}
               className="input"
-              placeholder="Enter your password"
+              placeholder={t('login.passwordPlaceholder')}
               autoComplete="current-password"
               required
             />
           </label>
 
           <button className="btn btn-primary btn-full" type="submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Log in'}
+            {loading ? t('login.signingIn') : t('login.logIn')}
           </button>
 
-          <p className="auth-trust">Your data is encrypted and securely transmitted.</p>
+          <p className="auth-trust">{t('login.trust')}</p>
 
           {(message || error) && (
             <div className={`auth-state ${error ? 'auth-state-error' : 'auth-state-success'}`} role="status" aria-live="polite">
@@ -104,9 +106,9 @@ function Login() {
           )}
 
           <p className="auth-foot">
-            New here?{' '}
+            {t('login.newHere')}{' '}
             <Link to="/welcome" className="auth-link">
-              Back to welcome
+              {t('login.backToWelcome')}
             </Link>
           </p>
         </form>

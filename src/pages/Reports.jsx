@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import { formatMoney } from '../lib/formatters';
+import { useI18n } from '../i18n';
 
 const REPORTS_QUERY = gql`
   query ReportsInvoices($limit: Int = 400) {
@@ -35,9 +36,9 @@ const REPORTS_QUERY = gql`
 `;
 
 const REPORT_TABS = [
-  { key: 'paid', label: 'Paid' },
-  { key: 'clients', label: 'Clients' },
-  { key: 'items', label: 'Items' }
+  { key: 'paid', labelKey: 'reports.tabs.paid' },
+  { key: 'clients', labelKey: 'reports.tabs.clients' },
+  { key: 'items', labelKey: 'reports.tabs.items' }
 ];
 
 function parseInvoiceDate(value) {
@@ -51,6 +52,7 @@ function monthLabel(year, monthIndex) {
 }
 
 function Reports() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('paid');
   const [year, setYear] = useState(() => new Date().getFullYear());
   const swipeStartX = useRef(null);
@@ -223,11 +225,11 @@ function Reports() {
     return (
       <div className="stack reports-page">
         <section className="state-error" role="alert">
-          <p className="state-title">Could not load reports.</p>
+          <p className="state-title">{t('reports.couldNotLoad')}</p>
           <p className="state-message">{error.message}</p>
           <div className="state-actions">
             <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-              Try again
+              {t('common.tryAgain')}
             </button>
           </div>
         </section>
@@ -238,21 +240,21 @@ function Reports() {
   return (
     <div className="stack reports-page">
       <section className="reports-hero">
-        <p className="kicker">Insights</p>
-        <h2 className="title">Simple Reports</h2>
-        <p className="subtle">A quick monthly snapshot of paid amount, active clients, and invoice activity.</p>
+        <p className="kicker">{t('reports.heroKicker')}</p>
+        <h2 className="title">{t('reports.heroTitle')}</h2>
+        <p className="subtle">{t('reports.heroSubtitle')}</p>
 
         <div className="reports-summary-grid">
           <div className={`reports-summary-card ${activeTab === 'paid' ? 'active' : ''}`}>
-            <span className="reports-summary-label">Paid</span>
+            <span className="reports-summary-label">{t('reports.tabs.paid')}</span>
             <strong className="reports-summary-value">{formatMoney(yearSummary.paidAmount, baseCurrency)}</strong>
           </div>
           <div className={`reports-summary-card ${activeTab === 'clients' ? 'active' : ''}`}>
-            <span className="reports-summary-label">Clients</span>
+            <span className="reports-summary-label">{t('reports.tabs.clients')}</span>
             <strong className="reports-summary-value">{yearSummary.clients}</strong>
           </div>
           <div className={`reports-summary-card ${activeTab === 'items' ? 'active' : ''}`}>
-            <span className="reports-summary-label">Items</span>
+            <span className="reports-summary-label">{t('reports.tabs.items')}</span>
             <strong className="reports-summary-value">{yearSummary.items}</strong>
           </div>
         </div>
@@ -271,13 +273,13 @@ function Reports() {
                 aria-selected={isActive}
                 onClick={() => setActiveTab(tab.key)}
               >
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             );
           })}
         </div>
 
-        <div className="reports-years" role="tablist" aria-label="Select year">
+        <div className="reports-years" role="tablist" aria-label={t('reports.selectYearAria')}>
           {yearOptions.map((yearOption) => {
             const isActive = yearOption === year;
             return (
@@ -298,8 +300,8 @@ function Reports() {
 
       {monthlyCards.every((month) => month.invoiceCount === 0) ? (
         <section className="state-empty" role="status">
-          <p className="state-title">No invoice activity for {year}.</p>
-          <p className="state-message">Create invoices this year to populate your monthly report cards.</p>
+          <p className="state-title">{t('reports.emptyTitle', { year })}</p>
+          <p className="state-message">{t('reports.emptyMessage')}</p>
         </section>
       ) : (
         <section className="reports-month-list" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
@@ -307,30 +309,38 @@ function Reports() {
             <article className="reports-month-card" key={`${year}-${month.monthIndex}`}>
               <div className="reports-month-head">
                 <h3>{month.monthLabel}</h3>
-                <span className="reports-month-chip">{month.invoiceCount} invoices</span>
+                <span className="reports-month-chip">{t('reports.invoiceCount', { count: month.invoiceCount })}</span>
               </div>
 
               <div className="reports-month-grid">
                 <div className="reports-metric">
-                  <span>Clients</span>
+                  <span>{t('reports.tabs.clients')}</span>
                   <strong>{month.clientCount}</strong>
                 </div>
                 <div className="reports-metric">
-                  <span>Invoices</span>
+                  <span>{t('nav.invoices')}</span>
                   <strong>{month.invoiceCount}</strong>
                 </div>
                 <div className="reports-metric reports-metric-wide">
-                  <span>Paid</span>
+                  <span>{t('reports.tabs.paid')}</span>
                   <strong>{formatMoney(month.paidAmount, baseCurrency)}</strong>
                 </div>
               </div>
 
               <div className={`reports-focus-line reports-focus-${activeTab}`}>
-                {activeTab === 'paid' && <span>Collected: {formatMoney(month.paidAmount, baseCurrency)}</span>}
-                {activeTab === 'clients' && <span>Active clients: {month.clientCount}</span>}
+                {activeTab === 'paid' && (
+                  <span>
+                    {t('reports.collected')}: {formatMoney(month.paidAmount, baseCurrency)}
+                  </span>
+                )}
+                {activeTab === 'clients' && (
+                  <span>
+                    {t('reports.activeClients')}: {month.clientCount}
+                  </span>
+                )}
                 {activeTab === 'items' && (
                   <span>
-                    Unique items: {month.itemCount} · Qty sold: {month.itemQty.toLocaleString()}
+                    {t('reports.uniqueItems')}: {month.itemCount} · {t('reports.qtySold')}: {month.itemQty.toLocaleString()}
                   </span>
                 )}
               </div>

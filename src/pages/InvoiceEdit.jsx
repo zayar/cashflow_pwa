@@ -3,6 +3,7 @@ import { gql, useQuery } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 import InvoiceForm from './InvoiceForm';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
+import { useI18n } from '../i18n';
 
 const FIND_INVOICE = gql`
   query FindInvoiceForEdit($limit: Int = 120) {
@@ -39,6 +40,7 @@ function toDateInputValue(value) {
 }
 
 function InvoiceEdit() {
+  const { t } = useI18n();
   const { id } = useParams();
   const { state, dispatch } = useInvoiceDraft();
   const [isHydrated, setIsHydrated] = useState(() => String(state.invoiceId || '') === String(id || ''));
@@ -132,10 +134,10 @@ function InvoiceEdit() {
     return (
       <div className="stack">
         <section className="state-empty" role="status">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Invoice not found in recent invoices.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>Return to invoices and refresh, then try again.</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('invoiceView.notFoundTitle')}</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>{t('invoiceEdit.returnAndRefresh')}</p>
           <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-            Try again
+            {t('common.tryAgain')}
           </button>
         </section>
       </div>
@@ -146,10 +148,10 @@ function InvoiceEdit() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>Could not load this invoice.</p>
-          <p style={{ marginTop: 0, marginBottom: 14 }}>{error?.message || 'Invoice not found.'}</p>
+          <p style={{ marginTop: 0, marginBottom: 10, fontWeight: 800 }}>{t('invoiceView.couldNotLoadTitle')}</p>
+          <p style={{ marginTop: 0, marginBottom: 14 }}>{error?.message || t('invoiceView.invoiceNotFound')}</p>
           <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-            Try again
+            {t('common.tryAgain')}
           </button>
         </section>
       </div>

@@ -1,5 +1,6 @@
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useEffect, useMemo, useState } from 'react';
+import { useI18n } from '../i18n';
 
 const LIST_BANK_ACCOUNTS = gql`
   query ListBankingAccount {
@@ -72,6 +73,7 @@ const CREATE_ACCOUNT = gql`
 `;
 
 function BankAccounts() {
+  const { t } = useI18n();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [formError, setFormError] = useState('');
@@ -159,9 +161,9 @@ function BankAccounts() {
 
   const validate = () => {
     const nextErrors = {};
-    if (!name.trim()) nextErrors.name = 'Account name is required.';
-    if (!accountNumber.trim()) nextErrors.accountNumber = 'Account number is required.';
-    if (!currencyId) nextErrors.currencyId = 'Currency is required.';
+    if (!name.trim()) nextErrors.name = t('bankAccounts.accountNameRequired');
+    if (!accountNumber.trim()) nextErrors.accountNumber = t('bankAccounts.accountNumberRequired');
+    if (!currencyId) nextErrors.currencyId = t('bankAccounts.currencyRequired');
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -171,7 +173,7 @@ function BankAccounts() {
     if (!validate()) return;
 
     if (!branches.length) {
-      setFormError('At least one active branch is required.');
+      setFormError(t('bankAccounts.atLeastOneBranch'));
       return;
     }
 
@@ -188,11 +190,11 @@ function BankAccounts() {
       };
 
       await createAccount({ variables: { input } });
-      setStatus('Bank account created');
+      setStatus(t('bankAccounts.created'));
       closeSheet();
       refetchAccounts();
     } catch (error) {
-      setFormError(error?.message || 'Failed to create bank account.');
+      setFormError(error?.message || t('bankAccounts.createFailed'));
     }
   };
 
@@ -215,11 +217,11 @@ function BankAccounts() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p className="state-title">Could not load bank accounts.</p>
+          <p className="state-title">{t('bankAccounts.couldNotLoad')}</p>
           <p className="state-message">{accountsError.message}</p>
           <div className="state-actions">
             <button className="btn btn-secondary" type="button" onClick={() => refetchAccounts()}>
-              Try again
+              {t('common.tryAgain')}
             </button>
           </div>
         </section>
@@ -232,21 +234,21 @@ function BankAccounts() {
       <section className="card">
         <div className="card-header">
           <div>
-            <p className="kicker">Settings</p>
-            <h2 className="title">Bank Accounts</h2>
+            <p className="kicker">{t('bankAccounts.kicker')}</p>
+            <h2 className="title">{t('bankAccounts.title')}</h2>
             <p className="subtle" style={{ marginTop: 4 }}>
-              Manage deposit accounts used by Record Payment.
+              {t('bankAccounts.subtitle')}
             </p>
           </div>
           <button className="btn btn-primary" type="button" onClick={openSheet}>
-            + Add bank
+            {t('bankAccounts.addBank')}
           </button>
         </div>
 
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-          <span className="subtle">{bankAccounts.length} bank accounts</span>
+          <span className="subtle">{t('bankAccounts.count', { count: bankAccounts.length })}</span>
           <button className="btn btn-secondary" type="button" onClick={() => refetchAccounts()}>
-            Refresh
+            {t('common.refresh')}
           </button>
         </div>
 
@@ -255,11 +257,11 @@ function BankAccounts() {
 
       {bankAccounts.length === 0 && (
         <section className="state-empty" role="status">
-          <p className="state-title">No bank accounts yet.</p>
-          <p className="state-message">Add one to start tracking balances and payments.</p>
+          <p className="state-title">{t('bankAccounts.noAccountsTitle')}</p>
+          <p className="state-message">{t('bankAccounts.noAccountsMessage')}</p>
           <div className="state-actions">
             <button className="btn btn-primary" type="button" onClick={openSheet}>
-              Add bank account
+              {t('bankAccounts.addBankAccount')}
             </button>
           </div>
         </section>
@@ -273,7 +275,7 @@ function BankAccounts() {
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: 800 }}>{account.name}</p>
                   <p className="subtle" style={{ marginTop: 4, marginBottom: 0 }}>
-                    {account.accountNumber || 'No account number'}
+                    {account.accountNumber || t('bankAccounts.noAccountNumber')}
                   </p>
                   <div className="list-meta" style={{ marginTop: 8 }}>
                     {account.currency?.symbol && (
@@ -281,13 +283,13 @@ function BankAccounts() {
                         {account.currency.name} ({account.currency.symbol})
                       </span>
                     )}
-                    {account.isActive === false && <span className="meta-chip">Inactive</span>}
+                    {account.isActive === false && <span className="meta-chip">{t('bankAccounts.inactive')}</span>}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span className="meta-chip">Bank</span>
+                  <span className="meta-chip">{t('bankAccounts.bank')}</span>
                   <p className="bank-balance">{formatBalance(account)}</p>
-                  <p className="bank-caption">Available balance</p>
+                  <p className="bank-caption">{t('bankAccounts.availableBalance')}</p>
                 </div>
               </div>
             </li>
@@ -304,19 +306,19 @@ function BankAccounts() {
         <div className="sheet-handle" aria-hidden="true" />
         <div className="sheet-header">
           <h3 className="title" style={{ margin: 0 }}>
-            New bank account
+            {t('bankAccounts.newBankTitle')}
           </h3>
           <button className="btn btn-secondary" type="button" onClick={closeSheet}>
-            Close
+            {t('common.close')}
           </button>
         </div>
 
         <div className="form-grid">
           <p className="subtle" style={{ marginTop: 0 }}>
-            This bank appears in invoice payment selection.
+            {t('bankAccounts.newBankSubtitle')}
           </p>
           <label className="field">
-            <span className="label">Account name</span>
+            <span className="label">{t('bankAccounts.accountName')}</span>
             <input
               className="input"
               value={name}
@@ -327,24 +329,24 @@ function BankAccounts() {
           </label>
 
           <label className="field">
-            <span className="label">Account number</span>
+            <span className="label">{t('bankAccounts.accountNumber')}</span>
             <input
               className="input"
               value={accountNumber}
               onChange={(event) => setAccountNumber(event.target.value)}
-              placeholder="Enter account number"
+              placeholder={t('bankAccounts.accountNumberPlaceholder')}
             />
             {errors.accountNumber && <div className="inline-error">{errors.accountNumber}</div>}
           </label>
 
           <label className="field">
-            <span className="label">Currency</span>
+            <span className="label">{t('bankAccounts.currency')}</span>
             <select
               className="input"
               value={currencyId}
               onChange={(event) => setCurrencyId(event.target.value)}
             >
-              <option value="">Select currency</option>
+              <option value="">{t('bankAccounts.selectCurrency')}</option>
               {sortedCurrencies.map((currency) => (
                 <option key={currency.id} value={currency.id}>
                   {currency.name} ({currency.symbol})
@@ -358,10 +360,10 @@ function BankAccounts() {
 
           <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
             <button className="btn btn-secondary" type="button" onClick={closeSheet} disabled={creating}>
-              Cancel
+              {t('common.cancel')}
             </button>
             <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={creating}>
-              {creating ? 'Saving...' : 'Save bank account'}
+              {creating ? t('common.saving') : t('bankAccounts.saveBankAccount')}
             </button>
           </div>
         </div>

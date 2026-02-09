@@ -4,11 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { getDefaultInvoiceLocationIds, getUsername } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
+import { useI18n } from '../i18n';
 import {
   computeDueDate,
   formatInvoiceNumberShort,
   formatMoney,
-  formatPaymentTerms,
   formatShortDate
 } from '../lib/formatters';
 
@@ -149,6 +149,7 @@ function SendIcon() {
 function InvoiceView() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t } = useI18n();
 
   const [status, setStatus] = useState('');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
@@ -203,10 +204,24 @@ function InvoiceView() {
   const fallbackBranchId = invoice?.branch?.id ?? defaults.branchId;
   const fallbackWarehouseId = invoice?.warehouse?.id ?? defaults.warehouseId;
 
-  const branchName = invoice?.branch?.name || (fallbackBranchId ? `Branch #${fallbackBranchId}` : '');
-  const warehouseName = invoice?.warehouse?.name || (fallbackWarehouseId ? `Warehouse #${fallbackWarehouseId}` : '');
+  const branchName = invoice?.branch?.name || (fallbackBranchId ? `#${fallbackBranchId}` : '');
+  const warehouseName = invoice?.warehouse?.name || (fallbackWarehouseId ? `#${fallbackWarehouseId}` : '');
 
-  const paymentTermsLabel = formatPaymentTerms(invoice?.invoicePaymentTerms);
+  const paymentTermsLabel = useMemo(() => {
+    const value = invoice?.invoicePaymentTerms;
+    switch (value) {
+      case 'DueOnReceipt':
+        return t('invoiceForm.paymentTerms.dueOnReceipt');
+      case 'Net7':
+        return t('invoiceForm.paymentTerms.net7');
+      case 'Net15':
+        return t('invoiceForm.paymentTerms.net15');
+      case 'Net30':
+        return t('invoiceForm.paymentTerms.net30');
+      default:
+        return value || '--';
+    }
+  }, [invoice?.invoicePaymentTerms, t]);
   const dueDate = computeDueDate(invoice?.invoiceDate, invoice?.invoicePaymentTerms);
 
   const totals = useMemo(() => {
@@ -219,12 +234,13 @@ function InvoiceView() {
 
   const displayNumber = useMemo(() => {
     if (invoice?.invoiceNumber) return formatInvoiceNumberShort(invoice.invoiceNumber);
-    if (invoice?.id) return `Invoice ${invoice.id}`;
-    return 'Invoice';
-  }, [invoice?.id, invoice?.invoiceNumber]);
+    if (invoice?.id) return `${t('pages.invoiceView.title')} ${invoice.id}`;
+    return t('pages.invoiceView.title');
+  }, [invoice?.id, invoice?.invoiceNumber, t]);
 
-  const statusLabel = invoice?.currentStatus || 'Unknown';
-  const normalizedStatus = (statusLabel || '').toLowerCase();
+  const rawStatus = invoice?.currentStatus || 'Unknown';
+  const displayStatus = invoice?.currentStatus || t('invoiceView.unknown');
+  const normalizedStatus = (rawStatus || '').toLowerCase();
   const isDraft = normalizedStatus.includes('draft');
   const isConfirmed = normalizedStatus.includes('confirmed');
   const remainingBalance = Math.max(0, Number(invoice?.remainingBalance || 0));
@@ -253,19 +269,19 @@ function InvoiceView() {
       const share = await createInvoiceShareToken(invoice.id);
       const shareUrl = buildInvoiceShareUrl(share?.token);
       if (!shareUrl) {
-        throw new Error('Share link is unavailable.');
+        throw new Error(t('invoiceForm.shareUnavailable'));
       }
 
       if (navigator.share) {
-        await navigator.share({ url: shareUrl, title: 'Invoice' });
+        await navigator.share({ url: shareUrl, title: t('invoiceForm.shareTitle') });
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);
       }
 
-      setStatus('Share link ready.');
+      setStatus(t('invoiceView.shareReady'));
       setIsActionsOpen(false);
     } catch (err) {
-      setStatus(err.message || 'Failed to generate share link.');
+      setStatus(err.message || t('invoiceView.shareFailed'));
     }
   };
 
@@ -293,9 +309,9 @@ function InvoiceView() {
       setIsConfirmOpen(false);
       setIsActionsOpen(false);
       await refetchInvoice();
-      setStatus('Invoice confirmed.');
+      setStatus(t('invoiceView.invoiceConfirmed'));
     } catch (err) {
-      setStatus(err.message || 'Failed to confirm invoice.');
+      setStatus(err.message || t('invoiceView.confirmFailed'));
     } finally {
       isConfirmingRef.current = false;
     }
@@ -328,7 +344,7 @@ function InvoiceView() {
       amount > 0;
 
     if (!hasRequiredIds) {
-      setStatus('Unable to record payment. Missing branch, customer, currency, bank, or amount.');
+      setStatus(t('invoiceView.unableRecordPaymentMissing'));
       return;
     }
 
@@ -360,9 +376,9 @@ function InvoiceView() {
       setIsRecordPaymentOpen(false);
       setIsActionsOpen(false);
       await refetchInvoice();
-      setStatus('Payment recorded.');
+      setStatus(t('invoiceView.paymentRecorded'));
     } catch (err) {
-      setStatus(err.message || 'Failed to record payment.');
+      setStatus(err.message || t('invoiceView.paymentFailed'));
     } finally {
       isRecordingPaymentRef.current = false;
     }
@@ -375,7 +391,7 @@ function InvoiceView() {
       await deleteInvoice({ variables: { id: invoice.id } });
       navigate('/', { replace: true });
     } catch (err) {
-      setStatus(err.message || 'Failed to delete invoice.');
+      setStatus(err.message || t('invoiceView.deleteFailed'));
     }
   };
 
@@ -385,24 +401,24 @@ function InvoiceView() {
 
   const primaryActionLabel = isDraft
     ? saving
-      ? 'Confirming...'
-      : 'Confirm'
+      ? t('invoiceView.confirming')
+      : t('invoiceView.confirm')
     : canRecordPayment
       ? isRecordingPayment
-        ? 'Recording...'
-        : 'Record Payment'
+        ? t('invoiceView.recording')
+        : t('invoiceView.recordPayment')
       : showPaidState
-        ? 'Paid'
-        : 'Confirmed';
+        ? t('invoiceView.paid')
+        : t('invoiceView.confirmed');
 
   const primaryActionClassName = isDraft ? 'btn btn-primary' : canRecordPayment ? 'btn btn-record-payment' : 'btn btn-primary';
   const nextActionHint = isDraft
-    ? 'Next step: confirm this draft invoice.'
+    ? t('invoiceView.nextDraft')
     : canRecordPayment
-      ? 'Next step: record full payment to settle this invoice.'
+      ? t('invoiceView.nextRecord')
       : showPaidState
-        ? 'Payment complete. This invoice is settled.'
-        : 'This invoice is confirmed.';
+        ? t('invoiceView.nextPaid')
+        : t('invoiceView.nextConfirmed');
 
   if (loading && !data) {
     return (
@@ -426,8 +442,8 @@ function InvoiceView() {
     return (
       <div className="stack">
         <section className="state-empty" role="status">
-          <p className="state-title">Invoice not found in recent invoices.</p>
-          <p className="state-message">Tap load more to search further back, or return to invoices.</p>
+          <p className="state-title">{t('invoiceView.notFoundTitle')}</p>
+          <p className="state-message">{t('invoiceView.notFoundMessage')}</p>
           <div className="toolbar" style={{ justifyContent: 'center', gap: 10 }}>
             {canLoadMore && (
               <button
@@ -435,11 +451,11 @@ function InvoiceView() {
                 type="button"
                 onClick={() => setLimit((prev) => Math.min(prev * 2, 640))}
               >
-                Load more
+                {t('common.loadMore')}
               </button>
             )}
             <button className="btn btn-primary" type="button" onClick={() => navigate('/')}>
-              Back to invoices
+              {t('invoiceView.backToInvoices')}
             </button>
           </div>
         </section>
@@ -451,11 +467,11 @@ function InvoiceView() {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
-          <p className="state-title">Could not load this invoice.</p>
-          <p className="state-message">{error?.message || 'Invoice not found.'}</p>
+          <p className="state-title">{t('invoiceView.couldNotLoadTitle')}</p>
+          <p className="state-message">{error?.message || t('invoiceView.invoiceNotFound')}</p>
           <div className="state-actions">
             <button className="btn btn-secondary" type="button" onClick={() => refetchInvoice()}>
-              Try again
+              {t('common.tryAgain')}
             </button>
           </div>
         </section>
@@ -468,23 +484,35 @@ function InvoiceView() {
       <section className="card invoice-meta">
         <div className="invoice-meta-top">
           <div style={{ minWidth: 0 }}>
-            <p className="kicker">Invoice</p>
+            <p className="kicker">{t('invoiceView.metaKicker')}</p>
             <h2 className="title" style={{ marginBottom: 0 }}>
               {displayNumber}
             </h2>
           </div>
-          <span className={`badge ${statusClass(statusLabel)}`}>{statusLabel}</span>
+          <span className={`badge ${statusClass(rawStatus)}`}>{displayStatus}</span>
         </div>
 
         <div className="invoice-meta-chips">
-          {branchName && <span className="meta-chip">Branch: {branchName}</span>}
-          {warehouseName && <span className="meta-chip">Warehouse: {warehouseName}</span>}
-          <span className="meta-chip">Date: {formatShortDate(invoice.invoiceDate)}</span>
-          <span className="meta-chip">Terms: {paymentTermsLabel}</span>
+          {branchName && (
+            <span className="meta-chip">
+              {t('invoiceView.branch')}: {branchName}
+            </span>
+          )}
+          {warehouseName && (
+            <span className="meta-chip">
+              {t('invoiceView.warehouseLabel')}: {warehouseName}
+            </span>
+          )}
+          <span className="meta-chip">
+            {t('invoiceView.date')}: {formatShortDate(invoice.invoiceDate)}
+          </span>
+          <span className="meta-chip">
+            {t('invoiceView.terms')}: {paymentTermsLabel}
+          </span>
         </div>
       </section>
 
-      <section className="invoice-paper-wrap" aria-label="Invoice paper">
+      <section className="invoice-paper-wrap" aria-label={t('invoiceView.invoicePaperAria')}>
         <div className="invoice-paper">
           <div className="invoice-paper-head">
             <div className="invoice-paper-brand" aria-label="Account">
@@ -495,54 +523,54 @@ function InvoiceView() {
             </div>
 
             <div className="invoice-paper-title">
-              <div className="invoice-paper-heading">INVOICE</div>
+              <div className="invoice-paper-heading">{t('templatePreview.invoice')}</div>
               <div className="invoice-paper-number"># {displayNumber}</div>
             </div>
           </div>
 
           <div className="invoice-paper-balance">
-            <div className="invoice-paper-balance-label">Remaining Balance</div>
+            <div className="invoice-paper-balance-label">{t('invoiceView.remainingBalance')}</div>
             <div className="invoice-paper-balance-value">{formatMoney(invoice.remainingBalance, baseCurrency)}</div>
           </div>
 
           <div className="invoice-paper-grid">
             <div className="invoice-paper-block">
-              <div className="invoice-paper-block-label">Bill To</div>
+              <div className="invoice-paper-block-label">{t('invoiceView.billTo')}</div>
               <div className="invoice-paper-block-value">{invoice.customer?.name || '--'}</div>
             </div>
 
             <div className="invoice-paper-block">
               <div className="invoice-paper-block-row">
-                <span>Invoice Date</span>
+                <span>{t('invoiceView.invoiceDate')}</span>
                 <span>{formatShortDate(invoice.invoiceDate)}</span>
               </div>
               <div className="invoice-paper-block-row">
-                <span>Payment Terms</span>
+                <span>{t('invoiceView.paymentTerms')}</span>
                 <span>{paymentTermsLabel}</span>
               </div>
               <div className="invoice-paper-block-row">
-                <span>Due Date</span>
+                <span>{t('invoiceView.dueDate')}</span>
                 <span>{dueDate ? formatShortDate(dueDate.toISOString()) : '--'}</span>
               </div>
               <div className="invoice-paper-block-row">
-                <span>Warehouse</span>
+                <span>{t('invoiceView.warehouseLabel')}</span>
                 <span>{warehouseName || '--'}</span>
               </div>
             </div>
           </div>
 
-          <div className="invoice-table" role="table" aria-label="Invoice line items">
+          <div className="invoice-table" role="table" aria-label={t('invoiceView.tableAria')}>
             <div className="invoice-table-row invoice-table-head" role="row">
               <div role="columnheader">#</div>
-              <div role="columnheader">Item</div>
+              <div role="columnheader">{t('invoiceView.item')}</div>
               <div role="columnheader" style={{ textAlign: 'right' }}>
-                Qty
+                {t('invoiceView.qty')}
               </div>
               <div role="columnheader" style={{ textAlign: 'right' }}>
-                Rate
+                {t('invoiceView.rate')}
               </div>
               <div role="columnheader" style={{ textAlign: 'right' }}>
-                Amount
+                {t('invoiceView.amount')}
               </div>
             </div>
 
@@ -560,8 +588,8 @@ function InvoiceView() {
                   <div className="invoice-col-name" role="cell">
                     <div className="invoice-item-name">{line.name || '--'}</div>
                     <div className="invoice-item-meta">
-                      Qty {qty} · Rate {formatMoney(rate, baseCurrency)}
-                      {discount ? ` · Discount ${formatMoney(discount, baseCurrency)}` : ''}
+                      {t('invoiceView.qty')} {qty} · {t('invoiceView.rate')} {formatMoney(rate, baseCurrency)}
+                      {discount ? ` · ${t('invoiceView.discount')} ${formatMoney(discount, baseCurrency)}` : ''}
                     </div>
                   </div>
                   <div className="invoice-col-qty" role="cell" style={{ textAlign: 'right' }}>
@@ -581,19 +609,19 @@ function InvoiceView() {
           <div className="invoice-totals">
             <div className="invoice-totals-card">
               <div className="invoice-total-row">
-                <span>Sub Total</span>
+                <span>{t('invoiceView.subTotal')}</span>
                 <span>{formatMoney(totals.subtotal, baseCurrency)}</span>
               </div>
               <div className="invoice-total-row">
-                <span>Discount</span>
+                <span>{t('invoiceView.discount')}</span>
                 <span>-{formatMoney(totals.discount, baseCurrency)}</span>
               </div>
               <div className="invoice-total-row invoice-total-strong">
-                <span>Total</span>
+                <span>{t('invoiceView.total')}</span>
                 <span>{formatMoney(totals.total, baseCurrency)}</span>
               </div>
               <div className="invoice-total-row">
-                <span>Remaining</span>
+                <span>{t('invoiceView.remaining')}</span>
                 <span>{formatMoney(invoice.remainingBalance, baseCurrency)}</span>
               </div>
             </div>
@@ -607,8 +635,8 @@ function InvoiceView() {
         </section>
       )}
 
-      <section className="surface-card flow-note-card" aria-label="Next action">
-        <p className="kicker">Next action</p>
+      <section className="surface-card flow-note-card" aria-label={t('invoiceView.nextActionKicker')}>
+        <p className="kicker">{t('invoiceView.nextActionKicker')}</p>
         <p style={{ margin: 0 }} className="subtle">
           {nextActionHint}
         </p>
@@ -619,15 +647,15 @@ function InvoiceView() {
         type="button"
         onClick={handleShare}
         disabled={!canShare || saving}
-        aria-label="Send invoice link"
-        title={canShare ? 'Send invoice link' : 'Confirm invoice to enable sending'}
+        aria-label={t('invoiceView.sendInvoiceLink')}
+        title={canShare ? t('invoiceView.sendInvoiceLinkTitle') : t('invoiceView.sendEnableHint')}
       >
         <SendIcon />
       </button>
 
       <div className="sticky-actions invoice-actions">
         <button className="btn btn-secondary" type="button" onClick={() => setIsActionsOpen(true)}>
-          Actions
+          {t('common.actions')}
         </button>
         <button
           className={primaryActionClassName}
@@ -648,17 +676,17 @@ function InvoiceView() {
       </div>
 
       {isActionsOpen && (
-        <Modal title="Invoice actions" onClose={() => setIsActionsOpen(false)}>
+        <Modal title={t('invoiceView.invoiceActionsTitle')} onClose={() => setIsActionsOpen(false)}>
           <div className="action-list">
             {canEdit && (
               <button className="btn btn-secondary btn-full" type="button" onClick={handleEdit} disabled={saving}>
-                Edit invoice
+                {t('invoiceView.editInvoice')}
               </button>
             )}
 
             {canShare && (
               <button className="btn btn-secondary btn-full" type="button" onClick={handleShare} disabled={saving}>
-                Share link
+                {t('invoiceView.shareLink')}
               </button>
             )}
 
@@ -669,11 +697,11 @@ function InvoiceView() {
                 onClick={() => setIsRecordPaymentOpen(true)}
                 disabled={saving}
               >
-                {isRecordingPayment ? 'Recording...' : 'Record Payment'}
+                {isRecordingPayment ? t('invoiceView.recording') : t('invoiceView.recordPayment')}
               </button>
             )}
             <button className="btn btn-secondary btn-full" type="button" onClick={handlePrint}>
-              PDF / Print
+              {t('invoiceView.pdfPrint')}
             </button>
 
             {canDelete && (
@@ -685,7 +713,7 @@ function InvoiceView() {
                 }}
                 disabled={saving}
               >
-                Delete invoice
+                {t('invoiceView.deleteInvoice')}
               </button>
             )}
           </div>
@@ -693,17 +721,17 @@ function InvoiceView() {
       )}
 
       {isConfirmOpen && (
-        <Modal title="Confirm invoice" onClose={() => setIsConfirmOpen(false)}>
+        <Modal title={t('invoiceView.confirmInvoiceTitle')} onClose={() => setIsConfirmOpen(false)}>
           <div className="form-grid">
             <p className="subtle" style={{ marginTop: 0 }}>
-              Confirming will lock this invoice into a confirmed state.
+              {t('invoiceView.confirmInvoiceCopy')}
             </p>
             <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
               <button className="btn btn-secondary" type="button" onClick={() => setIsConfirmOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button className="btn btn-primary" type="button" onClick={handleConfirm} disabled={saving}>
-                {saving ? 'Confirming…' : 'Confirm'}
+                {saving ? t('invoiceView.confirming') : t('invoiceView.confirm')}
               </button>
             </div>
           </div>
@@ -711,29 +739,29 @@ function InvoiceView() {
       )}
 
       {isRecordPaymentOpen && (
-        <Modal title="Record payment" onClose={() => setIsRecordPaymentOpen(false)}>
+        <Modal title={t('invoiceView.recordPaymentTitle')} onClose={() => setIsRecordPaymentOpen(false)}>
           <div className="form-grid">
             <p className="subtle" style={{ marginTop: 0 }}>
-              Select a bank account to record full payment for this invoice.
+              {t('invoiceView.recordPaymentCopy')}
             </p>
 
             {banksLoading && (
               <section className="state-loading" role="status" aria-live="polite">
-                <p className="state-message">Loading payment options...</p>
+                <p className="state-message">{t('invoiceView.loadingPaymentOptions')}</p>
               </section>
             )}
 
             {banksError && (
               <section className="state-error" role="alert">
-                <p className="state-title">Could not load payment options.</p>
+                <p className="state-title">{t('invoiceView.couldNotLoadPaymentOptions')}</p>
                 <p className="state-message">{banksError?.message}</p>
               </section>
             )}
 
             {!banksLoading && !banksError && bankAccounts.length === 0 && (
               <section className="state-empty" role="status">
-                <p className="state-title">No bank accounts found.</p>
-                <p className="state-message">Add a bank account from More {'>'} Bank Accounts first.</p>
+                <p className="state-title">{t('invoiceView.noBankAccountsTitle')}</p>
+                <p className="state-message">{t('invoiceView.noBankAccountsCopy')}</p>
               </section>
             )}
 
@@ -760,7 +788,7 @@ function InvoiceView() {
 
             <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
               <button className="btn btn-secondary" type="button" onClick={() => setIsRecordPaymentOpen(false)} disabled={saving}>
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -768,17 +796,17 @@ function InvoiceView() {
       )}
 
       {isDeleteOpen && (
-        <Modal title="Delete invoice" onClose={() => setIsDeleteOpen(false)}>
+        <Modal title={t('invoiceView.deleteInvoiceTitle')} onClose={() => setIsDeleteOpen(false)}>
           <div className="form-grid">
             <p className="subtle" style={{ marginTop: 0 }}>
-              This can&apos;t be undone. The invoice will be removed permanently.
+              {t('invoiceView.deleteInvoiceCopy')}
             </p>
             <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
               <button className="btn btn-secondary" type="button" onClick={() => setIsDeleteOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button className="btn btn-danger" type="button" onClick={handleDelete} disabled={!isDraft || saving}>
-                {saving ? 'Deleting…' : 'Delete'}
+                {saving ? t('invoiceView.deleting') : t('invoiceView.delete')}
               </button>
             </div>
           </div>

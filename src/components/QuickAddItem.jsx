@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import Modal from './Modal';
+import { useI18n } from '../i18n';
 
 const CREATE_PRODUCT = gql`
   mutation QuickAddProduct($input: NewProduct!) {
@@ -38,6 +39,7 @@ const GET_PRODUCT_DEFAULTS = gql`
 `;
 
 function QuickAddItem({ onSave, onClose }) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
   const [price, setPrice] = useState('');
@@ -100,10 +102,10 @@ function QuickAddItem({ onSave, onClose }) {
   };
 
   return (
-    <Modal title="Quick add item" onClose={onClose}>
+    <Modal title={t('picker.quickAddItemTitle')} onClose={onClose}>
       <div className="form-grid">
         <label className="field">
-          <span className="label">Name *</span>
+          <span className="label">{t('fields.nameRequired')}</span>
           <input 
             className="input" 
             value={name} 
@@ -112,11 +114,11 @@ function QuickAddItem({ onSave, onClose }) {
           />
         </label>
         <label className="field">
-          <span className="label">SKU</span>
+          <span className="label">{t('fields.sku')}</span>
           <input className="input" value={sku} onChange={(e) => setSku(e.target.value)} />
         </label>
         <label className="field">
-          <span className="label">Price</span>
+          <span className="label">{t('fields.price')}</span>
           <input
             className="input"
             type="number"
@@ -132,7 +134,7 @@ function QuickAddItem({ onSave, onClose }) {
             type="button" 
             onClick={onClose}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button 
             className="btn btn-primary" 
@@ -140,7 +142,7 @@ function QuickAddItem({ onSave, onClose }) {
             onClick={handleSave} 
             disabled={loading || !defaultsData}
           >
-            {loading ? 'Saving…' : 'Save'}
+            {loading ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </div>

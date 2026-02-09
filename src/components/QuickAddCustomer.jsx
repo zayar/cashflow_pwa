@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import Modal from './Modal';
+import { useI18n } from '../i18n';
 
 const CREATE_CUSTOMER = gql`
   mutation QuickAddCustomer($input: NewCustomer!) {
@@ -28,6 +29,7 @@ const GET_BUSINESS = gql`
 `;
 
 function QuickAddCustomer({ onSave, onClose }) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [address, setAddress] = useState('');
@@ -64,10 +66,10 @@ function QuickAddCustomer({ onSave, onClose }) {
   };
 
   return (
-    <Modal title="Quick add client" onClose={onClose}>
+    <Modal title={t('picker.quickAddClientTitle')} onClose={onClose}>
       <div className="form-grid">
         <label className="field">
-          <span className="label">Name *</span>
+          <span className="label">{t('fields.nameRequired')}</span>
           <input 
             className="input" 
             value={name} 
@@ -76,22 +78,22 @@ function QuickAddCustomer({ onSave, onClose }) {
           />
         </label>
         <label className="field">
-          <span className="label">Notes</span>
+          <span className="label">{t('fields.notes')}</span>
           <input className="input" value={note} onChange={(e) => setNote(e.target.value)} />
         </label>
         <label className="field">
-          <span className="label">Address (optional)</span>
+          <span className="label">{t('fields.addressOptional')}</span>
           <textarea className="input" rows={3} value={address} onChange={(e) => setAddress(e.target.value)} />
         </label>
         <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn btn-secondary" type="button" onClick={onClose}>Cancel</button>
+          <button className="btn btn-secondary" type="button" onClick={onClose}>{t('common.cancel')}</button>
           <button 
             className="btn btn-primary" 
             type="button" 
             onClick={handleSave} 
             disabled={loading || !businessData}
           >
-            {loading ? 'Saving…' : 'Save'}
+            {loading ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </div>
