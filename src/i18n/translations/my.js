@@ -39,6 +39,21 @@ export default {
     reports: 'အစီရင်ခံစာများ',
     more: 'ပိုမို'
   },
+  status: {
+    draft: 'မူကြမ်း',
+    confirmed: 'အတည်ပြုပြီး',
+    due: 'ပေးရန်ကျန်',
+    overdue: 'ရက်ကျော်',
+    paid: 'ပေးချေပြီး',
+    partialPaid: 'တစ်စိတ်တစ်ပိုင်း ပေးချေပြီး',
+    void: 'ပယ်ဖျက်ထားသည်'
+  },
+  docTypes: {
+    invoice: 'အင်ဗွိုက်စ်',
+    creditNote: 'ခရက်ဒစ် နုတ်စာ',
+    paymentReceipt: 'ငွေလက်ခံပြေစာ',
+    bill: 'ဘီလ်'
+  },
   topbar: {
     hiUser: 'မင်္ဂလာပါ၊ {{name}}',
     logout: 'အကောင့်ထွက်ရန်'

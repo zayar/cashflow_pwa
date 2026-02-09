@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useInvoiceDraft } from '../state/invoiceDraft';
 import { formatInvoiceNumberShort, formatMoney, formatShortDate } from '../lib/formatters';
 import { useI18n } from '../i18n';
+import { getInvoiceStatusKey } from '../i18n/status';
 
 const INVOICES_QUERY = gql`
   query PaginateInvoices($limit: Int = 20) {
@@ -221,7 +222,11 @@ function Invoices() {
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <p style={{ margin: 0, fontWeight: 800 }}>{formatMoney(invoice.invoiceTotalAmount, baseCurrency)}</p>
                   <span className={`badge ${statusClass(invoice.currentStatus)}`}>
-                    {invoice.currentStatus || t('invoices.unknown')}
+                    {(() => {
+                      const rawStatus = invoice.currentStatus || '';
+                      const statusKey = getInvoiceStatusKey(rawStatus);
+                      return statusKey ? t(statusKey) : rawStatus || t('invoices.unknown');
+                    })()}
                   </span>
                 </div>
               </Link>

@@ -5,6 +5,7 @@ import Modal from '../components/Modal';
 import { getDefaultInvoiceLocationIds, getUsername } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import { useI18n } from '../i18n';
+import { getInvoiceStatusKey } from '../i18n/status';
 import {
   computeDueDate,
   formatInvoiceNumberShort,
@@ -238,8 +239,9 @@ function InvoiceView() {
     return t('pages.invoiceView.title');
   }, [invoice?.id, invoice?.invoiceNumber, t]);
 
-  const rawStatus = invoice?.currentStatus || 'Unknown';
-  const displayStatus = invoice?.currentStatus || t('invoiceView.unknown');
+  const rawStatus = invoice?.currentStatus || '';
+  const statusKey = getInvoiceStatusKey(rawStatus);
+  const displayStatus = statusKey ? t(statusKey) : rawStatus || t('invoiceView.unknown');
   const normalizedStatus = (rawStatus || '').toLowerCase();
   const isDraft = normalizedStatus.includes('draft');
   const isConfirmed = normalizedStatus.includes('confirmed');

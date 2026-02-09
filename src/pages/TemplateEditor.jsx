@@ -88,8 +88,10 @@ function TemplateEditor() {
   const [error, setError] = useState('');
 
   const label = useMemo(() => {
-    return DOCUMENT_TYPES.find((type) => type.key === documentType)?.label || 'Template';
-  }, [documentType]);
+    const entry = DOCUMENT_TYPES.find((type) => type.key === documentType);
+    if (entry?.labelKey) return t(entry.labelKey);
+    return t('templateEditor.template');
+  }, [documentType, t]);
 
   const logoUrl = useMemo(() => resolveStorageAccessUrl(config?.header?.logoUrl || ''), [config?.header?.logoUrl]);
   const qrUrl = useMemo(() => resolveStorageAccessUrl(config?.footer?.qrImageUrl || ''), [config?.footer?.qrImageUrl]);

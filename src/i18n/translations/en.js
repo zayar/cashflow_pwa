@@ -39,6 +39,21 @@ export default {
     reports: 'Reports',
     more: 'More'
   },
+  status: {
+    draft: 'Draft',
+    confirmed: 'Confirmed',
+    due: 'Due',
+    overdue: 'Overdue',
+    paid: 'Paid',
+    partialPaid: 'Partially paid',
+    void: 'Void'
+  },
+  docTypes: {
+    invoice: 'Invoice',
+    creditNote: 'Credit Note',
+    paymentReceipt: 'Payment Receipt',
+    bill: 'Bill'
+  },
   topbar: {
     hiUser: 'Hi, {{name}}',
     logout: 'Logout'

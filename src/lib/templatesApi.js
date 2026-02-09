@@ -45,10 +45,10 @@ const request = async (path, { method = 'GET', body } = {}) => {
 };
 
 export const DOCUMENT_TYPES = [
-  { key: 'invoice', label: 'Invoice' },
-  { key: 'credit_note', label: 'Credit Note' },
-  { key: 'payment_receipt', label: 'Payment Receipt' },
-  { key: 'bill', label: 'Bill' }
+  { key: 'invoice', labelKey: 'docTypes.invoice' },
+  { key: 'credit_note', labelKey: 'docTypes.creditNote' },
+  { key: 'payment_receipt', labelKey: 'docTypes.paymentReceipt' },
+  { key: 'bill', labelKey: 'docTypes.bill' }
 ];
 
 export const safeParseConfigString = (configJson) => {
