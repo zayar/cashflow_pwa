@@ -61,6 +61,20 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/reports')) {
     return { titleKey: 'pages.reports.title', kickerKey: 'pages.reports.kicker', backPath: '/' };
   }
+  if (pathname.startsWith('/expenses/new')) {
+    return { titleKey: 'pages.expenseNew.title', kickerKey: 'pages.expenseNew.kicker', backPath: '/expenses' };
+  }
+  const expenseMatch = pathname.match(/^\/expenses\/([^/]+)/);
+  const expenseId = expenseMatch?.[1] || '';
+  if (expenseId && pathname.endsWith('/edit')) {
+    return { titleKey: 'pages.expenseEdit.title', kickerKey: 'pages.expenseEdit.kicker', backPath: `/expenses/${expenseId}` };
+  }
+  if (expenseId) {
+    return { titleKey: 'pages.expenseView.title', kickerKey: 'pages.expenseView.kicker', backPath: '/expenses' };
+  }
+  if (pathname.startsWith('/expenses')) {
+    return { titleKey: 'pages.expenses.title', kickerKey: 'pages.expenses.kicker', backPath: '/more' };
+  }
   if (pathname.startsWith('/more')) {
     return { titleKey: 'pages.more.title', kickerKey: 'pages.more.kicker', backPath: '/' };
   }
@@ -90,9 +104,10 @@ function RootLayout() {
     location.pathname.startsWith('/templates') ||
     location.pathname.startsWith('/bank-accounts') ||
     location.pathname.startsWith('/more/integrations') ||
+    location.pathname.startsWith('/expenses/') ||
     isItemDetail ||
     isClientDetail;
-  const hideFab = location.pathname.startsWith('/reports');
+  const hideFab = location.pathname.startsWith('/reports') || location.pathname.startsWith('/expenses');
 
   const pageCopy = useMemo(() => getPageCopy(location.pathname), [location.pathname]);
 

@@ -81,6 +81,18 @@ function More() {
         <div className="feature-list">
           <div className="feature-row">
             <div>
+              <p style={{ margin: 0, fontWeight: 700 }}>{t('more.expenses')}</p>
+              <p className="subtle" style={{ fontSize: 13 }}>
+                {t('more.expensesCopy')}
+              </p>
+            </div>
+            <button className="btn btn-secondary" type="button" onClick={() => navigate('/expenses')}>
+              {t('more.open')}
+            </button>
+          </div>
+
+          <div className="feature-row">
+            <div>
               <p style={{ margin: 0, fontWeight: 700 }}>{t('more.pdfExport')}</p>
               <p className="subtle" style={{ fontSize: 13 }}>
                 {t('more.pdfExportCopy')}

@@ -23,6 +23,10 @@ const Templates = lazy(() => import('./pages/Templates'));
 const TemplateEditor = lazy(() => import('./pages/TemplateEditor'));
 const BankAccounts = lazy(() => import('./pages/BankAccounts'));
 const TelegramConnect = lazy(() => import('./pages/TelegramConnect'));
+const Expenses = lazy(() => import('./pages/Expenses'));
+const ExpenseForm = lazy(() => import('./pages/ExpenseForm'));
+const ExpenseView = lazy(() => import('./pages/ExpenseView'));
+const ExpenseEdit = lazy(() => import('./pages/ExpenseEdit'));
 
 function suspense(element) {
   return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
@@ -50,6 +54,10 @@ export function AppRoutes() {
         { path: 'templates/:documentType/:templateId/edit', element: suspense(<TemplateEditor />) },
         { path: 'bank-accounts', element: suspense(<BankAccounts />) },
         { path: 'more/integrations/telegram', element: suspense(<TelegramConnect />) },
+        { path: 'expenses', element: suspense(<Expenses />) },
+        { path: 'expenses/new', element: suspense(<ExpenseForm />) },
+        { path: 'expenses/:id', element: suspense(<ExpenseView />) },
+        { path: 'expenses/:id/edit', element: suspense(<ExpenseEdit />) },
         { path: 'reports', element: suspense(<Reports />) },
         { path: 'more', element: suspense(<More />) }
       ]

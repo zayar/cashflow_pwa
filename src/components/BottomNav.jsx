@@ -66,8 +66,14 @@ function BottomNav({ activePath }) {
       {navItems.map((item) => {
         const isInvoices = item.to === '/' && activePath.startsWith('/invoices');
         const isRoot = item.to === '/' && activePath === '/';
+        const isMoreRelated =
+          item.to === '/more' &&
+          (activePath.startsWith('/more') ||
+            activePath.startsWith('/templates') ||
+            activePath.startsWith('/bank-accounts') ||
+            activePath.startsWith('/expenses'));
         const isExact = item.to !== '/' && activePath.startsWith(item.to);
-        const isActive = isInvoices || isRoot || isExact;
+        const isActive = isInvoices || isRoot || isExact || isMoreRelated;
         const Icon = item.icon;
 
         return (
