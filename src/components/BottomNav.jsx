@@ -60,7 +60,7 @@ const navItems = [
 ];
 
 function BottomNav({ activePath }) {
-  const { t } = useI18n();
+  const { tEn } = useI18n();
   return (
     <nav className="bottom-nav" aria-label="Primary navigation">
       {navItems.map((item) => {
@@ -75,7 +75,7 @@ function BottomNav({ activePath }) {
             <span className="nav-pill" aria-hidden="true">
               <Icon />
             </span>
-            <span>{t(item.labelKey)}</span>
+            <span>{tEn(item.labelKey)}</span>
           </Link>
         );
       })}

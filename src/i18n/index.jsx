@@ -45,7 +45,8 @@ function interpolate(template, vars) {
 const I18nContext = createContext({
   lang: DEFAULT_LANG,
   setLang: () => {},
-  t: (key) => String(key || '')
+  t: (key) => String(key || ''),
+  tEn: (key) => String(key || '')
 });
 
 export function I18nProvider({ children }) {
@@ -72,6 +73,15 @@ export function I18nProvider({ children }) {
     [lang]
   );
 
+  // For UI that must remain in English even when the user switches languages
+  // (e.g. top navigation labels to avoid layout shifts).
+  const tEn = useCallback((key, vars) => {
+    const fallback = dictionaries[DEFAULT_LANG];
+    const raw = getByPath(fallback, key);
+    const resolved = typeof raw === 'string' ? raw : String(key || '');
+    return interpolate(resolved, vars);
+  }, []);
+
   useEffect(() => {
     try {
       document.documentElement.lang = lang === 'my' ? 'my' : 'en';
@@ -80,11 +90,10 @@ export function I18nProvider({ children }) {
     }
   }, [lang]);
 
-  const value = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
+  const value = useMemo(() => ({ lang, setLang, t, tEn }), [lang, setLang, t, tEn]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {
   return useContext(I18nContext);
 }
-

@@ -70,7 +70,7 @@ function getPageCopy(pathname) {
 function RootLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useI18n();
+  const { t, tEn } = useI18n();
   const [token, setToken] = useState('');
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -131,23 +131,23 @@ function RootLayout() {
               <BrandLogo variant="mark" className="brand-mark-svg" />
             </div>
             <div className="brand-copy">
-              <p className="brand-kicker">{t(pageCopy.kickerKey)}</p>
-              <h1 className="heading">{t(pageCopy.titleKey)}</h1>
+              <p className="brand-kicker">{tEn(pageCopy.kickerKey)}</p>
+              <h1 className="heading">{tEn(pageCopy.titleKey)}</h1>
             </div>
           </div>
 
           <div className="topbar-actions">
             {isEditorPage ? (
-              <Link to={pageCopy.backPath} className="btn btn-secondary" aria-label={t('common.back')}>
-                {t('common.back')}
+              <Link to={pageCopy.backPath} className="btn btn-secondary" aria-label={tEn('common.back')}>
+                {tEn('common.back')}
               </Link>
             ) : (
               <>
-                <span className="user-chip" title={username || t('common.user')}>
-                  {t('topbar.hiUser', { name: username || t('common.user') })}
+                <span className="user-chip" title={username || tEn('common.user')}>
+                  {tEn('topbar.hiUser', { name: username || tEn('common.user') })}
                 </span>
                 <button type="button" className="btn btn-danger" onClick={handleLogout}>
-                  {t('topbar.logout')}
+                  {tEn('topbar.logout')}
                 </button>
               </>
             )}
