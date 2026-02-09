@@ -150,7 +150,7 @@ function SendIcon() {
 function InvoiceView() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { t } = useI18n();
+  const { t, tEn } = useI18n();
 
   const [status, setStatus] = useState('');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
@@ -525,7 +525,7 @@ function InvoiceView() {
             </div>
 
             <div className="invoice-paper-title">
-              <div className="invoice-paper-heading">{t('templatePreview.invoice')}</div>
+              <div className="invoice-paper-heading">{tEn('templatePreview.invoice')}</div>
               <div className="invoice-paper-number"># {displayNumber}</div>
             </div>
           </div>
