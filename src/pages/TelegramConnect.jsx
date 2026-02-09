@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getActiveTelegramLinkCode, generateTelegramLinkCode } from '../lib/telegramLinkApi';
 import { useI18n } from '../i18n';
 
@@ -18,6 +19,7 @@ const formatDateTime = (epochMs) => {
 };
 
 function TelegramConnect() {
+  const navigate = useNavigate();
   const { t } = useI18n();
   const [activeCode, setActiveCode] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,6 +123,19 @@ function TelegramConnect() {
           </button>
           <button type="button" className="btn btn-ghost" onClick={loadActiveCode} disabled={isGenerating}>
             {t('common.refresh')}
+          </button>
+        </div>
+      </section>
+
+      <section className="card">
+        <p className="kicker">{t('telegramAutoReports.kicker')}</p>
+        <h3 className="title" style={{ marginBottom: 6 }}>
+          {t('telegramAutoReports.title')}
+        </h3>
+        <p className="subtle">{t('telegramAutoReports.subtitle')}</p>
+        <div className="toolbar">
+          <button type="button" className="btn btn-secondary" onClick={() => navigate('/more/integrations/telegram/auto-reports')}>
+            {t('common.open')}
           </button>
         </div>
       </section>

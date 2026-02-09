@@ -55,6 +55,9 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/bank-accounts')) {
     return { titleKey: 'pages.bankAccounts.title', kickerKey: 'pages.bankAccounts.kicker', backPath: '/more' };
   }
+  if (pathname.startsWith('/more/integrations/telegram/auto-reports')) {
+    return { titleKey: 'pages.telegramAutoReports.title', kickerKey: 'pages.telegramAutoReports.kicker', backPath: '/more/integrations/telegram' };
+  }
   if (pathname.startsWith('/more/integrations/telegram')) {
     return { titleKey: 'pages.telegramConnect.title', kickerKey: 'pages.telegramConnect.kicker', backPath: '/more' };
   }

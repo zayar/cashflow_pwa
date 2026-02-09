@@ -561,6 +561,12 @@ textarea.input:focus {
   border-color: #cedef1;
 }
 
+.badge-danger {
+  background: #fff1f1;
+  color: #9e1f1f;
+  border-color: #ffc7c7;
+}
+
 .empty,
 .state-empty,
 .state-loading,
