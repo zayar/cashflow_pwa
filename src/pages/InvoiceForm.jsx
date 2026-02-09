@@ -110,7 +110,7 @@ function getNetworkErrorMessage(error) {
 }
 
 function InvoiceForm() {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -376,7 +376,7 @@ function InvoiceForm() {
     setStatus('');
     try {
       const share = await createInvoiceShareToken(invoice.invoiceId);
-      const shareUrl = buildInvoiceShareUrl(share?.token);
+      const shareUrl = buildInvoiceShareUrl(share?.token, { lang });
       if (!shareUrl) {
         throw new Error(t('invoiceForm.shareUnavailable'));
       }

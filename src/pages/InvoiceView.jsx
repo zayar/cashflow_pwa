@@ -150,7 +150,7 @@ function SendIcon() {
 function InvoiceView() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { t, tEn } = useI18n();
+  const { lang, t, tEn } = useI18n();
 
   const [status, setStatus] = useState('');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
@@ -269,7 +269,7 @@ function InvoiceView() {
     setStatus('');
     try {
       const share = await createInvoiceShareToken(invoice.id);
-      const shareUrl = buildInvoiceShareUrl(share?.token);
+      const shareUrl = buildInvoiceShareUrl(share?.token, { lang });
       if (!shareUrl) {
         throw new Error(t('invoiceForm.shareUnavailable'));
       }

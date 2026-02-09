@@ -17,7 +17,10 @@ if (typeof window !== 'undefined') {
   const hash = window.location.hash || '';
   const match = hash.match(/^#\/public\/invoices\/(.+)$/);
   if (match && match[1]) {
-    const target = buildInvoiceShareUrl(match[1]);
+    const [tokenPart, queryPart] = String(match[1]).split('?');
+    const qs = new URLSearchParams(queryPart || '');
+    const lang = qs.get('lang') || '';
+    const target = buildInvoiceShareUrl(tokenPart, { lang });
     if (target && target !== window.location.href) {
       window.location.replace(target);
     }

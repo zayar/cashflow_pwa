@@ -64,9 +64,11 @@ export const createInvoiceShareToken = async (invoiceId) => {
   });
 };
 
-export const buildInvoiceShareUrl = (token) => {
+export const buildInvoiceShareUrl = (token, { lang } = {}) => {
   if (!token) return '';
   const origin = getShareViewerOrigin();
   // Public invoice viewer lives in the main Cashflow web app.
-  return `${origin}/#/public/invoices/${encodeURIComponent(String(token))}`;
+  const normalizedLang = String(lang || '').trim().toLowerCase();
+  const suffix = normalizedLang && normalizedLang !== 'en' ? `?lang=${encodeURIComponent(normalizedLang)}` : '';
+  return `${origin}/#/public/invoices/${encodeURIComponent(String(token))}${suffix}`;
 };
