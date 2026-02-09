@@ -2,6 +2,7 @@ import { gql, useQuery } from '@apollo/client';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../i18n';
+import { dateInputToMyDateString } from '../lib/dates';
 import { formatMoney, formatShortDate } from '../lib/formatters';
 
 const PAGINATE_EXPENSES = gql`
@@ -49,16 +50,10 @@ const PAGINATE_EXPENSES = gql`
   }
 `;
 
-function toIsoDate(value) {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 10);
-}
-
 function monthRange() {
   const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  return { fromDate: toIsoDate(start), toDate: toIsoDate(now) };
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { fromDate: dateInputToMyDateString(start), toDate: dateInputToMyDateString(now) };
 }
 
 function SearchIcon() {
@@ -246,4 +241,3 @@ function Expenses() {
 }
 
 export default Expenses;
-

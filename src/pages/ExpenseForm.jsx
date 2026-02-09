@@ -5,6 +5,7 @@ import Modal from '../components/Modal';
 import QuickAddCustomer from '../components/QuickAddCustomer';
 import { useI18n } from '../i18n';
 import { getDefaultInvoiceCurrencyId, getDefaultInvoiceLocationIds } from '../lib/auth';
+import { dateInputToISODateTime, toDateInputValue } from '../lib/dates';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { completeUpload, resolveStorageAccessUrl, signUpload, uploadToSignedUrl } from '../lib/uploadApi';
 
@@ -137,12 +138,6 @@ const UPDATE_EXPENSE = gql`
   }
 `;
 
-function toIsoDate(value) {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 10);
-}
-
 function toPositiveInt(value) {
   const number = Number(value);
   if (!Number.isFinite(number) || number <= 0) return 0;
@@ -189,7 +184,7 @@ function ExpenseForm({ mode = 'create', expense = null }) {
   const [supplier, setSupplier] = useState(() => (expense?.supplier?.id ? expense.supplier : null));
   const [customer, setCustomer] = useState(() => (expense?.customer?.id ? expense.customer : null));
 
-  const [expenseDate, setExpenseDate] = useState(() => toIsoDate(expense?.expenseDate) || toIsoDate(new Date()));
+  const [expenseDate, setExpenseDate] = useState(() => toDateInputValue(expense?.expenseDate) || toDateInputValue(new Date()));
   const [amount, setAmount] = useState(() => (expense?.amount != null ? String(expense.amount) : ''));
   const [bankCharges, setBankCharges] = useState(() => (expense?.bankCharges != null ? String(expense.bankCharges) : ''));
   const [referenceNumber, setReferenceNumber] = useState(() => String(expense?.referenceNumber || ''));
@@ -329,7 +324,7 @@ function ExpenseForm({ mode = 'create', expense = null }) {
     if (!toPositiveInt(expenseAccountId)) nextErrors.expenseAccountId = t('expenseForm.validation.expenseAccount');
     if (!toPositiveInt(paidThroughId)) nextErrors.paidThroughId = t('expenseForm.validation.paidThrough');
     if (!toPositiveInt(branchId)) nextErrors.branchId = t('expenseForm.validation.branch');
-    if (!expenseDate) nextErrors.expenseDate = t('expenseForm.validation.date');
+    if (!dateInputToISODateTime(expenseDate)) nextErrors.expenseDate = t('expenseForm.validation.date');
 
     const currId = toPositiveInt(currencyId) || baseCurrencyId;
     if (!currId) nextErrors.currencyId = t('expenseForm.validation.currency');
@@ -354,11 +349,13 @@ function ExpenseForm({ mode = 'create', expense = null }) {
 
     const { taxType, taxId } = parseTaxSelection(taxSelection);
 
+    const isoExpenseDate = dateInputToISODateTime(expenseDate);
+
     const input = {
       expenseAccountId: toPositiveInt(expenseAccountId),
       assetAccountId: toPositiveInt(paidThroughId),
       branchId: toPositiveInt(branchId),
-      expenseDate,
+      expenseDate: isoExpenseDate,
       currencyId: currId,
       exchangeRate: normalizedExchangeRate,
       amount: Number(amount),
