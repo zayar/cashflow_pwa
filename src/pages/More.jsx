@@ -79,6 +79,7 @@ function More() {
 
       <section className="more-grid">
         <div className="feature-list">
+          {/* UX: keep bottom nav to 5 items; Expenses lives under More to reduce clutter for beginners. */}
           <div className="feature-row">
             <div>
               <p style={{ margin: 0, fontWeight: 700 }}>{t('more.expenses')}</p>
