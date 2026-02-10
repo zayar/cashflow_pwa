@@ -161,7 +161,7 @@ function More() {
           <span className="meta-chip">{t('more.smartReminders')}</span>
           <span className="meta-chip">{t('more.recurringInvoices')}</span>
         </div>
-        <button className="btn btn-upgrade" type="button">
+        <button className="btn btn-upgrade" type="button" onClick={() => navigate('/more/subscribe')}>
           {t('more.upgradeCta')}
         </button>
       </section>

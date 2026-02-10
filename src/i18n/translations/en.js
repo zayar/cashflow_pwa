@@ -122,6 +122,7 @@ export default {
     templateEdit: { title: 'Edit Template', kicker: 'Templates' },
     bankAccounts: { title: 'Bank Accounts', kicker: 'Settings' },
     telegramConnect: { title: 'Telegram Connect', kicker: 'Integrations' },
+    subscribe: { title: 'Subscribe', kicker: 'Upgrade' },
     expenses: { title: 'Expenses', kicker: 'Purchases' },
     expenseNew: { title: 'New Expense', kicker: 'Expenses' },
     expenseEdit: { title: 'Edit Expense', kicker: 'Expenses' },
@@ -349,6 +350,58 @@ export default {
     languageTitle: 'Language',
     languageCopy: 'Choose the language used in this app.',
     languageAria: 'Language selection'
+  },
+  subscribe: {
+    kicker: 'Cashflow Pro',
+    title: 'Choose your plan',
+    subtitle: 'Pick a plan for your business. You can switch later.',
+    mostPopular: 'Most popular',
+    select: 'Select',
+    selected: 'Selected',
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+    month: 'mo',
+    year: 'yr',
+    was: 'was',
+    everythingIncludes: 'Everything in {{name}}, plus:',
+    seeAllFeatures: '+ See all features',
+    hideAllFeatures: 'Hide features',
+    upgradeNow: 'Upgrade now',
+    monthlyPlan: 'monthly plan',
+    yearlyPlan: 'yearly plan',
+    plans: {
+      essential: {
+        name: 'Essentials',
+        blurb: 'Simple invoicing for getting started',
+        f1: 'Up to 3 invoices per month',
+        f2: 'Autofill client and item info',
+        f3: 'Online payments',
+        f4: 'Any device (iOS, Android, Web)'
+      },
+      plus: {
+        name: 'Plus',
+        blurb: 'Customization, reporting, and automation',
+        f1: 'Unlimited invoices per month',
+        f2: 'Summary reports (sales, paid, outstanding)',
+        f3: 'Due date reminders',
+        f4: 'Premium templates and branding',
+        f5: 'Telegram reports and notifications'
+      },
+      premium: {
+        name: 'Premium',
+        blurb: 'Priority support and advanced controls',
+        f1: 'Everything in Plus',
+        f2: 'Multi-branch support (where available)',
+        f3: 'Approval workflows (where available)',
+        f4: 'Advanced exports and audit history',
+        f5: 'Priority support'
+      }
+    },
+    requestTitle: 'Upgrade request',
+    requestCopy:
+      'Subscription checkout is not available in the PWA yet. Copy this request and share it with your admin/support to activate Cashflow Pro.',
+    copyRequest: 'Copy request',
+    copied: 'Copied'
   },
   invoiceForm: {
     paymentTerms: {
