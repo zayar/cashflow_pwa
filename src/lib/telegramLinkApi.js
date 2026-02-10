@@ -55,3 +55,28 @@ export const generateTelegramLinkCode = async () => {
     body: {}
   });
 };
+
+export const getTelegramAutoReportSettings = async () => {
+  return request('/api/telegram/auto-reports');
+};
+
+export const upsertTelegramAutoReportSchedule = async (payload) => {
+  return request('/api/telegram/auto-reports', {
+    method: 'POST',
+    body: payload
+  });
+};
+
+export const sendTelegramAutoReportTest = async (scheduleId) => {
+  return request('/api/telegram/auto-reports/test', {
+    method: 'POST',
+    body: { id: scheduleId }
+  });
+};
+
+export const deleteTelegramAutoReportSchedule = async (scheduleId) => {
+  return request('/api/telegram/auto-reports/delete', {
+    method: 'POST',
+    body: { id: scheduleId }
+  });
+};

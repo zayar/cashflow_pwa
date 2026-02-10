@@ -2166,6 +2166,27 @@ textarea.input:focus {
   word-break: break-word;
 }
 
+.telegram-schedule-group {
+  border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-soft) 78%, white 22%);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.telegram-weekly-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 520px) {
+  .telegram-weekly-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .reports-page {
   gap: 12px;
 }
