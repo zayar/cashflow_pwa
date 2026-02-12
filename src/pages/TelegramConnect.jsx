@@ -54,22 +54,26 @@ function TelegramConnect() {
   const [canManageSchedules, setCanManageSchedules] = useState(false);
   const [telegramLinked, setTelegramLinked] = useState(false);
   const [linkedRecipientsCount, setLinkedRecipientsCount] = useState(0);
-  const [dailyScheduleId, setDailyScheduleId] = useState('');
-  const [dailyType, setDailyType] = useState('YESTERDAY_DAILY');
-  const [dailyEnabled, setDailyEnabled] = useState(false);
-  const [dailyTime, setDailyTime] = useState(DEFAULT_DAILY_TIME);
+  const [yesterdayScheduleId, setYesterdayScheduleId] = useState('');
+  const [yesterdayEnabled, setYesterdayEnabled] = useState(false);
+  const [yesterdayTime, setYesterdayTime] = useState(DEFAULT_DAILY_TIME);
+  const [todayScheduleId, setTodayScheduleId] = useState('');
+  const [todayEnabled, setTodayEnabled] = useState(false);
+  const [todayTime, setTodayTime] = useState(DEFAULT_DAILY_TIME);
   const [weeklyScheduleId, setWeeklyScheduleId] = useState('');
   const [weeklyEnabled, setWeeklyEnabled] = useState(false);
   const [weeklyDayOfWeek, setWeeklyDayOfWeek] = useState(DEFAULT_WEEKLY_DAY);
   const [weeklyTime, setWeeklyTime] = useState(DEFAULT_WEEKLY_TIME);
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
 
-  const dailyYesterdayLabel = t('telegram.dailyYesterday');
-  const dailyTodayLabel = t('telegram.dailyToday');
-  const dailyTypeAria = t('telegram.dailyTypeAria');
-  const fallbackYesterday = dailyYesterdayLabel === 'telegram.dailyYesterday' ? 'Yesterday' : dailyYesterdayLabel;
-  const fallbackToday = dailyTodayLabel === 'telegram.dailyToday' ? 'Today' : dailyTodayLabel;
-  const fallbackDailyTypeAria = dailyTypeAria === 'telegram.dailyTypeAria' ? 'Daily report period' : dailyTypeAria;
+  const yesterdayToggleLabel = t('telegram.dailyYesterdayToggle');
+  const todayToggleLabel = t('telegram.dailyTodayToggle');
+  const fallbackYesterdayToggle =
+    yesterdayToggleLabel === 'telegram.dailyYesterdayToggle'
+      ? t('telegram.dailyEnabled') || 'Yesterday report'
+      : yesterdayToggleLabel;
+  const fallbackTodayToggle =
+    todayToggleLabel === 'telegram.dailyTodayToggle' ? 'Today report' : todayToggleLabel;
 
   const loadActiveCode = useCallback(async () => {
     setErrorMessage('');
@@ -92,21 +96,22 @@ function TelegramConnect() {
       const schedules = Array.isArray(payload?.schedules) ? payload.schedules : [];
       const linked = Boolean(payload?.telegramLinked);
       const timezoneDefault = String(payload?.timezoneDefault || DEFAULT_TIMEZONE) || DEFAULT_TIMEZONE;
-      const daily =
-        schedules.find((row) => row?.type === 'YESTERDAY_DAILY')
-        || schedules.find((row) => row?.type === 'DAILY')
-        || null;
+      const yesterday = schedules.find((row) => row?.type === 'YESTERDAY_DAILY') || null;
+      const today = schedules.find((row) => row?.type === 'DAILY') || null;
       const weekly = schedules.find((row) => row?.type === 'WEEKLY') || null;
 
       setCanManageSchedules(Boolean(payload?.canManage));
       setTelegramLinked(linked);
       setLinkedRecipientsCount(Number(payload?.linkedRecipientsCount || 0));
-      setTimezone(String(daily?.timezone || weekly?.timezone || timezoneDefault || DEFAULT_TIMEZONE));
+      setTimezone(String(yesterday?.timezone || today?.timezone || weekly?.timezone || timezoneDefault || DEFAULT_TIMEZONE));
 
-      setDailyScheduleId(String(daily?.id || ''));
-      setDailyType(String(daily?.type || 'YESTERDAY_DAILY'));
-      setDailyEnabled(Boolean(daily?.enabled));
-      setDailyTime(String(daily?.time || DEFAULT_DAILY_TIME));
+      setYesterdayScheduleId(String(yesterday?.id || ''));
+      setYesterdayEnabled(Boolean(yesterday?.enabled));
+      setYesterdayTime(String(yesterday?.time || DEFAULT_DAILY_TIME));
+
+      setTodayScheduleId(String(today?.id || ''));
+      setTodayEnabled(Boolean(today?.enabled));
+      setTodayTime(String(today?.time || DEFAULT_DAILY_TIME));
 
       setWeeklyScheduleId(String(weekly?.id || ''));
       setWeeklyEnabled(Boolean(weekly?.enabled));
@@ -172,11 +177,19 @@ function TelegramConnect() {
     setSettingsMessage('');
     try {
       const normalizedTz = String(timezone || DEFAULT_TIMEZONE).trim() || DEFAULT_TIMEZONE;
-      const savedDaily = await upsertTelegramAutoReportSchedule({
-        id: dailyScheduleId || undefined,
-        type: dailyType === 'DAILY' ? 'DAILY' : 'YESTERDAY_DAILY',
-        enabled: Boolean(dailyEnabled),
-        time: dailyTime || DEFAULT_DAILY_TIME,
+      const savedYesterday = await upsertTelegramAutoReportSchedule({
+        id: yesterdayScheduleId || undefined,
+        type: 'YESTERDAY_DAILY',
+        enabled: Boolean(yesterdayEnabled),
+        time: yesterdayTime || DEFAULT_DAILY_TIME,
+        timezone: normalizedTz
+      });
+
+      const savedToday = await upsertTelegramAutoReportSchedule({
+        id: todayScheduleId || undefined,
+        type: 'DAILY',
+        enabled: Boolean(todayEnabled),
+        time: todayTime || DEFAULT_DAILY_TIME,
         timezone: normalizedTz
       });
 
@@ -189,7 +202,8 @@ function TelegramConnect() {
         dayOfWeek: weeklyDayOfWeek || DEFAULT_WEEKLY_DAY
       });
 
-      setDailyScheduleId(String(savedDaily?.id || dailyScheduleId || ''));
+      setYesterdayScheduleId(String(savedYesterday?.id || yesterdayScheduleId || ''));
+      setTodayScheduleId(String(savedToday?.id || todayScheduleId || ''));
       setWeeklyScheduleId(String(savedWeekly?.id || weeklyScheduleId || ''));
       setSettingsMessage(t('telegram.scheduleSaved'));
       await loadAutoReportSettings();
@@ -202,23 +216,23 @@ function TelegramConnect() {
 
   const handleSendTestReport = async () => {
     setIsSendingTest(true);
-    setSettingsError('');
-    setSettingsMessage('');
-    try {
-      let targetScheduleId = dailyScheduleId || weeklyScheduleId;
-      if (!targetScheduleId) {
-        const createdDaily = await upsertTelegramAutoReportSchedule({
-          type: 'YESTERDAY_DAILY',
-          enabled: false,
-          time: dailyTime || DEFAULT_DAILY_TIME,
-          timezone: String(timezone || DEFAULT_TIMEZONE).trim() || DEFAULT_TIMEZONE
-        });
-        targetScheduleId = String(createdDaily?.id || '');
-        setDailyScheduleId(targetScheduleId);
-      }
-      if (!targetScheduleId) {
-        throw new Error(t('telegram.scheduleMissingForTest'));
-      }
+      setSettingsError('');
+      setSettingsMessage('');
+      try {
+        let targetScheduleId = yesterdayScheduleId || todayScheduleId || weeklyScheduleId;
+        if (!targetScheduleId) {
+          const createdDaily = await upsertTelegramAutoReportSchedule({
+            type: 'YESTERDAY_DAILY',
+            enabled: false,
+            time: yesterdayTime || DEFAULT_DAILY_TIME,
+            timezone: String(timezone || DEFAULT_TIMEZONE).trim() || DEFAULT_TIMEZONE
+          });
+          targetScheduleId = String(createdDaily?.id || '');
+          setYesterdayScheduleId(targetScheduleId);
+        }
+        if (!targetScheduleId) {
+          throw new Error(t('telegram.scheduleMissingForTest'));
+        }
       await sendTelegramAutoReportTest(targetScheduleId);
       setSettingsMessage(t('telegram.testQueued'));
       await loadAutoReportSettings();
@@ -294,41 +308,46 @@ function TelegramConnect() {
             {!canManageSchedules ? <p className="auth-state">{t('telegram.ownerOnly')}</p> : null}
 
             <div className="telegram-schedule-group">
-              <label className="toggle" htmlFor="daily-enabled-toggle">
+              <label className="toggle" htmlFor="yesterday-enabled-toggle">
                 <input
-                  id="daily-enabled-toggle"
+                  id="yesterday-enabled-toggle"
                   type="checkbox"
-                  checked={dailyEnabled}
-                  onChange={(event) => setDailyEnabled(event.target.checked)}
+                  checked={yesterdayEnabled}
+                  onChange={(event) => setYesterdayEnabled(event.target.checked)}
                   disabled={!canManageSchedules || isSavingSettings || isSendingTest}
                 />
-                {t('telegram.dailyEnabled')}
+                {fallbackYesterdayToggle}
               </label>
-              <div className="pill-tabs" role="group" aria-label={t('telegram.dailyTypeAria')}>
-                <button
-                  type="button"
-                  className={`pill ${dailyType === 'YESTERDAY_DAILY' ? 'active' : ''}`}
-                  onClick={() => setDailyType('YESTERDAY_DAILY')}
-                  disabled={!canManageSchedules || isSavingSettings || isSendingTest}
-                >
-                  {fallbackYesterday}
-                </button>
-                <button
-                  type="button"
-                  className={`pill ${dailyType === 'DAILY' ? 'active' : ''}`}
-                  onClick={() => setDailyType('DAILY')}
-                  disabled={!canManageSchedules || isSavingSettings || isSendingTest}
-                >
-                  {fallbackToday}
-                </button>
-              </div>
               <div className="field">
                 <p className="label">{t('telegram.dailyTime')}</p>
                 <input
                   className="input"
                   type="time"
-                  value={dailyTime}
-                  onChange={(event) => setDailyTime(event.target.value)}
+                  value={yesterdayTime}
+                  onChange={(event) => setYesterdayTime(event.target.value)}
+                  disabled={!canManageSchedules || isSavingSettings || isSendingTest}
+                />
+              </div>
+            </div>
+
+            <div className="telegram-schedule-group">
+              <label className="toggle" htmlFor="today-enabled-toggle">
+                <input
+                  id="today-enabled-toggle"
+                  type="checkbox"
+                  checked={todayEnabled}
+                  onChange={(event) => setTodayEnabled(event.target.checked)}
+                  disabled={!canManageSchedules || isSavingSettings || isSendingTest}
+                />
+                {fallbackTodayToggle}
+              </label>
+              <div className="field">
+                <p className="label">{t('telegram.dailyTime')}</p>
+                <input
+                  className="input"
+                  type="time"
+                  value={todayTime}
+                  onChange={(event) => setTodayTime(event.target.value)}
                   disabled={!canManageSchedules || isSavingSettings || isSendingTest}
                 />
               </div>
