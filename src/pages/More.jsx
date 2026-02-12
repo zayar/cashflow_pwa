@@ -150,18 +150,26 @@ function More() {
         </div>
       </section>
 
-      <section className="upgrade-card" aria-label="Upgrade to Cashflow Pro">
-        <p className="kicker">{t('more.upgradeKicker')}</p>
-        <h3 className="title" style={{ marginBottom: 0 }}>
+      <section className="upgrade-card upgrade-card-premium" aria-label="Upgrade to Cashflow Pro">
+        <div className="upgrade-head">
+          <span className="upgrade-badge">{t('more.proBadge')}</span>
+          <p className="kicker">{t('more.upgradeKicker')}</p>
+        </div>
+        <h3 className="title" style={{ marginBottom: 4 }}>
           {t('more.unlockTitle')}
         </h3>
-        <p className="subtle">{t('more.upgradeCopy')}</p>
-        <div className="upgrade-points" aria-label={t('more.proFeaturesAria')}>
-          <span className="meta-chip">{t('more.advancedReports')}</span>
-          <span className="meta-chip">{t('more.smartReminders')}</span>
-          <span className="meta-chip">{t('more.recurringInvoices')}</span>
+        <p className="subtle upgrade-subcopy">{t('more.upgradeCopy')}</p>
+        <div className="upgrade-benefits" aria-label={t('more.proFeaturesAria')}>
+          {[t('more.advancedReports'), t('more.aiAdvisor'), t('more.unlimitedInvoices'), t('more.prioritySupport')]
+            .filter(Boolean)
+            .map((label) => (
+              <div className="upgrade-benefit" key={label}>
+                <span className="upgrade-check" aria-hidden="true">✓</span>
+                <span>{label}</span>
+              </div>
+            ))}
         </div>
-        <button className="btn btn-upgrade" type="button" onClick={() => navigate('/more/subscribe')}>
+        <button className="btn btn-upgrade btn-upgrade-strong" type="button" onClick={() => navigate('/more/subscribe')}>
           {t('more.upgradeCta')}
         </button>
       </section>
