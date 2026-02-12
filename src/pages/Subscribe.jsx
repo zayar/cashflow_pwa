@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Modal from '../components/Modal';
 import { useI18n } from '../i18n';
 import { getUsername } from '../lib/auth';
+import { createSubscriptionOrder, getSubscriptionStatus } from '../lib/paymentsApi';
 
 function CheckIcon() {
   return (
@@ -47,10 +48,21 @@ function PlanOption({ title, priceLine, metaLine, active, onClick }) {
   );
 }
 
+const PAYMENT_METHODS = [
+  { id: 'APLUS', label: 'A+ Wallet' },
+  { id: 'AYAPAY', label: 'AYA Pay' },
+  { id: 'KPAY', label: 'KBZ Pay' }
+];
+
 function Subscribe() {
   const { t } = useI18n();
   const [selectedPlan, setSelectedPlan] = useState('plus');
   const [billing, setBilling] = useState('monthly'); // monthly | yearly
+  const [paymentMethod, setPaymentMethod] = useState('APLUS');
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState(() => localStorage.getItem('subscription-pending-id') || '');
+  const [pendingStatus, setPendingStatus] = useState(null);
+  const [error, setError] = useState('');
   const [showFeaturesFor, setShowFeaturesFor] = useState('');
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -126,15 +138,56 @@ function Subscribe() {
       `User: ${username}`,
       `Plan: ${activePlan.name}`,
       `Billing: ${billing}`,
+      `Payment: ${paymentMethod}`,
       `Price: ${priceLine}`,
       `Date: ${new Date().toISOString()}`
     ].join('\n');
-  }, [activePlan.name, billing, priceLine]);
+  }, [activePlan.name, billing, priceLine, paymentMethod]);
 
-  const handleUpgrade = async () => {
-    setCopied(false);
-    setShowRequestModal(true);
+  const handleCreateOrder = async () => {
+    setError('');
+    setCreatingOrder(true);
+    try {
+      const payload = {
+        business_id: '', // backend infers from token; optional override
+        plan: billing === 'yearly' ? 'YEARLY' : 'MONTHLY',
+        payment_method: paymentMethod,
+        amount: billing === 'yearly' ? activePlan.yearly.amount : activePlan.monthly.amount,
+        currency: activePrice.currency
+      };
+      const res = await createSubscriptionOrder(payload);
+      setPendingOrderId(res.payment_id);
+      localStorage.setItem('subscription-pending-id', res.payment_id);
+      if (res.link) {
+        window.open(res.link, '_blank');
+      }
+      setPendingStatus({ status: res.status });
+    } catch (err) {
+      setError(err?.message || 'Failed to start payment');
+    } finally {
+      setCreatingOrder(false);
+    }
   };
+
+  const refreshStatus = async (orderId) => {
+    if (!orderId) return;
+    try {
+      const res = await getSubscriptionStatus(orderId);
+      setPendingStatus(res);
+      if (res.status === 'PAID' || res.subscription?.status === 'ACTIVE') {
+        localStorage.removeItem('subscription-pending-id');
+      }
+    } catch (err) {
+      setError(err?.message || 'Could not check status');
+    }
+  };
+
+  useEffect(() => {
+    if (pendingOrderId) {
+      refreshStatus(pendingOrderId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingOrderId]);
 
   const handleCopy = async () => {
     try {
@@ -253,13 +306,59 @@ function Subscribe() {
       </div>
 
       <div className="subscribe-sticky">
-        <button className="btn btn-primary subscribe-cta" type="button" onClick={handleUpgrade}>
-          <span className="subscribe-cta-title">{t('subscribe.upgradeNow')}</span>
-          <span className="subscribe-cta-sub">
-            {activePlan.name} {billing === 'yearly' ? t('subscribe.yearlyPlan') : t('subscribe.monthlyPlan')} •{' '}
-            {billing === 'yearly' ? perMonthLine : priceLine}
-          </span>
-        </button>
+        <div className="stack" style={{ gap: 12 }}>
+          <div className="payment-methods">
+            {PAYMENT_METHODS.map((m) => (
+              <button
+                key={m.id}
+                className={`payment-chip ${paymentMethod === m.id ? 'active' : ''}`}
+                type="button"
+                onClick={() => setPaymentMethod(m.id)}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <button className="btn btn-primary subscribe-cta" type="button" onClick={handleCreateOrder} disabled={creatingOrder}>
+            <span className="subscribe-cta-title">
+              {creatingOrder ? t('subscribe.loading') : t('subscribe.upgradeNow')}
+            </span>
+            <span className="subscribe-cta-sub">
+              {activePlan.name} {billing === 'yearly' ? t('subscribe.yearlyPlan') : t('subscribe.monthlyPlan')} •{' '}
+              {billing === 'yearly' ? perMonthLine : priceLine} • {paymentMethod}
+            </span>
+          </button>
+          {error ? <p className="error-text">{error}</p> : null}
+          {pendingOrderId ? (
+            <div className="pending-card">
+              <div>
+                <p className="kicker">Pending payment</p>
+                <p className="subtle">ID: {pendingOrderId}</p>
+                <p className="subtle">Status: {pendingStatus?.status || 'UNKNOWN'}</p>
+                <p className="subtle">
+                  Subscription: {pendingStatus?.subscription?.status || '—'}{' '}
+                  {pendingStatus?.subscription?.plan ? `(${pendingStatus.subscription.plan})` : ''}
+                </p>
+              </div>
+              <div className="toolbar" style={{ justifyContent: 'flex-start' }}>
+                <button className="btn btn-secondary" type="button" onClick={() => refreshStatus(pendingOrderId)}>
+                  {t('subscribe.refreshStatus') || 'Check payment'}
+                </button>
+                <button
+                  className="btn btn-tertiary"
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('subscription-pending-id');
+                    setPendingOrderId('');
+                    setPendingStatus(null);
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {showRequestModal && (
@@ -285,4 +384,3 @@ function Subscribe() {
 }
 
 export default Subscribe;
-

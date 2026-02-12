@@ -3126,3 +3126,33 @@ html[lang='my'] .welcome-copy {
     grid-template-columns: 1.2fr 0.8fr;
   }
 }
+
+/* Subscription payment chips */
+.payment-methods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.payment-chip {
+  padding: 8px 12px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text, #0f172a);
+  font-weight: 600;
+}
+.payment-chip.active {
+  border-color: var(--primary-500, #2563eb);
+  color: var(--primary-600, #1d4ed8);
+  box-shadow: 0 0 0 2px var(--primary-100, #dbeafe);
+}
+.pending-card {
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--surface-soft, #f8fafc);
+}
+.error-text {
+  color: #c0392b;
+  font-weight: 600;
+}
