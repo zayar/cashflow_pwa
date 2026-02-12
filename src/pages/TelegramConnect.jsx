@@ -8,10 +8,11 @@ import {
 } from '../lib/telegramLinkApi';
 import { useI18n } from '../i18n';
 
-const DEFAULT_TIMEZONE = 'Asia/Bangkok';
+const DEFAULT_TIMEZONE = 'Asia/Yangon';
 const DEFAULT_DAILY_TIME = '08:00';
 const DEFAULT_WEEKLY_TIME = '08:00';
 const DEFAULT_WEEKLY_DAY = 'SUN';
+const COMMON_TIMEZONES = ['Asia/Yangon', 'Asia/Bangkok', 'Asia/Singapore', 'Asia/Kolkata', 'UTC'];
 const DAY_OPTIONS = [
   { value: 'MON', label: 'Monday' },
   { value: 'TUE', label: 'Tuesday' },
@@ -62,6 +63,13 @@ function TelegramConnect() {
   const [weeklyDayOfWeek, setWeeklyDayOfWeek] = useState(DEFAULT_WEEKLY_DAY);
   const [weeklyTime, setWeeklyTime] = useState(DEFAULT_WEEKLY_TIME);
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
+
+  const dailyYesterdayLabel = t('telegram.dailyYesterday');
+  const dailyTodayLabel = t('telegram.dailyToday');
+  const dailyTypeAria = t('telegram.dailyTypeAria');
+  const fallbackYesterday = dailyYesterdayLabel === 'telegram.dailyYesterday' ? 'Yesterday' : dailyYesterdayLabel;
+  const fallbackToday = dailyTodayLabel === 'telegram.dailyToday' ? 'Today' : dailyTodayLabel;
+  const fallbackDailyTypeAria = dailyTypeAria === 'telegram.dailyTypeAria' ? 'Daily report period' : dailyTypeAria;
 
   const loadActiveCode = useCallback(async () => {
     setErrorMessage('');
@@ -296,6 +304,24 @@ function TelegramConnect() {
                 />
                 {t('telegram.dailyEnabled')}
               </label>
+              <div className="pill-tabs" role="group" aria-label={t('telegram.dailyTypeAria')}>
+                <button
+                  type="button"
+                  className={`pill ${dailyType === 'YESTERDAY_DAILY' ? 'active' : ''}`}
+                  onClick={() => setDailyType('YESTERDAY_DAILY')}
+                  disabled={!canManageSchedules || isSavingSettings || isSendingTest}
+                >
+                  {fallbackYesterday}
+                </button>
+                <button
+                  type="button"
+                  className={`pill ${dailyType === 'DAILY' ? 'active' : ''}`}
+                  onClick={() => setDailyType('DAILY')}
+                  disabled={!canManageSchedules || isSavingSettings || isSendingTest}
+                >
+                  {fallbackToday}
+                </button>
+              </div>
               <div className="field">
                 <p className="label">{t('telegram.dailyTime')}</p>
                 <input
@@ -350,13 +376,21 @@ function TelegramConnect() {
 
             <div className="field">
               <p className="label">{t('telegram.timezoneLabel')}</p>
-              <input
+              <select
                 className="input"
-                type="text"
                 value={timezone}
                 onChange={(event) => setTimezone(event.target.value)}
                 disabled={!canManageSchedules || isSavingSettings || isSendingTest}
-              />
+              >
+                {COMMON_TIMEZONES.map((tz) => (
+                  <option key={tz} value={tz}>
+                    {tz}
+                  </option>
+                ))}
+                {!COMMON_TIMEZONES.includes(timezone) ? (
+                  <option value={timezone}>{timezone}</option>
+                ) : null}
+              </select>
             </div>
 
             {settingsError ? <p className="auth-state auth-state-error">{settingsError}</p> : null}

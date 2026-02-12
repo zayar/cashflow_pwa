@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@500;600;700&display=swap');
 
 :root {
   --font-sans: 'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+  --font-sans-mm: 'Noto Sans Myanmar', 'Myanmar Sans Pro', 'Padauk', 'Noto Sans', sans-serif;
 
   --bg: #f3f6fb;
   --bg-accent: #e8f0ff;
@@ -67,6 +69,10 @@ body {
     radial-gradient(100% 55% at 100% 0%, #e8fff8 0%, transparent 45%),
     var(--bg);
   overflow-x: hidden;
+}
+
+html[lang='my'] body {
+  font-family: var(--font-sans-mm);
 }
 
 a {
@@ -1616,18 +1622,33 @@ textarea.input:focus {
   font-weight: 800;
   color: #1e293b;
   text-align: center;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
 }
 
 .welcome-copy {
   margin: 0;
-  margin-bottom: 10px;
-  max-width: 330px;
-  font-size: 15px;
+  margin-bottom: 12px;
+  max-width: 360px;
+  font-size: 15.5px;
   color: #64748b;
   text-align: center;
-  line-height: 1.55;
+  line-height: 1.7;
+}
+
+html[lang='my'] .welcome-title,
+html[lang='my'] .welcome-copy {
+  font-family: var(--font-sans-mm);
+  letter-spacing: 0;
+}
+
+html[lang='my'] .welcome-title {
+  line-height: 1.32;
+}
+
+html[lang='my'] .welcome-copy {
+  line-height: 1.8;
+  font-size: 16px;
 }
 
 .welcome-actions {
