@@ -1,4 +1,4 @@
-import { getToken } from './auth';
+import { getToken, handleUnauthorized } from './auth';
 
 const DEFAULT_PROD_URI = '/query';
 const DEFAULT_DEV_URI = 'http://localhost:4000/query';
@@ -160,6 +160,9 @@ export const signUpload = async ({ file, context }) => {
       context
     })
   });
+  if (response.status === 401) {
+    handleUnauthorized();
+  }
   const { data: payload, text } = await parseJsonResponse(response);
   if (!response.ok) {
     throw new Error(
@@ -204,6 +207,9 @@ export const completeUpload = async ({ objectKey, mimeType, context }) => {
       context
     })
   });
+  if (response.status === 401) {
+    handleUnauthorized();
+  }
   const { data: payload, text } = await parseJsonResponse(response);
   if (!response.ok) {
     throw new Error(

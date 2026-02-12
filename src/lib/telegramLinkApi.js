@@ -1,4 +1,4 @@
-import { getToken } from './auth';
+import { getToken, handleUnauthorized } from './auth';
 import { getApiBaseUrl } from './uploadApi';
 
 const buildHeaders = () => {
@@ -37,9 +37,13 @@ const request = async (path, { method = 'GET', body } = {}) => {
     headers: buildHeaders(),
     body: body === undefined ? undefined : JSON.stringify(body)
   });
+  if (response.status === 401) {
+    handleUnauthorized();
+  }
   const { data, text } = await parseJsonResponse(response);
   if (!response.ok) {
-    throw new Error(data?.error || text || 'Request failed');
+    const message = response.status === 401 ? 'Session expired. Please sign in again.' : data?.error || text || 'Request failed';
+    throw new Error(message);
   }
   return data;
 };

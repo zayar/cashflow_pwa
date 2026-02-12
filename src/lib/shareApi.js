@@ -1,4 +1,5 @@
-import { getToken } from './auth';
+import { getToken, handleUnauthorized } from './auth';
+import { buildInvoiceShareUrl as buildSharedInvoiceShareUrl } from '@cashflow/shared/share';
 
 const getApiBaseUrl = () => {
   const envBase = import.meta?.env?.VITE_API_BASE_URL;
@@ -42,6 +43,9 @@ const request = async (path, { method = 'GET', body, includeToken = true } = {})
     headers,
     body: body === undefined ? undefined : JSON.stringify(body)
   });
+  if (response.status === 401) {
+    handleUnauthorized();
+  }
   const text = await response.text();
   let payload = null;
   try {
@@ -50,7 +54,8 @@ const request = async (path, { method = 'GET', body, includeToken = true } = {})
     payload = null;
   }
   if (!response.ok) {
-    throw new Error(payload?.error || text || 'Request failed');
+    const message = response.status === 401 ? 'Session expired. Please sign in again.' : payload?.error || text || 'Request failed';
+    throw new Error(message);
   }
   return payload;
 };
@@ -68,7 +73,5 @@ export const buildInvoiceShareUrl = (token, { lang } = {}) => {
   if (!token) return '';
   const origin = getShareViewerOrigin();
   // Public invoice viewer lives in the main Cashflow web app.
-  const normalizedLang = String(lang || '').trim().toLowerCase();
-  const suffix = normalizedLang && normalizedLang !== 'en' ? `?lang=${encodeURIComponent(normalizedLang)}` : '';
-  return `${origin}/#/public/invoices/${encodeURIComponent(String(token))}${suffix}`;
+  return buildSharedInvoiceShareUrl(origin, token, { lang });
 };
