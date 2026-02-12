@@ -1,5 +1,4 @@
 import { getToken, handleUnauthorized } from './auth';
-import { buildInvoiceShareUrl as buildSharedInvoiceShareUrl } from '@cashflow/shared/share';
 
 const getApiBaseUrl = () => {
   const envBase = import.meta?.env?.VITE_API_BASE_URL;
@@ -73,5 +72,7 @@ export const buildInvoiceShareUrl = (token, { lang } = {}) => {
   if (!token) return '';
   const origin = getShareViewerOrigin();
   // Public invoice viewer lives in the main Cashflow web app.
-  return buildSharedInvoiceShareUrl(origin, token, { lang });
+  const normalizedLang = String(lang || '').trim().toLowerCase();
+  const suffix = normalizedLang && normalizedLang !== 'en' ? `?lang=${encodeURIComponent(normalizedLang)}` : '';
+  return `${origin}/#/public/invoices/${encodeURIComponent(String(token))}${suffix}`;
 };
