@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
-import { getDefaultInvoiceLocationIds, getUsername } from '../lib/auth';
+import { getDefaultInvoiceLocationIds } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import { getDefaultTemplate, safeParseConfigString } from '../lib/templatesApi';
 import { resolveStorageAccessUrl } from '../lib/uploadApi';
@@ -61,6 +61,7 @@ const GET_BUSINESS = gql`
   query GetBusinessForInvoiceView {
     getBusiness {
       id
+      name
       baseCurrency {
         id
         name
@@ -219,14 +220,11 @@ function InvoiceView() {
   }, [data, id]);
   const baseCurrency = businessData?.getBusiness?.baseCurrency;
   const businessId = businessData?.getBusiness?.id;
-
-  const accountLabel = useMemo(() => getUsername(), []);
-  const accountTitle = useMemo(() => {
-    if (!accountLabel) return '';
-    const trimmed = String(accountLabel).trim();
-    if (!trimmed) return '';
-    return trimmed.split('--')[0] || trimmed;
-  }, [accountLabel]);
+  const businessName = useMemo(() => {
+    const raw = businessData?.getBusiness?.name;
+    if (!raw) return '';
+    return String(raw).trim();
+  }, [businessData?.getBusiness?.name]);
 
   const defaults = useMemo(() => getDefaultInvoiceLocationIds(), []);
   const fallbackBranchId = invoice?.branch?.id ?? defaults.branchId;
@@ -593,27 +591,20 @@ function InvoiceView() {
       <section className="invoice-paper-wrap" aria-label={t('invoiceView.invoicePaperAria')}>
         <div className="invoice-paper invoice-paper-template" style={invoicePaperVars}>
           <div className="invoice-paper-head">
-            <div className="invoice-paper-brand" aria-label="Account">
-              {paperLogoUrl && (
-                <div className="invoice-paper-logo-slot">
-                  <img src={paperLogoUrl} alt="" className="invoice-paper-logo-image" loading="lazy" />
-                </div>
-              )}
-              <div>
-                {accountTitle && <p className="invoice-paper-brand-title">{accountTitle}</p>}
-                {accountLabel && <p className="invoice-paper-brand-subtle">{accountLabel}</p>}
-              </div>
+            <div className="invoice-paper-brand" aria-label="Business identity">
+              {paperLogoUrl && <img src={paperLogoUrl} alt="" className="invoice-paper-logo-image" loading="lazy" />}
+              {businessName && <p className="invoice-paper-brand-title">{businessName}</p>}
             </div>
 
             <div className="invoice-paper-title">
               <div className="invoice-paper-heading">{tEn('templatePreview.invoice')}</div>
               <div className="invoice-paper-number"># {displayNumber}</div>
+              <div className="invoice-paper-balance">
+                <div className="invoice-paper-balance-label">{t('invoiceView.remainingBalance')}</div>
+                <div className="invoice-paper-balance-value">{formatMoney(invoice.remainingBalance, baseCurrency)}</div>
+              </div>
+              <span className={`badge ${statusClass(rawStatus)} invoice-paper-status`}>{displayStatus}</span>
             </div>
-          </div>
-
-          <div className="invoice-paper-balance">
-            <div className="invoice-paper-balance-label">{t('invoiceView.remainingBalance')}</div>
-            <div className="invoice-paper-balance-value">{formatMoney(invoice.remainingBalance, baseCurrency)}</div>
           </div>
 
           <div className="invoice-paper-grid">

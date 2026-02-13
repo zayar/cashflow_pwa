@@ -873,39 +873,26 @@ textarea.input:focus {
 
 .invoice-paper-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
 }
 
 .invoice-paper-brand {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
   min-width: 0;
 }
 
-.invoice-paper-logo-slot {
-  width: clamp(128px, 34vw, 196px);
-  height: clamp(74px, 20vw, 114px);
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  display: grid;
-  place-items: center;
-  overflow: visible;
-  padding: 10px 12px;
-  margin-top: 2px;
-  margin-bottom: 2px;
-  flex-shrink: 0;
-}
-
 .invoice-paper-logo-image {
-  width: auto;
+  width: clamp(132px, 32vw, 188px);
   height: auto;
   max-width: 100%;
-  max-height: 100%;
+  max-height: 96px;
   object-fit: contain;
+  display: block;
+  margin: 2px 0 4px;
 }
 
 .invoice-paper-logo {
@@ -919,7 +906,7 @@ textarea.input:focus {
   margin: 0;
   font-weight: 900;
   letter-spacing: -0.02em;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .invoice-paper-brand-subtle {
@@ -932,6 +919,10 @@ textarea.input:focus {
 }
 
 .invoice-paper-title {
+  min-width: 0;
+  display: grid;
+  justify-items: end;
+  gap: 6px;
   text-align: right;
 }
 
@@ -955,14 +946,14 @@ textarea.input:focus {
 }
 
 .invoice-paper-number {
-  margin-top: 4px;
+  margin-top: 0;
   font-size: 13px;
   font-weight: 800;
   color: var(--text-muted);
 }
 
 .invoice-paper-balance {
-  margin-top: 14px;
+  margin-top: 2px;
   text-align: right;
 }
 
@@ -975,9 +966,14 @@ textarea.input:focus {
 }
 
 .invoice-paper-balance-value {
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 18px;
   font-weight: 900;
+}
+
+.invoice-paper-status {
+  margin-top: 2px;
+  align-self: flex-end;
 }
 
 .invoice-paper-grid {
@@ -1158,9 +1154,9 @@ textarea.input:focus {
     gap: 12px;
   }
 
-  .invoice-paper-logo {
-    width: 38px;
-    height: 38px;
+  .invoice-paper-logo-image {
+    width: clamp(114px, 38vw, 150px);
+    max-height: 84px;
   }
 
   .invoice-table-head {
