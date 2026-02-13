@@ -1278,6 +1278,10 @@ textarea.input:focus {
   .customer-select-value {
     font-size: 16px;
   }
+
+  .totals-hero-card .summary-total > :last-child {
+    font-size: 30px;
+  }
 }
 
 .section-title {
@@ -1401,6 +1405,182 @@ textarea.input:focus {
   color: var(--text);
   padding-top: 4px;
   border-top: 1px dashed #bfd4eb;
+}
+
+.invoice-panel-review {
+  gap: var(--space-4);
+}
+
+.review-summary-card {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, white 18%);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-soft) 64%, white 36%);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.review-summary-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.review-summary-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.review-summary-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.review-summary-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-summary-subvalue {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-summary-placeholder {
+  color: color-mix(in srgb, var(--text-muted) 78%, white 22%);
+}
+
+.review-summary-divider {
+  height: 1px;
+  background: color-mix(in srgb, var(--border) 78%, white 22%);
+}
+
+.review-link-btn {
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--ink-soft) 88%, white 12%);
+  padding: 0;
+  min-height: auto;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.review-link-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 40%, white 60%);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.review-inline-editor .input {
+  min-height: 40px;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+.review-support-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.review-support-card {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, white 18%);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.totals-hero-card {
+  border-color: color-mix(in srgb, var(--border-strong) 62%, white 38%);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--primary-soft) 40%, white 60%) 0%,
+    color-mix(in srgb, var(--primary-soft) 24%, white 76%) 100%
+  );
+  padding: 18px;
+  gap: 12px;
+}
+
+.totals-hero-card .summary-row {
+  font-size: 13px;
+  color: color-mix(in srgb, var(--text-muted) 70%, var(--text) 30%);
+}
+
+.totals-hero-card .summary-total {
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--border-strong) 70%, white 30%);
+  align-items: flex-end;
+}
+
+.totals-hero-card .summary-total > :first-child {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.totals-hero-card .summary-total > :last-child {
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.note-collapsible-card {
+  border: 1px solid color-mix(in srgb, var(--border) 84%, white 16%);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 10px;
+}
+
+.note-expand-button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--border-strong) 70%, white 30%);
+  background: color-mix(in srgb, var(--surface-soft) 72%, white 28%);
+  padding: 0 12px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.note-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.note-editor-input {
+  min-height: 92px;
 }
 
 .flow-note-card {
@@ -1559,6 +1739,14 @@ textarea.input:focus {
   backdrop-filter: blur(16px) saturate(130%);
   -webkit-backdrop-filter: blur(16px) saturate(130%);
   border-top: 1px solid var(--border);
+}
+
+.sticky-actions-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
 }
 
 .picker-page {
@@ -2856,6 +3044,10 @@ html[lang='my'] .welcome-copy {
   }
 
   .invoice-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .review-support-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

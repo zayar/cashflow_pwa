@@ -5,7 +5,6 @@ import InvoicePreview from '../components/InvoicePreview';
 import InvoiceLineCard from '../components/InvoiceLineCard';
 import Modal from '../components/Modal';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
-import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import { saveDefaultInvoiceCurrencyId, saveDefaultInvoiceLocationIds } from '../lib/auth';
 import { useI18n } from '../i18n';
 
@@ -119,6 +118,9 @@ function InvoiceForm() {
   const [warehouseIdInput, setWarehouseIdInput] = useState('');
   const [currencyIdInput, setCurrencyIdInput] = useState('');
   const [locationInputError, setLocationInputError] = useState('');
+  const [isDateEditorOpen, setIsDateEditorOpen] = useState(false);
+  const [isTermsEditorOpen, setIsTermsEditorOpen] = useState(false);
+  const [isNoteExpanded, setIsNoteExpanded] = useState(() => Boolean((invoice.notes || '').trim()));
 
   const [createInvoice, createState] = useMutation(CREATE_INVOICE);
   const [updateInvoice, updateState] = useMutation(UPDATE_INVOICE);
@@ -202,6 +204,29 @@ function InvoiceForm() {
     }
     return `#${selectedCurrencyId}`;
   }, [baseCurrency?.name, baseCurrency?.symbol, baseCurrencyId, selectedCurrencyId, t]);
+
+  const selectedPaymentTermsLabel = useMemo(() => {
+    const selected = paymentTermsOptions.find((option) => option.value === invoice.paymentTerms);
+    if (!selected) return invoice.paymentTerms || t('invoiceForm.notSet');
+    return t(selected.labelKey);
+  }, [invoice.paymentTerms, t]);
+
+  const formattedInvoiceDate = useMemo(() => {
+    if (!invoice.invoiceDate) return t('invoiceForm.notSet');
+    const parsed = new Date(`${invoice.invoiceDate}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return invoice.invoiceDate;
+    return parsed.toLocaleDateString(lang === 'my' ? 'my-MM' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }, [invoice.invoiceDate, lang, t]);
+
+  const itemCountLabel = useMemo(() => {
+    const count = invoice.lines.length;
+    if (count <= 0) return t('invoiceForm.notSet');
+    return count === 1 ? '1 item' : `${count} items`;
+  }, [invoice.lines.length, t]);
 
   const openLocationSettings = () => {
     setLocationInputError('');
@@ -361,32 +386,6 @@ function InvoiceForm() {
     }
   };
 
-  const handleShareLink = async () => {
-    if (!invoice.invoiceId) {
-      setStatus(t('invoiceForm.shareBeforeSave'));
-      return;
-    }
-
-    setStatus('');
-    try {
-      const share = await createInvoiceShareToken(invoice.invoiceId);
-      const shareUrl = buildInvoiceShareUrl(share?.token, { lang });
-      if (!shareUrl) {
-        throw new Error(t('invoiceForm.shareUnavailable'));
-      }
-
-      if (navigator.share) {
-        await navigator.share({ url: shareUrl, title: t('invoiceForm.shareTitle') });
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-      }
-
-      setStatus(t('invoiceForm.shareReady'));
-    } catch (err) {
-      setStatus(err.message || t('invoiceForm.shareFailed'));
-    }
-  };
-
   const handlePrimaryAction = async () => {
     if (step === 0) {
       if (validateCustomer()) setStep(1);
@@ -430,19 +429,11 @@ function InvoiceForm() {
               ? t('invoiceForm.setDefaultsAction')
               : t('invoiceForm.completeRequiredInfo');
 
-  const canShare = step === 2 && Boolean(invoice.invoiceId);
-
-  const secondaryButton = canShare
-    ? {
-        label: t('invoiceForm.shareLink'),
-        action: handleShareLink,
-        style: 'btn btn-secondary'
-      }
-    : {
-        label: step === 0 ? t('invoiceForm.cancel') : t('invoiceForm.back'),
-        action: step === 0 ? () => navigate('/') : () => setStep(step - 1),
-        style: 'btn btn-secondary'
-      };
+  const secondaryButton = {
+    label: step === 0 ? t('invoiceForm.cancel') : t('invoiceForm.back'),
+    action: step === 0 ? () => navigate('/') : () => setStep(step - 1),
+    style: 'btn btn-secondary'
+  };
 
   const saveErrorMessage = useMemo(() => {
     const raw = getNetworkErrorMessage(saveError) || saveError?.message || '';
@@ -472,6 +463,18 @@ function InvoiceForm() {
       openLocationSettings();
     }
   }, [hasLocationNotFoundError, isLocationOpen, saveError]);
+
+  useEffect(() => {
+    if ((invoice.notes || '').trim()) {
+      setIsNoteExpanded(true);
+    }
+  }, [invoice.notes]);
+
+  useEffect(() => {
+    if (step === 2) return;
+    setIsDateEditorOpen(false);
+    setIsTermsEditorOpen(false);
+  }, [step]);
 
   useEffect(() => {
     if (!isPreviewOpen) return undefined;
@@ -586,77 +589,112 @@ function InvoiceForm() {
       )}
 
       {step === 2 && (
-        <section className="invoice-panel" id="invoice-step-review">
+        <section className="invoice-panel invoice-panel-review" id="invoice-step-review">
           <h3 className="section-title" style={{ margin: 0 }}>
             {t('invoiceForm.reviewTitle')}
           </h3>
-          <p className="section-hint">{t('invoiceForm.reviewHint')}</p>
 
-          <div className="invoice-meta-grid">
-            <label className="field">
-              <span className="label">{t('invoiceForm.date')}</span>
-              <input
-                className="input"
-                type="date"
-                value={invoice.invoiceDate}
-                onChange={(event) => dispatch({ type: 'setField', field: 'invoiceDate', value: event.target.value })}
-              />
-            </label>
-            <label className="field">
-              <span className="label">{t('invoiceForm.paymentTermsLabel')}</span>
-              <select
-                className="input"
-                value={invoice.paymentTerms}
-                onChange={(event) => dispatch({ type: 'setField', field: 'paymentTerms', value: event.target.value })}
-              >
-                {paymentTermsOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.labelKey)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <section className="readiness-card" role="status" aria-live="polite">
-            <div className="readiness-grid">
-              <div className={`readiness-item ${hasCustomer ? 'ok' : ''}`}>{t('invoiceForm.healthCustomer')}</div>
-              <div className={`readiness-item ${linesReady ? 'ok' : ''}`}>{t('invoiceForm.healthItems')}</div>
-              <div className={`readiness-item ${defaultsReady ? 'ok' : ''}`}>{t('invoiceForm.healthDefaults')}</div>
+          <section className="review-summary-card" role="status" aria-live="polite">
+            <div className="review-summary-row">
+              <div className="review-summary-main">
+                <span className="review-summary-label">{t('invoiceForm.healthCustomer')}</span>
+                <span className={`review-summary-value ${hasCustomer ? '' : 'review-summary-placeholder'}`}>
+                  {invoice.customerName || t('invoiceForm.notSet')}
+                </span>
+              </div>
+              <button className="review-link-btn" type="button" onClick={() => setStep(0)}>
+                {hasCustomer ? t('common.edit') : t('invoiceForm.fixCustomer')}
+              </button>
             </div>
-            {!reviewReady && (
-              <div className="readiness-actions">
-                {!hasCustomer && (
-                  <button className="btn btn-secondary" type="button" onClick={() => setStep(0)}>
-                    {t('invoiceForm.fixCustomer')}
-                  </button>
-                )}
-                {hasCustomer && !linesReady && (
-                  <button className="btn btn-secondary" type="button" onClick={() => setStep(1)}>
-                    {t('invoiceForm.fixItems')}
-                  </button>
-                )}
-                {!defaultsReady && (
-                  <button className="btn btn-secondary" type="button" onClick={openLocationSettings}>
-                    {t('invoiceForm.setDefaults')}
-                  </button>
-                )}
+
+            <div className="review-summary-divider" />
+
+            <div className="review-summary-row">
+              <div className="review-summary-main">
+                <span className="review-summary-label">{t('invoiceForm.date')}</span>
+                <span className="review-summary-value">{formattedInvoiceDate}</span>
+              </div>
+              <button
+                className="review-link-btn"
+                type="button"
+                onClick={() => setIsDateEditorOpen((previous) => !previous)}
+                aria-expanded={isDateEditorOpen}
+              >
+                {isDateEditorOpen ? t('common.close') : t('common.edit')}
+              </button>
+            </div>
+
+            {isDateEditorOpen && (
+              <div className="review-inline-editor">
+                <input
+                  className="input"
+                  type="date"
+                  value={invoice.invoiceDate}
+                  onChange={(event) => dispatch({ type: 'setField', field: 'invoiceDate', value: event.target.value })}
+                />
+              </div>
+            )}
+
+            <div className="review-summary-row">
+              <div className="review-summary-main">
+                <span className="review-summary-label">{t('invoiceForm.paymentTermsLabel')}</span>
+                <span className="review-summary-value">{selectedPaymentTermsLabel}</span>
+              </div>
+              <button
+                className="review-link-btn"
+                type="button"
+                onClick={() => setIsTermsEditorOpen((previous) => !previous)}
+                aria-expanded={isTermsEditorOpen}
+              >
+                {isTermsEditorOpen ? t('common.close') : t('common.edit')}
+              </button>
+            </div>
+
+            {isTermsEditorOpen && (
+              <div className="review-inline-editor">
+                <select
+                  className="input"
+                  value={invoice.paymentTerms}
+                  onChange={(event) => dispatch({ type: 'setField', field: 'paymentTerms', value: event.target.value })}
+                >
+                  {paymentTermsOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.labelKey)}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
           </section>
 
-          <label className="field">
-            <span className="label">{t('invoiceForm.notes')}</span>
-            <textarea
-              className="input"
-              rows="3"
-              value={invoice.notes}
-              onChange={(event) => dispatch({ type: 'setField', field: 'notes', value: event.target.value })}
-              placeholder={t('invoiceForm.notesPlaceholder')}
-            />
-          </label>
+          <section className="review-support-grid" role="status" aria-live="polite">
+            <div className="review-support-card">
+              <div className="review-summary-main">
+                <span className="review-summary-label">{t('invoiceForm.healthItems')}</span>
+                <span className={`review-summary-value ${linesReady ? '' : 'review-summary-placeholder'}`}>
+                  {itemCountLabel}
+                </span>
+              </div>
+              <button className="review-link-btn" type="button" onClick={() => setStep(1)}>
+                {t('invoiceForm.fixItems')}
+              </button>
+            </div>
 
-          <div className="summary-card">
+            <div className="review-support-card">
+              <div className="review-summary-main">
+                <span className="review-summary-label">{t('invoiceForm.healthDefaults')}</span>
+                <span className={`review-summary-value ${defaultsReady ? '' : 'review-summary-placeholder'}`}>
+                  {selectedBranchName || t('invoiceForm.notSet')} - {selectedWarehouseName || t('invoiceForm.notSet')}
+                </span>
+                <span className="review-summary-subvalue">{selectedCurrencyLabel}</span>
+              </div>
+              <button className="review-link-btn" type="button" onClick={openLocationSettings}>
+                {t('invoiceForm.setDefaults')}
+              </button>
+            </div>
+          </section>
+
+          <div className="summary-card totals-hero-card">
             <div className="summary-row">
               <span>{t('invoiceForm.subtotal')}</span>
               <span>{currency(totals.subtotal)}</span>
@@ -675,6 +713,34 @@ function InvoiceForm() {
             </div>
           </div>
 
+          <section className="note-collapsible-card">
+            {!isNoteExpanded ? (
+              <button className="note-expand-button" type="button" onClick={() => setIsNoteExpanded(true)}>
+                + Add note
+              </button>
+            ) : (
+              <label className="field" style={{ margin: 0 }}>
+                <div className="note-editor-header">
+                  <span className="label" style={{ margin: 0 }}>
+                    {t('invoiceForm.notes')}
+                  </span>
+                  {!((invoice.notes || '').trim()) && (
+                    <button className="review-link-btn" type="button" onClick={() => setIsNoteExpanded(false)}>
+                      {t('common.close')}
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  className="input note-editor-input"
+                  rows="3"
+                  value={invoice.notes}
+                  onChange={(event) => dispatch({ type: 'setField', field: 'notes', value: event.target.value })}
+                  placeholder={t('invoiceForm.notesPlaceholder')}
+                />
+              </label>
+            )}
+          </section>
+
           <button
             type="button"
             className="preview-chip"
@@ -683,13 +749,6 @@ function InvoiceForm() {
           >
             {t('invoiceForm.previewInvoice', { amount: currency(totals.total) })}
           </button>
-
-          <div className="surface-card flow-note-card">
-            <p className="kicker">{t('invoiceForm.nextAfterSave')}</p>
-            <p className="subtle">
-              {t('invoiceForm.nextAfterSaveCopy')}
-            </p>
-          </div>
         </section>
       )}
 
@@ -864,6 +923,9 @@ function InvoiceForm() {
       </section>
 
       <div className="sticky-actions">
+        {step === 2 && (invoice.currentStatus || 'Draft') === 'Draft' && (
+          <p className="sticky-actions-hint">Invoice will be saved as Draft</p>
+        )}
         <button className={secondaryButton.style} type="button" onClick={secondaryButton.action}>
           {secondaryButton.label}
         </button>
