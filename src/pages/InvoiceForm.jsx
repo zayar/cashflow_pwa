@@ -61,12 +61,6 @@ const paymentTermsOptions = [
   { value: 'Net30', labelKey: 'invoiceForm.paymentTerms.net30' }
 ];
 
-const flowSteps = [
-  { key: 'customer', labelKey: 'invoiceForm.steps.customer' },
-  { key: 'items', labelKey: 'invoiceForm.steps.items' },
-  { key: 'review', labelKey: 'invoiceForm.steps.review' }
-];
-
 function currency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
@@ -393,19 +387,6 @@ function InvoiceForm() {
     }
   };
 
-  const canOpenStep = (targetStep) => {
-    if (targetStep <= step) return true;
-    if (targetStep === 1) return validateCustomer();
-    if (targetStep === 2) return validateCustomer() && validateLines();
-    return false;
-  };
-
-  const handleStepChange = (targetStep) => {
-    if (canOpenStep(targetStep)) {
-      setStep(targetStep);
-    }
-  };
-
   const handlePrimaryAction = async () => {
     if (step === 0) {
       if (validateCustomer()) setStep(1);
@@ -492,18 +473,6 @@ function InvoiceForm() {
     }
   }, [hasLocationNotFoundError, isLocationOpen, saveError]);
 
-  const stepGuide = useMemo(() => {
-    if (step === 0) {
-      return hasCustomer
-        ? t('invoiceForm.customerSelectedHint')
-        : t('invoiceForm.chooseCustomerAndVerifyDefaults');
-    }
-    if (step === 1) {
-      return linesReady ? t('invoiceForm.itemsReadyHint') : t('invoiceForm.addCompleteLineHint');
-    }
-    return t('invoiceForm.reviewTotalsHint');
-  }, [hasCustomer, linesReady, step, t]);
-
   useEffect(() => {
     if (!isPreviewOpen) return undefined;
 
@@ -526,115 +495,55 @@ function InvoiceForm() {
 
   return (
     <div className="invoice-page">
-      <section className="flow-banner">
-        <p className="kicker">{t('invoiceForm.bannerKicker')}</p>
-        <h2 className="title" style={{ marginBottom: 6 }}>
-          {t('invoiceForm.bannerTitle')}
-        </h2>
-        <p className="subtle">{t('invoiceForm.bannerCopy')}</p>
-
-        <div className="stepper" role="tablist" aria-label={t('invoiceForm.stepperAria')}>
-          {flowSteps.map((flowStep, index) => {
-            const isCurrent = step === index;
-            const isComplete = index === 0 ? hasCustomer : index === 1 ? linesReady : Boolean(invoice.invoiceId);
-            const className = `step ${isCurrent ? 'step-current' : ''} ${isComplete ? 'step-complete' : ''}`.trim();
-
-            return (
-              <button
-                key={flowStep.key}
-                type="button"
-                className={className}
-                onClick={() => handleStepChange(index)}
-                role="tab"
-                aria-selected={isCurrent}
-                aria-controls={`invoice-step-${flowStep.key}`}
-              >
-                <span className="step-index">{t('invoiceForm.stepIndex', { number: index + 1 })}</span>
-                <span className="step-label">{t(flowStep.labelKey)}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flow-health" role="status" aria-live="polite">
-          <div className="flow-health-grid">
-            <span className={`health-chip ${hasCustomer ? 'ok' : ''}`}>{t('invoiceForm.healthCustomer')}</span>
-            <span className={`health-chip ${linesReady ? 'ok' : ''}`}>{t('invoiceForm.healthItems')}</span>
-            <span className={`health-chip ${defaultsReady ? 'ok' : ''}`}>{t('invoiceForm.healthDefaults')}</span>
-          </div>
-          <p className="subtle" style={{ marginTop: 8 }}>{stepGuide}</p>
-        </div>
+      <section className="compact-step-indicator" aria-label={t('invoiceForm.stepperAria')}>
+        <span className="compact-step-current">{t('invoiceForm.stepIndex', { number: step + 1 })}</span>
+        <span className="compact-step-divider" aria-hidden="true">
+          /
+        </span>
+        <span className="compact-step-total">3</span>
       </section>
 
       {step === 0 && (
-        <section className="invoice-panel" id="invoice-step-customer">
-          <div className="invoice-header">
-            <div>
-              <div className="invoice-label">{t('invoiceForm.invoiceNo')}</div>
-              <div className="invoice-number">{invoice.invoiceNumber || t('invoiceForm.newLabel')}</div>
+        <section className="invoice-panel invoice-panel-customer" id="invoice-step-customer">
+          <button type="button" className="customer-select-card" onClick={openCustomerPicker}>
+            <span className="customer-select-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M5.5 19c1.35-3.1 3.65-4.65 6.5-4.65s5.15 1.55 6.5 4.65" />
+              </svg>
+            </span>
+            <div className="customer-select-copy">
+              <span className="customer-select-label">{t('invoiceForm.selectCustomer')}</span>
+              <span className={`customer-select-value ${invoice.customerName ? '' : 'customer-select-placeholder'}`}>
+                {invoice.customerName || t('invoiceForm.notSet')}
+              </span>
             </div>
-            <span className={`badge ${invoice.invoiceId ? 'badge-success' : 'badge-neutral'}`}>
-              {invoice.invoiceId ? t('invoiceForm.saved') : t('invoiceForm.draft')}
-            </span>
-          </div>
-
-          <div className="invoice-meta-grid">
-            <label className="field">
-              <span className="label">{t('invoiceForm.date')}</span>
-              <input
-                className="input"
-                type="date"
-                value={invoice.invoiceDate}
-                onChange={(event) => dispatch({ type: 'setField', field: 'invoiceDate', value: event.target.value })}
-              />
-            </label>
-            <label className="field">
-              <span className="label">{t('invoiceForm.paymentTermsLabel')}</span>
-              <select
-                className="input"
-                value={invoice.paymentTerms}
-                onChange={(event) => dispatch({ type: 'setField', field: 'paymentTerms', value: event.target.value })}
-              >
-                {paymentTermsOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.labelKey)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="default-location-row" role="status" aria-live="polite">
-            <span className="meta-chip">
-              {t('invoiceForm.defaultsBranch')}: {selectedBranchName || t('invoiceForm.notSet')}
-            </span>
-            <span className="meta-chip">
-              {t('invoiceForm.defaultsWarehouse')}: {selectedWarehouseName || t('invoiceForm.notSet')}
-            </span>
-            <span className="meta-chip">
-              {t('invoiceForm.defaultsCurrency')}: {selectedCurrencyLabel}
-            </span>
-            <button
-              className="btn btn-ghost"
-              type="button"
-              onClick={openLocationSettings}
-              style={{ minHeight: 36, padding: '8px 12px' }}
-            >
-              {t('invoiceForm.change')}
-            </button>
-          </div>
-
-          <button type="button" className="row-button" onClick={openCustomerPicker}>
-            <div className="row-label">{t('invoiceForm.to')}</div>
-            <div className={`row-value ${invoice.customerName ? '' : 'row-placeholder'}`}>
-              {invoice.customerName || t('invoiceForm.selectCustomer')}
-            </div>
-            <div className="row-chevron" aria-hidden="true">
+            <span className="customer-select-arrow" aria-hidden="true">
               {'>'}
-            </div>
+            </span>
           </button>
 
           {errors.customer && <div className="inline-error">{errors.customer}</div>}
+
+          <section className="location-settings-card" role="status" aria-live="polite">
+            <div className="location-settings-grid">
+              <div className="location-settings-item">
+                <span className="location-settings-label">{t('invoiceForm.branch')}</span>
+                <span className="location-settings-value">{selectedBranchName || t('invoiceForm.notSet')}</span>
+              </div>
+              <div className="location-settings-item">
+                <span className="location-settings-label">{t('invoiceForm.warehouse')}</span>
+                <span className="location-settings-value">{selectedWarehouseName || t('invoiceForm.notSet')}</span>
+              </div>
+              <div className="location-settings-item">
+                <span className="location-settings-label">{t('invoiceForm.currency')}</span>
+                <span className="location-settings-value">{selectedCurrencyLabel}</span>
+              </div>
+            </div>
+            <button className="btn btn-ghost location-settings-action" type="button" onClick={openLocationSettings}>
+              {t('invoiceForm.change')}
+            </button>
+          </section>
         </section>
       )}
 
@@ -682,6 +591,32 @@ function InvoiceForm() {
             {t('invoiceForm.reviewTitle')}
           </h3>
           <p className="section-hint">{t('invoiceForm.reviewHint')}</p>
+
+          <div className="invoice-meta-grid">
+            <label className="field">
+              <span className="label">{t('invoiceForm.date')}</span>
+              <input
+                className="input"
+                type="date"
+                value={invoice.invoiceDate}
+                onChange={(event) => dispatch({ type: 'setField', field: 'invoiceDate', value: event.target.value })}
+              />
+            </label>
+            <label className="field">
+              <span className="label">{t('invoiceForm.paymentTermsLabel')}</span>
+              <select
+                className="input"
+                value={invoice.paymentTerms}
+                onChange={(event) => dispatch({ type: 'setField', field: 'paymentTerms', value: event.target.value })}
+              >
+                {paymentTermsOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(option.labelKey)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           <section className="readiness-card" role="status" aria-live="polite">
             <div className="readiness-grid">
