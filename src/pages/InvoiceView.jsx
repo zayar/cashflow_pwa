@@ -250,6 +250,14 @@ function InvoiceView() {
     }
   }, [invoice?.invoicePaymentTerms, t]);
   const dueDate = computeDueDate(invoice?.invoiceDate, invoice?.invoicePaymentTerms);
+  const formatItemNumber = useMemo(
+    () =>
+      new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }),
+    []
+  );
   const invoiceItemRows = useMemo(
     () =>
       (invoice?.details || []).map((line, index) => {
@@ -263,11 +271,11 @@ function InvoiceView() {
           name: line?.name || '--',
           description: '',
           qty,
-          rate: formatMoney(rate, baseCurrency),
-          amount: formatMoney(amount, baseCurrency)
+          rate: formatItemNumber.format(rate),
+          amount: formatItemNumber.format(amount)
         };
       }),
-    [invoice?.details, baseCurrency]
+    [invoice?.details, formatItemNumber]
   );
 
   const totals = useMemo(() => {

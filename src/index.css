@@ -1058,6 +1058,15 @@ textarea.input:focus {
 
 .invoice-table > .invoice-items-table {
   padding-top: 12px;
+  font-size: 12px;
+}
+
+.invoice-table .invoice-items-name {
+  font-size: 12px;
+}
+
+.invoice-table .invoice-items-cell-right {
+  font-size: 12px;
 }
 
 .invoice-table-row {
@@ -1252,6 +1261,15 @@ textarea.input:focus {
 
   .invoice-items-desc {
     font-size: 11px;
+  }
+
+  .invoice-table > .invoice-items-table {
+    font-size: 11.5px;
+  }
+
+  .invoice-table .invoice-items-name,
+  .invoice-table .invoice-items-cell-right {
+    font-size: 11.5px;
   }
 
   .invoice-table-head {
