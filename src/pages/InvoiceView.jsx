@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
+import InvoiceItemsTable from '../components/InvoiceItemsTable';
 import { getDefaultInvoiceLocationIds } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import { getDefaultTemplate, safeParseConfigString } from '../lib/templatesApi';
@@ -249,6 +250,25 @@ function InvoiceView() {
     }
   }, [invoice?.invoicePaymentTerms, t]);
   const dueDate = computeDueDate(invoice?.invoiceDate, invoice?.invoicePaymentTerms);
+  const invoiceItemRows = useMemo(
+    () =>
+      (invoice?.details || []).map((line, index) => {
+        const qty = Number(line?.detailQty || 0);
+        const rate = Number(line?.detailUnitRate || 0);
+        const discount = Number(line?.detailDiscount || 0);
+        const amount = qty * rate - discount;
+
+        return {
+          id: line?.id || `${index}-${line?.name || 'item'}`,
+          name: line?.name || '--',
+          description: '',
+          qty,
+          rate: formatMoney(rate, baseCurrency),
+          amount: formatMoney(amount, baseCurrency)
+        };
+      }),
+    [invoice?.details, baseCurrency]
+  );
 
   const totals = useMemo(() => {
     const lines = invoice?.details ?? [];
@@ -633,51 +653,17 @@ function InvoiceView() {
             </div>
           </div>
 
-          <div className="invoice-table" role="table" aria-label={t('invoiceView.tableAria')}>
-            <div className="invoice-table-row invoice-table-head" role="row">
-              <div role="columnheader">#</div>
-              <div role="columnheader">{t('invoiceView.item')}</div>
-              <div role="columnheader" style={{ textAlign: 'right' }}>
-                {t('invoiceView.qty')}
-              </div>
-              <div role="columnheader" style={{ textAlign: 'right' }}>
-                {t('invoiceView.rate')}
-              </div>
-              <div role="columnheader" style={{ textAlign: 'right' }}>
-                {t('invoiceView.amount')}
-              </div>
-            </div>
-
-            {(invoice.details || []).map((line, index) => {
-              const qty = Number(line.detailQty || 0);
-              const rate = Number(line.detailUnitRate || 0);
-              const discount = Number(line.detailDiscount || 0);
-              const amount = qty * rate - discount;
-
-              return (
-                <div className="invoice-table-row" role="row" key={line.id || `${index}-${line.name}`}>
-                  <div className="invoice-col-index" role="cell">
-                    {index + 1}
-                  </div>
-                  <div className="invoice-col-name" role="cell">
-                    <div className="invoice-item-name">{line.name || '--'}</div>
-                    <div className="invoice-item-meta">
-                      {t('invoiceView.qty')} {qty} · {t('invoiceView.rate')} {formatMoney(rate, baseCurrency)}
-                      {discount ? ` · ${t('invoiceView.discount')} ${formatMoney(discount, baseCurrency)}` : ''}
-                    </div>
-                  </div>
-                  <div className="invoice-col-qty" role="cell" style={{ textAlign: 'right' }}>
-                    {qty}
-                  </div>
-                  <div className="invoice-col-rate" role="cell" style={{ textAlign: 'right' }}>
-                    {formatMoney(rate, baseCurrency)}
-                  </div>
-                  <div className="invoice-col-amount" role="cell" style={{ textAlign: 'right', fontWeight: 800 }}>
-                    {formatMoney(amount, baseCurrency)}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="invoice-table">
+            <InvoiceItemsTable
+              ariaLabel={t('invoiceView.tableAria')}
+              labels={{
+                item: t('invoiceView.item'),
+                qty: t('invoiceView.qty'),
+                rate: t('invoiceView.rate'),
+                amount: t('invoiceView.amount')
+              }}
+              items={invoiceItemRows}
+            />
           </div>
 
           <div className="invoice-totals">

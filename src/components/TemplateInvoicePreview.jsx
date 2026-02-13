@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n';
+import InvoiceItemsTable from './InvoiceItemsTable';
 
 const demoItems = [
   {
@@ -58,25 +59,17 @@ function TemplateInvoicePreview({ logoUrl, qrUrl }) {
         </div>
       </div>
 
-      <div className="template-preview-table" role="table" aria-label="Invoice line items">
-        <div className="template-preview-row template-preview-row-header" role="row">
-          <div className="template-preview-cell">{t('templatePreview.item')}</div>
-          <div className="template-preview-cell template-preview-cell-right">{t('templatePreview.qty')}</div>
-          <div className="template-preview-cell template-preview-cell-right">{t('templatePreview.rate')}</div>
-          <div className="template-preview-cell template-preview-cell-right">{t('templatePreview.amount')}</div>
-        </div>
-        {demoItems.map((item) => (
-          <div className="template-preview-row" role="row" key={item.id}>
-            <div className="template-preview-cell">
-              <div className="template-preview-item-name">{item.name}</div>
-              <div className="template-preview-item-desc">{item.description}</div>
-            </div>
-            <div className="template-preview-cell template-preview-cell-right">{item.qty}</div>
-            <div className="template-preview-cell template-preview-cell-right">{item.rate}</div>
-            <div className="template-preview-cell template-preview-cell-right">{item.amount}</div>
-          </div>
-        ))}
-      </div>
+      <InvoiceItemsTable
+        className="template-preview-table"
+        ariaLabel="Invoice line items"
+        labels={{
+          item: t('templatePreview.item'),
+          qty: t('templatePreview.qty'),
+          rate: t('templatePreview.rate'),
+          amount: t('templatePreview.amount')
+        }}
+        items={demoItems}
+      />
 
       <div className="template-preview-summary">
         <div className="template-preview-summary-row">
