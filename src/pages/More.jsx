@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clearToken } from '../lib/auth';
 import { useI18n } from '../i18n';
 import LanguageSwitch from '../components/LanguageSwitch';
+import { useBusinessProfile } from '../state/businessProfile';
+import { resolveStorageAccessUrl } from '../lib/uploadApi';
 
 function ChevronIcon() {
   return (
@@ -71,11 +74,22 @@ function TelegramIcon() {
   );
 }
 
-function ActionTile({ title, copy, icon, onClick, variant }) {
+function CompanyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.6" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M7 9h10M7 13h6M7 16h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ActionTile({ title, copy, icon, thumbnailUrl, onClick, variant }) {
   return (
     <button className={`more-action-tile ${variant || ''}`.trim()} type="button" onClick={onClick}>
       <div className="more-action-top">
-        <div className="more-action-icon">{icon}</div>
+        <div className="more-action-icon">
+          {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="more-action-thumb" loading="lazy" /> : icon}
+        </div>
         <span className="more-action-chevron" aria-hidden="true">
           <ChevronIcon />
         </span>
@@ -91,6 +105,16 @@ function ActionTile({ title, copy, icon, onClick, variant }) {
 function More() {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { profile, loadProfile } = useBusinessProfile();
+
+  useEffect(() => {
+    loadProfile().catch(() => {
+      // Surface-level fallback is enough on this menu page.
+    });
+  }, [loadProfile]);
+
+  const companyName = profile?.businessName || profile?.name || 'Set up your company profile';
+  const companyLogoUrl = resolveStorageAccessUrl(profile?.logoUrl || '');
 
   const handleLogout = () => {
     clearToken();
@@ -107,6 +131,14 @@ function More() {
         <p className="subtle">{t('more.quickCopy')}</p>
 
         <div className="more-action-grid" style={{ marginTop: 12 }}>
+          <ActionTile
+            title="Company Profile"
+            copy={companyName}
+            thumbnailUrl={companyLogoUrl}
+            icon={<CompanyIcon />}
+            variant="wide action-company"
+            onClick={() => navigate('/more/company-profile')}
+          />
           {/* UX: keep bottom nav to 5 items; Expenses lives under More to reduce clutter for beginners. */}
           <ActionTile
             title={t('more.expenses')}

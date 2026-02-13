@@ -7,6 +7,9 @@ import { clearToken, getToken, getUsername } from '../lib/auth';
 import { useI18n } from '../i18n';
 
 function getPageCopy(pathname) {
+  if (pathname.startsWith('/more/company-profile')) {
+    return { titleKey: 'pages.more.title', kickerKey: 'pages.more.kicker', backPath: '/more' };
+  }
   if (pathname.startsWith('/more/subscribe')) {
     return { titleKey: 'pages.subscribe.title', kickerKey: 'pages.subscribe.kicker', backPath: '/more' };
   }
@@ -107,6 +110,7 @@ function RootLayout() {
     location.pathname.startsWith('/templates') ||
     location.pathname.startsWith('/bank-accounts') ||
     location.pathname.startsWith('/more/integrations') ||
+    location.pathname.startsWith('/more/company-profile') ||
     location.pathname.startsWith('/more/subscribe') ||
     location.pathname.startsWith('/expenses/') ||
     isItemDetail ||

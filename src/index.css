@@ -1836,6 +1836,15 @@ textarea.input:focus {
   color: rgba(236, 246, 255, 0.74);
 }
 
+.invoice-preview-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(215, 227, 244, 0.28);
+}
+
 .preview-line {
   display: flex;
   justify-content: space-between;
@@ -2296,6 +2305,10 @@ html[lang='my'] .welcome-copy {
   --action-accent: #229ed9;
 }
 
+.more-action-tile.action-company {
+  --action-accent: #0f1217;
+}
+
 .more-action-top {
   display: flex;
   align-items: center;
@@ -2323,6 +2336,14 @@ html[lang='my'] .welcome-copy {
 .more-action-icon svg {
   width: 24px;
   height: 24px;
+}
+
+.more-action-thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  display: block;
 }
 
 .more-action-tile.primary .more-action-icon svg {
@@ -2364,6 +2385,98 @@ html[lang='my'] .welcome-copy {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.company-profile-page {
+  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+}
+
+.profile-logo-picker {
+  width: min(100%, 260px);
+  height: 220px;
+  border-radius: 22px;
+  border: 1px dashed color-mix(in srgb, var(--border) 78%, white 22%);
+  background: color-mix(in srgb, var(--surface-soft) 72%, white 28%);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.profile-logo-picker img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-logo-picker-small {
+  height: 170px;
+}
+
+.profile-wizard-page {
+  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+}
+
+.profile-wizard-card {
+  min-height: clamp(520px, 74vh, 700px);
+}
+
+.profile-wizard-title {
+  margin: 0;
+  font-size: clamp(1.7rem, 4.8vw, 2.4rem);
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+
+.profile-wizard-subtitle {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: clamp(1rem, 3.7vw, 1.3rem);
+}
+
+.profile-wizard-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.profile-wizard-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 84%, #ffffff 16%);
+}
+
+.profile-wizard-dot.active {
+  width: 46px;
+  background: #111111;
+}
+
+.profile-wizard-form {
+  margin-top: 24px;
+}
+
+.profile-wizard-icon {
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  margin: 2px auto 2px;
+  background: #0f1217;
+  color: #f5f7fb;
+  display: grid;
+  place-items: center;
+}
+
+.profile-wizard-icon svg {
+  width: 88px;
+  height: 88px;
+}
+
+.profile-wizard-actions {
+  grid-template-columns: 1fr 1fr;
 }
 
 .subscribe-page {

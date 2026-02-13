@@ -7,6 +7,7 @@ import { getDefaultInvoiceLocationIds } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import { getDefaultTemplate, safeParseConfigString } from '../lib/templatesApi';
 import { resolveStorageAccessUrl } from '../lib/uploadApi';
+import { useBusinessProfile } from '../state/businessProfile';
 import { useI18n } from '../i18n';
 import { getInvoiceStatusKey } from '../i18n/status';
 import {
@@ -53,20 +54,6 @@ const FIND_INVOICE = gql`
             detailDiscount
           }
         }
-      }
-    }
-  }
-`;
-
-const GET_BUSINESS = gql`
-  query GetBusinessForInvoiceView {
-    getBusiness {
-      id
-      name
-      baseCurrency {
-        id
-        name
-        symbol
       }
     }
   }
@@ -178,6 +165,7 @@ function InvoiceView() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { lang, t, tEn } = useI18n();
+  const { profile, loadProfile } = useBusinessProfile();
 
   const [status, setStatus] = useState('');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
@@ -190,7 +178,6 @@ function InvoiceView() {
   const isRecordingPaymentRef = useRef(false);
   const [paymentCompletedLocally, setPaymentCompletedLocally] = useState(false);
 
-  const { data: businessData } = useQuery(GET_BUSINESS, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
   const shouldLoadPaymentAccounts = isRecordPaymentOpen;
   const { data: bankData, loading: banksLoading, error: banksError } = useQuery(LIST_BANK_ACCOUNTS, {
     skip: !shouldLoadPaymentAccounts,
@@ -219,13 +206,19 @@ function InvoiceView() {
     const match = edges.find((edge) => String(edge?.node?.id || '') === String(id || ''));
     return match?.node || null;
   }, [data, id]);
-  const baseCurrency = businessData?.getBusiness?.baseCurrency;
-  const businessId = businessData?.getBusiness?.id;
+  const baseCurrency = profile?.baseCurrency || invoice?.currency || null;
+  const businessId = profile?.id;
   const businessName = useMemo(() => {
-    const raw = businessData?.getBusiness?.name;
+    const raw = profile?.businessName || profile?.name;
     if (!raw) return '';
     return String(raw).trim();
-  }, [businessData?.getBusiness?.name]);
+  }, [profile?.businessName, profile?.name]);
+  const businessPhone = useMemo(() => String(profile?.phone || '').trim(), [profile?.phone]);
+  const businessAddressLine = useMemo(() => {
+    const address = String(profile?.address || '').trim();
+    const city = String(profile?.city || '').trim();
+    return [address, city].filter(Boolean).join(', ');
+  }, [profile?.address, profile?.city]);
 
   const defaults = useMemo(() => getDefaultInvoiceLocationIds(), []);
   const fallbackBranchId = invoice?.branch?.id ?? defaults.branchId;
@@ -313,6 +306,12 @@ function InvoiceView() {
   }, [bankData]);
 
   useEffect(() => {
+    loadProfile().catch(() => {
+      // Invoice UI already has graceful fallbacks when profile is unavailable.
+    });
+  }, [loadProfile]);
+
+  useEffect(() => {
     if (!businessId) return undefined;
 
     let cancelled = false;
@@ -337,10 +336,8 @@ function InvoiceView() {
 
   const templateTheme = invoiceTemplateConfig?.theme || defaultInvoiceTemplateConfig.theme;
   const paperLogoUrl = useMemo(() => {
-    const shouldShowLogo = invoiceTemplateConfig?.header?.showLogo !== false;
-    if (!shouldShowLogo) return '';
-    return resolveStorageAccessUrl(invoiceTemplateConfig?.header?.logoUrl || '');
-  }, [invoiceTemplateConfig?.header?.logoUrl, invoiceTemplateConfig?.header?.showLogo]);
+    return resolveStorageAccessUrl(profile?.logoUrl || '');
+  }, [profile?.logoUrl]);
 
   const invoicePaperVars = useMemo(
     () => ({
@@ -622,6 +619,8 @@ function InvoiceView() {
             <div className="invoice-paper-brand" aria-label="Business identity">
               {paperLogoUrl && <img src={paperLogoUrl} alt="" className="invoice-paper-logo-image" loading="lazy" />}
               {businessName && <p className="invoice-paper-brand-title">{businessName}</p>}
+              {businessPhone && <p className="invoice-paper-brand-subtle">{businessPhone}</p>}
+              {businessAddressLine && <p className="invoice-paper-brand-subtle">{businessAddressLine}</p>}
             </div>
 
             <div className="invoice-paper-title">
