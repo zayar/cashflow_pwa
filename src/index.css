@@ -122,6 +122,7 @@ button {
   justify-content: space-between;
   gap: var(--space-3);
   min-width: 0;
+  min-height: 72px;
 }
 
 .brand-cluster {
@@ -188,6 +189,7 @@ button {
   align-items: center;
   gap: var(--space-2);
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .user-chip {
@@ -881,25 +883,29 @@ textarea.input:focus {
 }
 
 .invoice-paper-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--space-4);
+  row-gap: 8px;
 }
 
 .invoice-paper-brand {
-  display: grid;
-  align-content: start;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
   min-width: 0;
 }
 
 .invoice-paper-logo-image {
-  width: clamp(132px, 32vw, 188px);
+  width: auto;
   height: auto;
-  max-width: 100%;
-  max-height: 96px;
+  max-width: clamp(124px, 30vw, 170px);
+  max-height: 90px;
   object-fit: contain;
+  object-position: left center;
   display: block;
   margin: 0;
 }
@@ -913,9 +919,9 @@ textarea.input:focus {
 
 .invoice-paper-brand-title {
   margin: 0;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.02em;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.2;
 }
 
@@ -930,16 +936,19 @@ textarea.input:focus {
 
 .invoice-paper-title {
   min-width: 0;
-  display: grid;
-  justify-items: end;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 7px;
   text-align: right;
 }
 
 .invoice-paper-heading {
   font-size: 28px;
   font-weight: 900;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
+  line-height: 1;
   color: var(--primary-strong);
 }
 
@@ -1153,8 +1162,11 @@ textarea.input:focus {
 
 @media (max-width: 560px) {
   .topbar {
-    padding-top: calc(12px + env(safe-area-inset-top));
-    padding-bottom: 12px;
+    min-height: 64px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    padding-bottom: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
     gap: 10px;
   }
 
@@ -1180,9 +1192,10 @@ textarea.input:focus {
 
   .topbar-actions .btn {
     min-height: 40px;
-    padding: 8px 12px;
+    padding: 7px 12px;
     border-radius: 12px;
     white-space: nowrap;
+    font-size: 14px;
   }
 
   .invoice-paper {
@@ -1194,16 +1207,33 @@ textarea.input:focus {
   }
 
   .invoice-paper-head {
-    gap: 12px;
+    column-gap: 14px;
+    row-gap: 6px;
   }
 
   .invoice-paper-logo-image {
-    width: clamp(108px, 36vw, 142px);
-    max-height: 80px;
+    max-width: clamp(96px, 32vw, 126px);
+    max-height: 72px;
   }
 
   .invoice-paper-brand-title {
-    font-size: 15px;
+    font-size: 14px;
+  }
+
+  .invoice-paper-title {
+    gap: 5px;
+  }
+
+  .invoice-paper-number {
+    font-size: 12px;
+  }
+
+  .invoice-paper-balance-label {
+    font-size: 10px;
+  }
+
+  .invoice-paper-balance-value {
+    font-size: 17px;
   }
 
   .invoice-table-head {
