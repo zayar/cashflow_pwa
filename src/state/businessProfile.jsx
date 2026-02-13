@@ -1,10 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useApolloClient } from '@apollo/client';
 import { getToken } from '../lib/auth';
-import { fetchBusinessProfile, isProfileComplete, updateBusinessProfile } from '../lib/businessProfileService';
+import {
+  fetchBusinessEntitlement,
+  fetchBusinessProfile,
+  isProfileComplete,
+  updateBusinessProfile
+} from '../lib/businessProfileService';
 
 const BusinessProfileContext = createContext({
   profile: null,
+  entitlement: null,
   loading: false,
   error: '',
   loadProfile: async () => null,
@@ -16,6 +22,7 @@ const BusinessProfileContext = createContext({
 export function BusinessProfileProvider({ children }) {
   const client = useApolloClient();
   const [profile, setProfile] = useState(null);
+  const [entitlement, setEntitlement] = useState(null);
   const [profileToken, setProfileToken] = useState(() => getToken() || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,7 +45,11 @@ export function BusinessProfileProvider({ children }) {
         const next = await fetchBusinessProfile(client, {
           fetchPolicy: force || tokenChanged ? 'network-only' : 'cache-first'
         });
+        const nextEntitlement = await fetchBusinessEntitlement(client, {
+          fetchPolicy: force || tokenChanged ? 'network-only' : 'cache-first'
+        });
         setProfile(next || null);
+        setEntitlement(nextEntitlement || null);
         setProfileToken(token);
         return next || null;
       } catch (err) {
@@ -65,6 +76,8 @@ export function BusinessProfileProvider({ children }) {
         const next = await updateBusinessProfile(client, { currentProfile, updates });
         setProfile(next || null);
         setProfileToken(token);
+        const nextEntitlement = await fetchBusinessEntitlement(client, { fetchPolicy: 'network-only' });
+        setEntitlement(nextEntitlement || null);
         return next || null;
       } catch (err) {
         setError(err?.message || 'Failed to update business profile.');
@@ -79,6 +92,7 @@ export function BusinessProfileProvider({ children }) {
   useEffect(() => {
     if (!getToken()) {
       setProfile(null);
+      setEntitlement(null);
       setProfileToken('');
       setError('');
       return;
@@ -91,6 +105,7 @@ export function BusinessProfileProvider({ children }) {
   const value = useMemo(
     () => ({
       profile,
+      entitlement,
       loading,
       error,
       loadProfile,
@@ -98,7 +113,7 @@ export function BusinessProfileProvider({ children }) {
       saveProfile,
       profileComplete: isProfileComplete(profile)
     }),
-    [error, loadProfile, loading, profile, refreshProfile, saveProfile]
+    [entitlement, error, loadProfile, loading, profile, refreshProfile, saveProfile]
   );
 
   return <BusinessProfileContext.Provider value={value}>{children}</BusinessProfileContext.Provider>;

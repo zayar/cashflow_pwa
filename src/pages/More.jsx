@@ -105,7 +105,7 @@ function ActionTile({ title, copy, icon, thumbnailUrl, onClick, variant }) {
 function More() {
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { profile, loadProfile } = useBusinessProfile();
+  const { profile, entitlement, loadProfile } = useBusinessProfile();
 
   useEffect(() => {
     loadProfile().catch(() => {
@@ -115,6 +115,11 @@ function More() {
 
   const companyName = profile?.businessName || profile?.name || 'Set up your company profile';
   const companyLogoUrl = resolveStorageAccessUrl(profile?.logoUrl || '');
+  const currentPlan = String(entitlement?.plan || 'PRO').toUpperCase();
+  const isLitePlan = currentPlan === 'LITE';
+  const expiryText = entitlement?.endsAt
+    ? new Date(entitlement.endsAt).toLocaleDateString()
+    : 'No expiry';
 
   const handleLogout = () => {
     clearToken();
@@ -182,29 +187,45 @@ function More() {
         </div>
       </section>
 
-      <section className="upgrade-card upgrade-card-premium" aria-label="Upgrade to Cashflow Pro">
-        <div className="upgrade-head">
-          <span className="upgrade-badge">{t('more.proBadge')}</span>
-          <p className="kicker">{t('more.upgradeKicker')}</p>
-        </div>
-        <h3 className="title" style={{ marginBottom: 4 }}>
-          {t('more.unlockTitle')}
+      <section className="card">
+        <p className="kicker">Subscription</p>
+        <h3 className="title" style={{ marginBottom: 6 }}>
+          Current plan: {currentPlan}
         </h3>
-        <p className="subtle upgrade-subcopy">{t('more.upgradeCopy')}</p>
-        <div className="upgrade-benefits" aria-label={t('more.proFeaturesAria')}>
-          {[t('more.advancedReports'), t('more.aiAdvisor'), t('more.unlimitedInvoices'), t('more.prioritySupport')]
-            .filter(Boolean)
-            .map((label) => (
-              <div className="upgrade-benefit" key={label}>
-                <span className="upgrade-check" aria-hidden="true">✓</span>
-                <span>{label}</span>
-              </div>
-            ))}
-        </div>
-        <button className="btn btn-upgrade btn-upgrade-strong" type="button" onClick={() => navigate('/more/subscribe')}>
-          {t('more.upgradeCta')}
-        </button>
+        <p className="subtle">Status: {entitlement?.status || 'ACTIVE'}</p>
+        <p className="subtle">Expiry: {expiryText}</p>
+        {isLitePlan ? (
+          <button className="btn btn-primary" type="button" onClick={() => navigate('/more/subscribe')}>
+            Upgrade to Pro
+          </button>
+        ) : null}
       </section>
+
+      {isLitePlan ? (
+        <section className="upgrade-card upgrade-card-premium" aria-label="Upgrade to Cashflow Pro">
+          <div className="upgrade-head">
+            <span className="upgrade-badge">{t('more.proBadge')}</span>
+            <p className="kicker">{t('more.upgradeKicker')}</p>
+          </div>
+          <h3 className="title" style={{ marginBottom: 4 }}>
+            {t('more.unlockTitle')}
+          </h3>
+          <p className="subtle upgrade-subcopy">{t('more.upgradeCopy')}</p>
+          <div className="upgrade-benefits" aria-label={t('more.proFeaturesAria')}>
+            {[t('more.advancedReports'), t('more.aiAdvisor'), t('more.unlimitedInvoices'), t('more.prioritySupport')]
+              .filter(Boolean)
+              .map((label) => (
+                <div className="upgrade-benefit" key={label}>
+                  <span className="upgrade-check" aria-hidden="true">✓</span>
+                  <span>{label}</span>
+                </div>
+              ))}
+          </div>
+          <button className="btn btn-upgrade btn-upgrade-strong" type="button" onClick={() => navigate('/more/subscribe')}>
+            {t('more.upgradeCta')}
+          </button>
+        </section>
+      ) : null}
 
       <section className="more-grid">
         <div className="surface-card">

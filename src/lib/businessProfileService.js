@@ -94,6 +94,19 @@ export const UPDATE_BUSINESS_PROFILE = gql`
   }
 `;
 
+export const GET_BUSINESS_ENTITLEMENT = gql`
+  query GetBusinessEntitlementForPwa {
+    getBusinessEntitlement {
+      businessId
+      plan
+      startsAt
+      endsAt
+      status
+      allowedClients
+    }
+  }
+`;
+
 function safeText(value) {
   if (value == null) return '';
   return String(value).trim();
@@ -190,4 +203,13 @@ export async function updateBusinessProfile(client, { currentProfile, updates })
   if (next) return next;
 
   return normalizeBusinessProfile({ ...sourceProfile, ...updates, name: updates?.businessName ?? updates?.name ?? sourceProfile?.name });
+}
+
+export async function fetchBusinessEntitlement(client, options = {}) {
+  const { fetchPolicy = 'cache-first' } = options;
+  const result = await client.query({
+    query: GET_BUSINESS_ENTITLEMENT,
+    fetchPolicy
+  });
+  return result?.data?.getBusinessEntitlement || null;
 }

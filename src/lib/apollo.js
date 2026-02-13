@@ -8,6 +8,31 @@ const httpLink = new HttpLink({
 });
 
 const errorLink = onError(({ graphQLErrors, networkError }) => {
+  const knownSubscriptionCodes = new Set([
+    'BUSINESS_SUBSCRIPTION_EXPIRED',
+    'PLAN_UPGRADE_REQUIRED_WEB',
+    'CLIENT_NOT_ALLOWED'
+  ]);
+  const extractCode = () => {
+    for (const err of graphQLErrors || []) {
+      const code = String(err?.extensions?.code || err?.message || '').trim().toUpperCase();
+      if (knownSubscriptionCodes.has(code)) return code;
+    }
+    const networkCode = String(networkError?.result?.error || '').trim().toUpperCase();
+    if (knownSubscriptionCodes.has(networkCode)) return networkCode;
+    return '';
+  };
+  const subscriptionCode = extractCode();
+  if (subscriptionCode) {
+    if (typeof window !== 'undefined') {
+      const target = `/subscription-access?reason=${encodeURIComponent(subscriptionCode)}`;
+      if (window.location.pathname !== '/subscription-access') {
+        window.location.replace(target);
+      }
+    }
+    return;
+  }
+
   const hasGraphQlAuthError = graphQLErrors?.some(
     (err) =>
       err?.extensions?.code === 'UNAUTHENTICATED' ||
@@ -25,6 +50,7 @@ const authLink = setContext((_, { headers }) => {
   return {
     headers: {
       ...headers,
+      'X-Client-App': 'pwa',
       ...(token ? { token } : {})
     }
   };

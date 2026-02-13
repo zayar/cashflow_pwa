@@ -10,6 +10,7 @@ const Clients = lazy(() => import('./pages/Clients'));
 const More = lazy(() => import('./pages/More'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Login = lazy(() => import('./pages/Login'));
+const SubscriptionAccess = lazy(() => import('./pages/SubscriptionAccess'));
 const InvoiceForm = lazy(() => import('./pages/InvoiceForm'));
 const InvoiceView = lazy(() => import('./pages/InvoiceView'));
 const InvoiceEdit = lazy(() => import('./pages/InvoiceEdit'));
@@ -68,6 +69,7 @@ export function AppRoutes() {
     },
     { path: '/welcome', element: suspense(<Welcome />) },
     { path: '/login', element: suspense(<Login />) },
+    { path: '/subscription-access', element: suspense(<SubscriptionAccess />) },
     { path: '/pick/customer', element: suspense(<CustomerPickerPage />) },
     { path: '/pick/item', element: suspense(<ItemPickerPage />) },
     { path: '*', element: <Navigate to="/welcome" replace /> }
