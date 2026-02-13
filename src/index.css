@@ -121,6 +121,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+  min-width: 0;
 }
 
 .brand-cluster {
@@ -128,6 +129,7 @@ button {
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .brand-icon {
@@ -150,6 +152,7 @@ button {
 
 .brand-copy {
   min-width: 0;
+  overflow: hidden;
 }
 
 .brand-kicker {
@@ -159,6 +162,9 @@ button {
   text-transform: uppercase;
   color: var(--text-muted);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .heading {
@@ -167,6 +173,9 @@ button {
   line-height: 1.2;
   letter-spacing: -0.02em;
   font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .subtle {
@@ -881,7 +890,7 @@ textarea.input:focus {
 .invoice-paper-brand {
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -892,7 +901,7 @@ textarea.input:focus {
   max-height: 96px;
   object-fit: contain;
   display: block;
-  margin: 2px 0 4px;
+  margin: 0;
 }
 
 .invoice-paper-logo {
@@ -907,6 +916,7 @@ textarea.input:focus {
   font-weight: 900;
   letter-spacing: -0.02em;
   font-size: 17px;
+  line-height: 1.2;
 }
 
 .invoice-paper-brand-subtle {
@@ -1142,6 +1152,39 @@ textarea.input:focus {
 }
 
 @media (max-width: 560px) {
+  .topbar {
+    padding-top: calc(12px + env(safe-area-inset-top));
+    padding-bottom: 12px;
+    gap: 10px;
+  }
+
+  .brand-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .brand-mark-svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .brand-kicker {
+    font-size: 10px;
+    letter-spacing: 0.07em;
+  }
+
+  .heading {
+    font-size: clamp(1.02rem, 4.6vw, 1.24rem);
+  }
+
+  .topbar-actions .btn {
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
   .invoice-paper {
     padding: 18px;
   }
@@ -1155,8 +1198,12 @@ textarea.input:focus {
   }
 
   .invoice-paper-logo-image {
-    width: clamp(114px, 38vw, 150px);
-    max-height: 84px;
+    width: clamp(108px, 36vw, 142px);
+    max-height: 80px;
+  }
+
+  .invoice-paper-brand-title {
+    font-size: 15px;
   }
 
   .invoice-table-head {
