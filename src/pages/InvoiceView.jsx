@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { getDefaultInvoiceLocationIds, getUsername } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
+import { getDefaultTemplate, safeParseConfigString } from '../lib/templatesApi';
+import { resolveStorageAccessUrl } from '../lib/uploadApi';
 import { useI18n } from '../i18n';
 import { getInvoiceStatusKey } from '../i18n/status';
 import {
@@ -126,6 +128,29 @@ const DELETE_INVOICE = gql`
   }
 `;
 
+const defaultInvoiceTemplateConfig = {
+  theme: {
+    primaryColor: '#1677ff',
+    textColor: '#111827',
+    tableHeaderBg: '#111827',
+    tableHeaderText: '#ffffff',
+    borderColor: '#e2e8f0'
+  },
+  header: {
+    showLogo: true,
+    logoUrl: ''
+  }
+};
+
+function mergeInvoiceTemplateConfig(parsed) {
+  return {
+    ...defaultInvoiceTemplateConfig,
+    ...parsed,
+    theme: { ...defaultInvoiceTemplateConfig.theme, ...(parsed?.theme || {}) },
+    header: { ...defaultInvoiceTemplateConfig.header, ...(parsed?.header || {}) }
+  };
+}
+
 function statusClass(status) {
   const normalized = (status || '').toLowerCase();
   if (normalized.includes('paid')) return 'badge-success';
@@ -158,6 +183,7 @@ function InvoiceView() {
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [limit, setLimit] = useState(80);
+  const [invoiceTemplateConfig, setInvoiceTemplateConfig] = useState(defaultInvoiceTemplateConfig);
   const isConfirmingRef = useRef(false);
   const isRecordingPaymentRef = useRef(false);
   const [paymentCompletedLocally, setPaymentCompletedLocally] = useState(false);
@@ -192,6 +218,7 @@ function InvoiceView() {
     return match?.node || null;
   }, [data, id]);
   const baseCurrency = businessData?.getBusiness?.baseCurrency;
+  const businessId = businessData?.getBusiness?.id;
 
   const accountLabel = useMemo(() => getUsername(), []);
   const accountTitle = useMemo(() => {
@@ -258,6 +285,55 @@ function InvoiceView() {
     const rows = bankData?.listBankingAccount?.listBankingAccount || [];
     return rows.filter((account) => account?.detailType === 'Bank' && account?.isActive !== false);
   }, [bankData]);
+
+  useEffect(() => {
+    if (!businessId) return undefined;
+
+    let cancelled = false;
+    const loadTemplate = async () => {
+      try {
+        const template = await getDefaultTemplate('invoice', businessId);
+        if (cancelled) return;
+        const parsed = safeParseConfigString(template?.config_json);
+        setInvoiceTemplateConfig(mergeInvoiceTemplateConfig(parsed));
+      } catch {
+        if (!cancelled) {
+          setInvoiceTemplateConfig(defaultInvoiceTemplateConfig);
+        }
+      }
+    };
+
+    loadTemplate();
+    return () => {
+      cancelled = true;
+    };
+  }, [businessId]);
+
+  const templateTheme = invoiceTemplateConfig?.theme || defaultInvoiceTemplateConfig.theme;
+  const paperLogoUrl = useMemo(() => {
+    const shouldShowLogo = invoiceTemplateConfig?.header?.showLogo !== false;
+    if (!shouldShowLogo) return '';
+    return resolveStorageAccessUrl(invoiceTemplateConfig?.header?.logoUrl || '');
+  }, [invoiceTemplateConfig?.header?.logoUrl, invoiceTemplateConfig?.header?.showLogo]);
+
+  const invoicePaperVars = useMemo(
+    () => ({
+      '--invoice-template-primary': templateTheme.primaryColor || defaultInvoiceTemplateConfig.theme.primaryColor,
+      '--invoice-template-text': templateTheme.textColor || defaultInvoiceTemplateConfig.theme.textColor,
+      '--invoice-template-border': templateTheme.borderColor || defaultInvoiceTemplateConfig.theme.borderColor,
+      '--invoice-template-table-header-bg':
+        templateTheme.tableHeaderBg || templateTheme.primaryColor || defaultInvoiceTemplateConfig.theme.tableHeaderBg,
+      '--invoice-template-table-header-text':
+        templateTheme.tableHeaderText || defaultInvoiceTemplateConfig.theme.tableHeaderText
+    }),
+    [
+      templateTheme.borderColor,
+      templateTheme.primaryColor,
+      templateTheme.tableHeaderBg,
+      templateTheme.tableHeaderText,
+      templateTheme.textColor
+    ]
+  );
 
   useEffect(() => {
     setPaymentCompletedLocally(false);
@@ -515,9 +591,14 @@ function InvoiceView() {
       </section>
 
       <section className="invoice-paper-wrap" aria-label={t('invoiceView.invoicePaperAria')}>
-        <div className="invoice-paper">
+        <div className="invoice-paper invoice-paper-template" style={invoicePaperVars}>
           <div className="invoice-paper-head">
             <div className="invoice-paper-brand" aria-label="Account">
+              {paperLogoUrl && (
+                <div className="invoice-paper-logo-slot">
+                  <img src={paperLogoUrl} alt="" className="invoice-paper-logo-image" loading="lazy" />
+                </div>
+              )}
               <div>
                 {accountTitle && <p className="invoice-paper-brand-title">{accountTitle}</p>}
                 {accountLabel && <p className="invoice-paper-brand-subtle">{accountLabel}</p>}
