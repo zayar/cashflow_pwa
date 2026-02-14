@@ -3091,6 +3091,54 @@ html[lang='my'] .login-flat-foot {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.telegram-inventory-section {
+  display: grid;
+  gap: 10px;
+}
+
+.telegram-inventory-kicker {
+  margin: 2px 2px 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.telegram-helper-text {
+  margin: 0;
+  font-size: 13px;
+}
+
+.telegram-frequency-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--border) 75%, white 25%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-soft) 78%, white 22%);
+  padding: 4px;
+}
+
+.telegram-frequency-tab {
+  min-height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.telegram-frequency-tab.active {
+  background: linear-gradient(145deg, var(--primary-strong) 0%, var(--ink) 100%);
+  color: var(--text-on-strong);
+  box-shadow: 0 8px 16px rgba(23, 37, 62, 0.2);
+}
+
+.telegram-frequency-tab:disabled {
+  opacity: 0.56;
+}
+
 @media (max-width: 520px) {
   .telegram-weekly-row {
     grid-template-columns: 1fr;
