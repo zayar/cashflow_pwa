@@ -51,27 +51,28 @@ function Login() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-panel">
-        <div className="auth-head">
-          <div className="auth-brand">
-            <BrandLogo variant="full" className="auth-brand-logo" title="Cashflow Lite" decorative={false} />
+    <div className="login-flat-page">
+      <div className="login-flat-shell">
+        <div className="login-flat-top">
+          <div className="login-flat-brand">
+            <BrandLogo variant="full" className="login-flat-brand-logo" title="Cashflow Lite" decorative={false} />
+            <p className="login-flat-brand-text">cashflow</p>
           </div>
-          <h1 className="heading" style={{ marginBottom: 6 }}>
+          <h1 className="login-flat-title">
             {t('login.title')}
           </h1>
-          <p className="subtle">{t('login.subtitle')}</p>
+          <p className="login-flat-subtitle">{t('login.subtitle')}</p>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="login-flat-form" onSubmit={handleSubmit}>
           <label className="field" htmlFor="username">
-            <span className="label">{t('login.username')}</span>
+            <span className="login-flat-label">{t('login.username')}</span>
             <input
               id="username"
               name="username"
               value={form.username}
               onChange={handleChange}
-              className="input"
+              className="input login-flat-input"
               placeholder={t('login.usernamePlaceholder')}
               autoComplete="username"
               required
@@ -79,39 +80,41 @@ function Login() {
           </label>
 
           <label className="field" htmlFor="password">
-            <span className="label">{t('login.password')}</span>
+            <span className="login-flat-label">{t('login.password')}</span>
             <input
               id="password"
               name="password"
               type="password"
               value={form.password}
               onChange={handleChange}
-              className="input"
+              className="input login-flat-input"
               placeholder={t('login.passwordPlaceholder')}
               autoComplete="current-password"
               required
             />
           </label>
 
-          <button className="btn btn-primary btn-full" type="submit" disabled={loading}>
+          <button className="login-flat-submit" type="submit" disabled={loading}>
             {loading ? t('login.signingIn') : t('login.logIn')}
           </button>
 
-          <p className="auth-trust">{t('login.trust')}</p>
-
           {(message || error) && (
-            <div className={`auth-state ${error ? 'auth-state-error' : 'auth-state-success'}`} role="status" aria-live="polite">
+            <div className={`auth-state ${error ? 'auth-state-error' : 'auth-state-success'} login-flat-state`} role="status" aria-live="polite">
               {error ? error.message : message}
             </div>
           )}
+        </form>
 
-          <p className="auth-foot">
+        <div className="login-flat-bottom">
+          <p className="login-flat-trust">{t('login.trust')}</p>
+
+          <p className="login-flat-foot">
             {t('login.newHere')}{' '}
-            <Link to="/welcome" className="auth-link">
+            <Link to="/welcome" className="login-flat-link">
               {t('login.backToWelcome')}
             </Link>
           </p>
-        </form>
+        </div>
       </div>
     </div>
   );
