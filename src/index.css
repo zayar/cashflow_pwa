@@ -2427,6 +2427,17 @@ html[lang='my'] .login-flat-foot {
   gap: 12px;
 }
 
+.subscription-summary-card {
+  display: grid;
+  gap: 8px;
+}
+
+.subscription-summary-btn {
+  margin-top: 10px;
+  width: fit-content;
+  min-width: 180px;
+}
+
 .more-action-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
