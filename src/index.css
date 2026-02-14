@@ -2251,10 +2251,37 @@ html[lang='my'] .welcome-copy {
 
 .login-flat-page {
   min-height: 100vh;
-  background: #ffffff;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
   display: flex;
   align-items: flex-start;
-  padding: clamp(20px, 7vh, 72px) 24px;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: clamp(26px, 8.5vh, 84px) 24px;
+}
+
+.login-flat-page::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -20%;
+  width: 80%;
+  height: 50%;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(34, 211, 238, 0.05) 100%);
+  border-radius: 50%;
+  filter: blur(60px);
+}
+
+.login-flat-page::after {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  left: -10%;
+  width: 60%;
+  height: 40%;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.08) 0%, rgba(37, 99, 235, 0.05) 100%);
+  border-radius: 50%;
+  filter: blur(60px);
 }
 
 .login-flat-shell {
@@ -2262,70 +2289,109 @@ html[lang='my'] .welcome-copy {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-flat-fade-in {
+  animation: login-fade-in 320ms ease both;
 }
 
 .login-flat-top {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .login-flat-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  margin-top: 4px;
 }
 
 .login-flat-brand-logo {
-  width: 30px;
-  height: 30px;
+  width: 41px;
+  height: 41px;
   color: #0f172a;
 }
 
 .login-flat-brand-text {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: #111827;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.012em;
+  line-height: 1;
 }
 
 .login-flat-title {
   margin: 0;
-  font-size: clamp(28px, 5.8vw, 34px);
+  font-size: clamp(31px, 6.3vw, 38px);
   font-weight: 800;
   color: #111827;
-  line-height: 1.28;
-  letter-spacing: -0.015em;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .login-flat-subtitle {
   margin: 0;
-  color: #6b7280;
-  font-size: 15px;
-  line-height: 1.72;
+  color: #64748b;
+  font-size: 15.5px;
+  line-height: 1.75;
 }
 
 .login-flat-form {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .login-flat-label {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.4;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
   color: #4b5563;
 }
 
+.login-flat-input-wrap {
+  position: relative;
+}
+
+.login-flat-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.login-flat-input-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .login-flat-input {
-  min-height: 50px;
+  min-height: 54px;
   border-radius: 12px;
   border: 1px solid #d1d5db;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.92);
   padding: 12px 16px;
   box-shadow: none;
+}
+
+.login-flat-input-with-icon {
+  padding-left: 44px;
+}
+
+.login-flat-input-with-toggle {
+  padding-right: 64px;
 }
 
 .login-flat-input::placeholder {
@@ -2333,34 +2399,60 @@ html[lang='my'] .welcome-copy {
 }
 
 .login-flat-input:hover {
-  border-color: #9ca3af;
+  border-color: #a3afbf;
 }
 
 .login-flat-input:focus {
-  border-color: #111111;
-  box-shadow: none;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.login-flat-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.login-flat-password-toggle:hover {
+  color: #0f172a;
+}
+
+.login-flat-password-toggle:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
 }
 
 .login-flat-submit {
   width: 100%;
-  min-height: 52px;
-  border: 1px solid #111111;
+  min-height: 56px;
+  border: 1px solid #0f172a;
   border-radius: 12px;
-  background: #111111;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   color: #ffffff;
-  font-size: 16px;
+  font-size: 16.5px;
   font-weight: 800;
   letter-spacing: 0.01em;
   cursor: pointer;
-  transition: background-color 0.14s ease, transform 0.12s ease;
+  transition: background-color 0.14s ease, transform 0.12s ease, filter 0.14s ease;
 }
 
 .login-flat-submit:hover:not(:disabled) {
-  background: #030303;
+  filter: brightness(0.96);
 }
 
 .login-flat-submit:active:not(:disabled) {
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
 .login-flat-submit:disabled {
@@ -2380,6 +2472,7 @@ html[lang='my'] .welcome-copy {
 .login-flat-bottom {
   display: grid;
   gap: 16px;
+  padding-bottom: 6px;
 }
 
 .login-flat-trust {
@@ -2410,7 +2503,7 @@ html[lang='my'] .welcome-copy {
 @media (min-width: 768px) {
   .login-flat-page {
     align-items: center;
-    padding: clamp(40px, 10vh, 96px) 24px;
+    padding: clamp(48px, 10vh, 104px) 24px;
   }
 }
 
@@ -2420,6 +2513,17 @@ html[lang='my'] .login-flat-label,
 html[lang='my'] .login-flat-trust,
 html[lang='my'] .login-flat-foot {
   line-height: 1.8;
+}
+
+@keyframes login-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .more-grid {
@@ -3579,7 +3683,8 @@ html[lang='my'] .login-flat-foot {
   .topbar,
   .content,
   .picker-page,
-  .auth-page {
+  .auth-page,
+  .login-flat-page {
     padding-left: 12px;
     padding-right: 12px;
   }
