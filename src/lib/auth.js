@@ -109,6 +109,11 @@ function isBrowser() {
   return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 }
 
+const buildScopedKey = (baseKey, businessId) => {
+  const normalizedId = toPositiveInt(businessId);
+  return normalizedId ? `${baseKey}:${normalizedId}` : baseKey;
+};
+
 export function getToken() {
   if (!isBrowser()) return '';
   return localStorage.getItem(TOKEN_KEY) || '';
@@ -166,9 +171,11 @@ function writeStoredDefault(key, value) {
   localStorage.setItem(key, String(normalized));
 }
 
-export function getDefaultInvoiceLocationIds() {
-  const storedBranchId = readStoredDefault(DEFAULT_BRANCH_KEY);
-  const storedWarehouseId = readStoredDefault(DEFAULT_WAREHOUSE_KEY);
+export function getDefaultInvoiceLocationIds(businessId = 0) {
+  const branchKey = buildScopedKey(DEFAULT_BRANCH_KEY, businessId);
+  const warehouseKey = buildScopedKey(DEFAULT_WAREHOUSE_KEY, businessId);
+  const storedBranchId = readStoredDefault(branchKey);
+  const storedWarehouseId = readStoredDefault(warehouseKey);
   return resolveDefaultInvoiceLocationIds({
     storedBranchId,
     storedWarehouseId,
@@ -178,13 +185,16 @@ export function getDefaultInvoiceLocationIds() {
   });
 }
 
-export function saveDefaultInvoiceLocationIds(branchId, warehouseId) {
-  writeStoredDefault(DEFAULT_BRANCH_KEY, branchId);
-  writeStoredDefault(DEFAULT_WAREHOUSE_KEY, warehouseId);
+export function saveDefaultInvoiceLocationIds(branchId, warehouseId, businessId = 0) {
+  const branchKey = buildScopedKey(DEFAULT_BRANCH_KEY, businessId);
+  const warehouseKey = buildScopedKey(DEFAULT_WAREHOUSE_KEY, businessId);
+  writeStoredDefault(branchKey, branchId);
+  writeStoredDefault(warehouseKey, warehouseId);
 }
 
-export function getDefaultInvoiceCurrencyId() {
-  const storedCurrencyId = readStoredDefault(DEFAULT_CURRENCY_KEY);
+export function getDefaultInvoiceCurrencyId(businessId = 0) {
+  const currencyKey = buildScopedKey(DEFAULT_CURRENCY_KEY, businessId);
+  const storedCurrencyId = readStoredDefault(currencyKey);
   return resolveDefaultInvoiceCurrencyId({
     storedCurrencyId,
     token: getToken(),
@@ -192,6 +202,7 @@ export function getDefaultInvoiceCurrencyId() {
   });
 }
 
-export function saveDefaultInvoiceCurrencyId(currencyId) {
-  writeStoredDefault(DEFAULT_CURRENCY_KEY, currencyId);
+export function saveDefaultInvoiceCurrencyId(currencyId, businessId = 0) {
+  const currencyKey = buildScopedKey(DEFAULT_CURRENCY_KEY, businessId);
+  writeStoredDefault(currencyKey, currencyId);
 }

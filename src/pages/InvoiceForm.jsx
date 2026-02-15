@@ -5,7 +5,7 @@ import InvoicePreview from '../components/InvoicePreview';
 import InvoiceLineCard from '../components/InvoiceLineCard';
 import Modal from '../components/Modal';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
-import { saveDefaultInvoiceCurrencyId, saveDefaultInvoiceLocationIds } from '../lib/auth';
+import { saveDefaultInvoiceCurrencyId, saveDefaultInvoiceLocationIds, getDefaultInvoiceLocationIds, getDefaultInvoiceCurrencyId } from '../lib/auth';
 import { useI18n } from '../i18n';
 
 const CREATE_INVOICE = gql`
@@ -32,10 +32,14 @@ const GET_INVOICE_LOCATIONS = gql`
     listAllBranch {
       id
       name
+      isPrimary
+      isDefault
     }
     listAllWarehouse {
       id
       name
+      isPrimary
+      isDefault
     }
   }
 `;
@@ -74,6 +78,18 @@ function toPositiveInt(value) {
   const number = Number(value);
   if (!Number.isFinite(number) || number <= 0) return 0;
   return Math.trunc(number);
+}
+
+function pickPreferredId(options, preferredId) {
+  if (!Array.isArray(options) || options.length === 0) return 0;
+  const preferred = toPositiveInt(preferredId);
+  if (preferred) {
+    const match = options.find((item) => toPositiveInt(item?.id) === preferred);
+    if (match) return toPositiveInt(match.id);
+  }
+  const primary = options.find((item) => item?.isPrimary || item?.isDefault);
+  if (primary) return toPositiveInt(primary.id);
+  return toPositiveInt(options[0]?.id);
 }
 
 function getNetworkErrorMessage(error) {
@@ -163,10 +179,13 @@ function InvoiceForm() {
     }
   }, [errors.customer, hasCustomer]);
 
+  const businessId = toPositiveInt(businessData?.getBusiness?.id);
   const baseCurrency = businessData?.getBusiness?.baseCurrency;
   const baseCurrencyId = toPositiveInt(baseCurrency?.id);
   const branches = locationData?.listAllBranch ?? [];
   const warehouses = locationData?.listAllWarehouse ?? [];
+  const storedLocationDefaults = useMemo(() => getDefaultInvoiceLocationIds(businessId), [businessId]);
+  const storedCurrencyDefault = useMemo(() => getDefaultInvoiceCurrencyId(businessId), [businessId]);
 
   const selectedBranchId = toPositiveInt(invoice.branchId);
   const selectedWarehouseId = toPositiveInt(invoice.warehouseId);
@@ -239,11 +258,51 @@ function InvoiceForm() {
   useEffect(() => {
     if (!baseCurrencyId) return;
     const currentCurrencyId = toPositiveInt(invoice.currencyId);
-    if (currentCurrencyId === baseCurrencyId) return;
+    const desiredCurrencyId =
+      currentCurrencyId && currentCurrencyId === baseCurrencyId
+        ? currentCurrencyId
+        : baseCurrencyId || toPositiveInt(storedCurrencyDefault);
 
-    dispatch({ type: 'setField', field: 'currencyId', value: baseCurrencyId });
-    saveDefaultInvoiceCurrencyId(baseCurrencyId);
-  }, [baseCurrencyId, dispatch, invoice.currencyId]);
+    if (!desiredCurrencyId || desiredCurrencyId === currentCurrencyId) return;
+
+    dispatch({ type: 'setField', field: 'currencyId', value: desiredCurrencyId });
+    saveDefaultInvoiceCurrencyId(desiredCurrencyId, businessId);
+    if (isLocationOpen) setCurrencyIdInput(String(desiredCurrencyId));
+  }, [baseCurrencyId, businessId, dispatch, invoice.currencyId, storedCurrencyDefault, isLocationOpen]);
+
+  useEffect(() => {
+    if (locationsLoading) return;
+    if (!branches.length || !warehouses.length) return;
+
+    const nextBranchId = pickPreferredId(branches, storedLocationDefaults.branchId);
+    const nextWarehouseId = pickPreferredId(warehouses, storedLocationDefaults.warehouseId);
+    const branchInvalid = !selectedBranchId || !branches.some((branch) => toPositiveInt(branch.id) === selectedBranchId);
+    const warehouseInvalid =
+      !selectedWarehouseId || !warehouses.some((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId);
+
+    if (branchInvalid || selectedBranchId !== nextBranchId) {
+      dispatch({ type: 'setField', field: 'branchId', value: nextBranchId });
+      saveDefaultInvoiceLocationIds(nextBranchId, selectedWarehouseId || nextWarehouseId, businessId);
+      if (isLocationOpen) setBranchIdInput(String(nextBranchId));
+    }
+
+    if (warehouseInvalid || selectedWarehouseId !== nextWarehouseId) {
+      dispatch({ type: 'setField', field: 'warehouseId', value: nextWarehouseId });
+      saveDefaultInvoiceLocationIds(selectedBranchId || nextBranchId, nextWarehouseId, businessId);
+      if (isLocationOpen) setWarehouseIdInput(String(nextWarehouseId));
+    }
+  }, [
+    branches,
+    warehouses,
+    locationsLoading,
+    selectedBranchId,
+    selectedWarehouseId,
+    storedLocationDefaults.branchId,
+    storedLocationDefaults.warehouseId,
+    dispatch,
+    businessId,
+    isLocationOpen
+  ]);
 
   useEffect(() => {
     if (!isLocationOpen) return;
@@ -251,12 +310,15 @@ function InvoiceForm() {
     const branchIds = new Set(branches.map((branch) => String(branch.id)));
     const warehouseIds = new Set(warehouses.map((warehouse) => String(warehouse.id)));
 
+    const primaryBranch = branches.find((branch) => branch?.isPrimary || branch?.isDefault);
+    const primaryWarehouse = warehouses.find((warehouse) => warehouse?.isPrimary || warehouse?.isDefault);
+
     if (branches.length > 0 && (!branchIdInput || !branchIds.has(String(branchIdInput)))) {
-      setBranchIdInput(String(branches[0]?.id ?? ''));
+      setBranchIdInput(String(primaryBranch?.id ?? branches[0]?.id ?? ''));
     }
 
     if (warehouses.length > 0 && (!warehouseIdInput || !warehouseIds.has(String(warehouseIdInput)))) {
-      setWarehouseIdInput(String(warehouses[0]?.id ?? ''));
+      setWarehouseIdInput(String(primaryWarehouse?.id ?? warehouses[0]?.id ?? ''));
     }
 
     if (baseCurrencyId && toPositiveInt(currencyIdInput) !== baseCurrencyId) {
@@ -277,8 +339,8 @@ function InvoiceForm() {
     dispatch({ type: 'setField', field: 'branchId', value: nextBranchId });
     dispatch({ type: 'setField', field: 'warehouseId', value: nextWarehouseId });
     dispatch({ type: 'setField', field: 'currencyId', value: nextCurrencyId });
-    saveDefaultInvoiceLocationIds(nextBranchId, nextWarehouseId);
-    saveDefaultInvoiceCurrencyId(nextCurrencyId);
+    saveDefaultInvoiceLocationIds(nextBranchId, nextWarehouseId, businessId);
+    saveDefaultInvoiceCurrencyId(nextCurrencyId, businessId);
     setStatus(t('invoiceForm.invoiceDefaultsUpdated'));
     setIsLocationOpen(false);
   };
