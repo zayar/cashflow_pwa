@@ -84,3 +84,22 @@ export const deleteTelegramAutoReportSchedule = async (scheduleId) => {
     body: { id: scheduleId }
   });
 };
+
+/**
+ * List Telegram recipients linked to the current business.
+ * @returns {{ recipients: Array<{ telegramUserId: string, linkedAt: number }> }}
+ */
+export const getLinkedRecipients = async () => {
+  return request('/api/telegram/recipients');
+};
+
+/**
+ * Disconnect (unlink) one Telegram recipient from the current business.
+ * @param {string} telegramUserId - The Telegram user ID to disconnect.
+ */
+export const disconnectRecipient = async (telegramUserId) => {
+  return request('/api/telegram/recipients/disconnect', {
+    method: 'POST',
+    body: { telegramUserId }
+  });
+};

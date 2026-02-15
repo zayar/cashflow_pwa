@@ -3290,6 +3290,56 @@ html[lang='my'] .login-flat-foot {
   text-decoration: underline;
 }
 
+.tg-recipients-block {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-soft) 76%, white 24%);
+  border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
+}
+
+.tg-recipients-block .label {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tg-recipients-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tg-recipient-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.tg-recipient-id {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.tg-recipient-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.tg-disconnect-btn {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
 /* Legacy — keep for code-panel backward compat */
 .telegram-code-panel {
   border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);

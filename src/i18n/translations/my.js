@@ -818,7 +818,15 @@ export default {
     saveSchedules: 'Schedule သိမ်းရန်',
     savingSchedules: 'သိမ်းနေသည်...',
     sendTestNow: 'စမ်းသပ် Report အခု ပို့ရန်',
-    sendingTest: 'ပို့နေသည်...'
+    sendingTest: 'ပို့နေသည်...',
+    recipientsLoadFailed: 'ချိတ်ဆက်ထားသော recipient များ မတင်နိုင်ပါ။',
+    connectedRecipientsTitle: 'ချိတ်ဆက်ထားသော recipient များ',
+    loadingRecipients: 'Recipient များ တင်နေသည်...',
+    recipientId: 'Telegram ID',
+    disconnectTitle: 'ဤ recipient ကို သင့်လုပ်ငန်းမှ ချိတ်ဆက်မှု ဖြုတ်ရန်',
+    disconnecting: 'ချိတ်ဆက်မှု ဖြုတ်နေသည်...',
+    disconnect: 'ချိတ်ဆက်မှု ဖြုတ်မည်',
+    disconnectFailed: 'ချိတ်ဆက်မှု ဖြုတ်မရပါ။ ထပ်ကြိုးစားပါ။'
   },
   invoiceLine: {
     selectItem: 'ပစ္စည်း ရွေးပါ',

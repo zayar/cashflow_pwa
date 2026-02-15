@@ -4,7 +4,9 @@ import {
   generateTelegramLinkCode,
   getTelegramAutoReportSettings,
   upsertTelegramAutoReportSchedule,
-  sendTelegramAutoReportTest
+  sendTelegramAutoReportTest,
+  getLinkedRecipients,
+  disconnectRecipient
 } from '../lib/telegramLinkApi';
 import { useI18n } from '../i18n';
 
@@ -85,6 +87,10 @@ function TelegramConnect() {
   const [canManageSchedules, setCanManageSchedules] = useState(false);
   const [telegramLinked, setTelegramLinked] = useState(false);
   const [linkedRecipientsCount, setLinkedRecipientsCount] = useState(0);
+  const [recipients, setRecipients] = useState([]);
+  const [recipientsLoading, setRecipientsLoading] = useState(false);
+  const [disconnectingId, setDisconnectingId] = useState(null);
+  const [recipientsError, setRecipientsError] = useState('');
   const [yesterdayScheduleId, setYesterdayScheduleId] = useState('');
   const [yesterdayEnabled, setYesterdayEnabled] = useState(false);
   const [yesterdayTime, setYesterdayTime] = useState(DEFAULT_DAILY_TIME);
@@ -158,6 +164,7 @@ function TelegramConnect() {
       setCanManageSchedules(Boolean(payload?.canManage));
       setTelegramLinked(linked);
       setLinkedRecipientsCount(Number(payload?.linkedRecipientsCount || 0));
+      setRecipients([]);
       setTimezone(
         String(
           yesterday?.timezone ||
@@ -207,10 +214,37 @@ function TelegramConnect() {
     }
   }, [t]);
 
+  const loadRecipients = useCallback(async () => {
+    if (!telegramLinked) {
+      setRecipients([]);
+      return;
+    }
+    setRecipientsError('');
+    setRecipientsLoading(true);
+    try {
+      const payload = await getLinkedRecipients();
+      const list = Array.isArray(payload?.recipients) ? payload.recipients : [];
+      setRecipients(list);
+    } catch (err) {
+      setRecipientsError(err?.message || t('telegram.recipientsLoadFailed'));
+      setRecipients([]);
+    } finally {
+      setRecipientsLoading(false);
+    }
+  }, [telegramLinked, t]);
+
   useEffect(() => {
     loadActiveCode();
     loadAutoReportSettings();
   }, [loadActiveCode, loadAutoReportSettings]);
+
+  useEffect(() => {
+    if (telegramLinked) {
+      loadRecipients();
+    } else {
+      setRecipients([]);
+    }
+  }, [telegramLinked, loadRecipients]);
 
   const expiresLabel = useMemo(() => formatDateTime(activeCode?.expiresAt), [activeCode?.expiresAt]);
 
@@ -378,6 +412,21 @@ function TelegramConnect() {
     }, 400);
   };
 
+  const handleDisconnect = async (telegramUserId) => {
+    if (!canManageSchedules || !telegramUserId) return;
+    setRecipientsError('');
+    setDisconnectingId(telegramUserId);
+    try {
+      await disconnectRecipient(telegramUserId);
+      await loadRecipients();
+      await loadAutoReportSettings();
+    } catch (err) {
+      setRecipientsError(err?.message || t('telegram.disconnectFailed'));
+    } finally {
+      setDisconnectingId(null);
+    }
+  };
+
   return (
     <div className="stack">
       <section className="card telegram-connect-card">
@@ -499,9 +548,49 @@ function TelegramConnect() {
             {!telegramLinked ? (
               <p className="auth-state">{t('telegram.notLinkedFirst')}</p>
             ) : (
-              <p className="auth-state auth-state-success">
-                {t('telegram.linkedRecipients')}: {linkedRecipientsCount}
-              </p>
+              <>
+                <p className="auth-state auth-state-success">
+                  {t('telegram.linkedRecipients')}: {linkedRecipientsCount}
+                </p>
+                {canManageSchedules && linkedRecipientsCount > 0 ? (
+                  <div className="tg-recipients-block">
+                    <p className="label">{t('telegram.connectedRecipientsTitle')}</p>
+                    {recipientsError ? (
+                      <p className="auth-state auth-state-error">{recipientsError}</p>
+                    ) : null}
+                    {recipientsLoading ? (
+                      <p className="subtle">{t('telegram.loadingRecipients')}</p>
+                    ) : recipients.length > 0 ? (
+                      <ul className="tg-recipients-list">
+                        {recipients.map((r) => (
+                          <li key={r.telegramUserId} className="tg-recipient-row">
+                            <span className="tg-recipient-id">
+                              {t('telegram.recipientId')}: {r.telegramUserId}
+                              {r.linkedAt ? (
+                                <span className="tg-recipient-meta">
+                                  {' · '}
+                                  {formatDateTime(r.linkedAt)}
+                                </span>
+                              ) : null}
+                            </span>
+                            <button
+                              type="button"
+                              className="btn btn-ghost tg-disconnect-btn"
+                              onClick={() => handleDisconnect(r.telegramUserId)}
+                              disabled={disconnectingId !== null}
+                              title={t('telegram.disconnectTitle')}
+                            >
+                              {disconnectingId === r.telegramUserId
+                                ? t('telegram.disconnecting')
+                                : t('telegram.disconnect')}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
             )}
             {!canManageSchedules ? <p className="auth-state">{t('telegram.ownerOnly')}</p> : null}
 

@@ -818,7 +818,15 @@ export default {
     saveSchedules: 'Save Schedule',
     savingSchedules: 'Saving...',
     sendTestNow: 'Send Test Report Now',
-    sendingTest: 'Sending...'
+    sendingTest: 'Sending...',
+    recipientsLoadFailed: 'Failed to load connected recipients.',
+    connectedRecipientsTitle: 'Connected recipients',
+    loadingRecipients: 'Loading recipients...',
+    recipientId: 'Telegram ID',
+    disconnectTitle: 'Disconnect this recipient from your business',
+    disconnecting: 'Disconnecting...',
+    disconnect: 'Disconnect',
+    disconnectFailed: 'Failed to disconnect. Please try again.'
   },
   invoiceLine: {
     selectItem: 'Select item',
