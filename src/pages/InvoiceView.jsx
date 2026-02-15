@@ -6,7 +6,7 @@ import InvoiceItemsTable from '../components/InvoiceItemsTable';
 import { getDefaultInvoiceLocationIds } from '../lib/auth';
 import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
 import { getDefaultTemplate, safeParseConfigString } from '../lib/templatesApi';
-import { resolveStorageAccessUrl } from '../lib/uploadApi';
+import { extractStorageObjectKey, resolveStorageAccessUrl } from '../lib/uploadApi';
 import { useBusinessProfile } from '../state/businessProfile';
 import { useI18n } from '../i18n';
 import { getInvoiceStatusKey } from '../i18n/status';
@@ -29,6 +29,10 @@ const FIND_INVOICE = gql`
           currentStatus
           invoiceTotalAmount
           remainingBalance
+          documents {
+            id
+            documentUrl
+          }
           branch {
             id
             name
@@ -177,6 +181,7 @@ function InvoiceView() {
   const isConfirmingRef = useRef(false);
   const isRecordingPaymentRef = useRef(false);
   const [paymentCompletedLocally, setPaymentCompletedLocally] = useState(false);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState('');
 
   const shouldLoadPaymentAccounts = isRecordPaymentOpen;
   const { data: bankData, loading: banksLoading, error: banksError } = useQuery(LIST_BANK_ACCOUNTS, {
@@ -206,6 +211,17 @@ function InvoiceView() {
     const match = edges.find((edge) => String(edge?.node?.id || '') === String(id || ''));
     return match?.node || null;
   }, [data, id]);
+
+  const paymentProofDocs = useMemo(() => {
+    const docs = invoice?.documents || [];
+    if (!Array.isArray(docs) || docs.length === 0) return [];
+    const segment = `/sales_invoices/${String(invoice?.id || '')}/payment_proofs/`;
+    return docs.filter((d) => {
+      const raw = d?.documentUrl || '';
+      const key = extractStorageObjectKey(raw) || String(raw);
+      return !!key && key.includes(segment);
+    });
+  }, [invoice?.documents, invoice?.id]);
   const baseCurrency = profile?.baseCurrency || invoice?.currency || null;
   const businessId = profile?.id;
   const businessName = useMemo(() => {
@@ -696,6 +712,29 @@ function InvoiceView() {
         </div>
       </section>
 
+      {paymentProofDocs.length > 0 && (
+        <section className="card" aria-label="Payment proof">
+          <p className="kicker">Payment proof</p>
+          <div className="cf-thumb-grid" style={{ marginTop: 10 }}>
+            {paymentProofDocs.map((doc) => {
+              const src = resolveStorageAccessUrl(doc?.documentUrl || '');
+              if (!src) return null;
+              return (
+                <button
+                  key={doc?.id || doc?.documentUrl}
+                  type="button"
+                  className="cf-thumb"
+                  onClick={() => setProofPreviewUrl(src)}
+                  aria-label="Open payment proof"
+                >
+                  <img src={src} alt="" loading="lazy" />
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {status && (
         <section className="surface-card" role="status" aria-live="polite">
           <p style={{ margin: 0 }}>{status}</p>
@@ -876,6 +915,18 @@ function InvoiceView() {
                 {saving ? t('invoiceView.deleting') : t('invoiceView.delete')}
               </button>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {proofPreviewUrl && (
+        <Modal title="Payment proof" onClose={() => setProofPreviewUrl('')}>
+          <div style={{ display: 'grid', placeItems: 'center' }}>
+            <img
+              src={proofPreviewUrl}
+              alt="Payment proof"
+              style={{ maxWidth: '100%', height: 'auto', borderRadius: 12 }}
+            />
           </div>
         </Modal>
       )}

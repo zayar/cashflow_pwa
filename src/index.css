@@ -4142,3 +4142,27 @@ html[lang='my'] .login-flat-foot {
   color: #c0392b;
   font-weight: 600;
 }
+
+/* Payment proof thumbnails (invoice details) */
+.cf-thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+}
+
+.cf-thumb {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-soft);
+  padding: 0;
+  aspect-ratio: 1 / 1;
+  cursor: pointer;
+}
+
+.cf-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

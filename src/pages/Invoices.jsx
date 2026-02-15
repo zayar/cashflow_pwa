@@ -3,6 +3,7 @@ import { gql, useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { useInvoiceDraft } from '../state/invoiceDraft';
 import { formatInvoiceNumberShort, formatMoney, formatShortDate } from '../lib/formatters';
+import { extractStorageObjectKey } from '../lib/uploadApi';
 import { useI18n } from '../i18n';
 import { getInvoiceStatusKey } from '../i18n/status';
 
@@ -17,6 +18,9 @@ const INVOICES_QUERY = gql`
           currentStatus
           invoiceTotalAmount
           remainingBalance
+          documents {
+            documentUrl
+          }
           customer {
             name
           }
@@ -116,6 +120,17 @@ function Invoices() {
     });
   }, [invoices, search, tab]);
 
+  const paymentProofCount = (invoice) => {
+    const docs = invoice?.documents || [];
+    if (!Array.isArray(docs) || docs.length === 0) return 0;
+    const segment = `/sales_invoices/${String(invoice?.id || '')}/payment_proofs/`;
+    return docs.filter((d) => {
+      const raw = d?.documentUrl || '';
+      const key = extractStorageObjectKey(raw) || String(raw);
+      return !!key && key.includes(segment);
+    }).length;
+  };
+
   return (
     <div className="stack">
       <section className="card">
@@ -204,6 +219,9 @@ function Invoices() {
           {filtered.map((invoice) => (
             <li key={invoice.id} className="list-card list-clickable">
               <Link to={`/invoices/${invoice.id}`} className="list-link">
+                {(() => {
+                  const proofCount = paymentProofCount(invoice);
+                  return (
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: 800 }}>
                     {formatInvoiceNumberShort(invoice.invoiceNumber) || `${t('pages.invoiceView.title')} ${invoice.id}`}
@@ -216,8 +234,11 @@ function Invoices() {
                     <span className="meta-chip">
                       {t('invoices.balance')}: {formatMoney(invoice.remainingBalance, baseCurrency)}
                     </span>
+                    {proofCount > 0 && <span className="meta-chip">Proof: {proofCount}</span>}
                   </div>
                 </div>
+                  );
+                })()}
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <p style={{ margin: 0, fontWeight: 800 }}>{formatMoney(invoice.invoiceTotalAmount, baseCurrency)}</p>
