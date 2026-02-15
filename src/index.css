@@ -3027,25 +3027,270 @@ html[lang='my'] .login-flat-foot {
 
 .telegram-connect-card {
   display: grid;
+  gap: 16px;
+}
+
+/* Header with Telegram icon */
+.tg-header {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
-.telegram-steps {
-  border: 1px dashed color-mix(in srgb, var(--border-strong) 72%, white 28%);
-  border-radius: 12px;
-  padding: 10px 12px;
-  display: grid;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.58);
+.tg-header .kicker {
+  margin-bottom: 2px;
 }
 
-.telegram-step {
+.tg-header .title {
+  margin: 0;
+}
+
+.tg-icon-circle {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0088cc 0%, #0077b5 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Step-by-step flow */
+.tg-steps-flow {
+  display: grid;
+  gap: 0;
+  padding: 4px 0;
+}
+
+.tg-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.tg-step-number {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf9 100%);
+  border: 1.5px solid #b3ddf2;
+  color: #0077b5;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tg-step-body {
+  flex: 1;
+  padding-top: 2px;
+}
+
+.tg-step-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.tg-step-desc {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.tg-step-connector {
+  width: 2px;
+  height: 12px;
+  margin-left: 13px;
+  background: linear-gradient(180deg, #b3ddf2, #d1ecf9);
+  border-radius: 1px;
+}
+
+/* Command card */
+.tg-command-card {
+  border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-soft) 76%, white 24%);
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.tg-command-label {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.tg-command-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tg-command-code {
+  flex: 1;
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, white 20%);
+  background: white;
+  padding: 10px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 14px;
+  color: #0f1d33;
+  word-break: break-word;
+  display: block;
+}
+
+.tg-copy-btn {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.tg-copy-btn:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.tg-copy-btn:active {
+  transform: scale(0.94);
+}
+
+.tg-expires {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Loading skeleton */
+.tg-loading-skeleton {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.tg-skeleton-line {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--surface-soft) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: tgShimmer 1.5s ease-in-out infinite;
+}
+
+.tg-skeleton-line.short {
+  width: 60%;
+}
+
+@keyframes tgShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Primary action buttons */
+.tg-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.tg-btn-full {
+  width: 100%;
+}
+
+.tg-bot-link-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #0088cc 0%, #0077b5 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+  box-shadow: 0 2px 8px rgba(0, 136, 204, 0.25);
+}
+
+.tg-bot-link-btn:hover {
+  background: linear-gradient(135deg, #007ab8 0%, #006aa3 100%);
+  box-shadow: 0 4px 16px rgba(0, 136, 204, 0.35);
+  transform: translateY(-1px);
+}
+
+.tg-bot-link-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 136, 204, 0.2);
+}
+
+.tg-secondary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tg-secondary-actions .btn {
+  flex: 1;
+}
+
+/* Bot hint / direct link */
+.tg-bot-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e8f4fd 100%);
+  border: 1px solid #d1ecf9;
+}
+
+.tg-bot-hint p {
   margin: 0;
   font-size: 13px;
-  color: var(--text);
-  font-weight: 600;
+  color: var(--text-muted);
 }
 
+.tg-bot-url {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0088cc;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.tg-bot-url:hover {
+  color: #006aa3;
+  text-decoration: underline;
+}
+
+/* Legacy — keep for code-panel backward compat */
 .telegram-code-panel {
   border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
   border-radius: 12px;

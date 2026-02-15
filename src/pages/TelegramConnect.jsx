@@ -364,49 +364,126 @@ function TelegramConnect() {
 
   const controlsDisabled = !canManageSchedules || isSavingSettings || isSendingTest;
 
+  const TELEGRAM_BOT_URL = 'https://t.me/BizCashflowBot';
+
+  const handleOpenBot = () => {
+    window.open(TELEGRAM_BOT_URL, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCopyAndOpen = async () => {
+    await handleCopy();
+    // Small delay so the user sees the "copied" feedback
+    setTimeout(() => {
+      handleOpenBot();
+    }, 400);
+  };
+
   return (
     <div className="stack">
       <section className="card telegram-connect-card">
-        <p className="kicker">{t('telegram.kicker')}</p>
-        <h3 className="title">{t('telegram.title')}</h3>
+        <div className="tg-header">
+          <div className="tg-icon-circle">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.28-.02-.12.03-2.02 1.28-5.69 3.77-.54.37-1.03.55-1.47.54-.48-.01-1.4-.27-2.09-.49-.84-.27-1.51-.42-1.45-.88.03-.24.37-.49 1.02-.74 3.98-1.73 6.64-2.88 7.97-3.43 3.8-1.58 4.59-1.86 5.1-1.87.11 0 .37.03.53.17.14.12.18.28.2.45-.01.06.01.24 0 .41z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div>
+            <p className="kicker">{t('telegram.kicker')}</p>
+            <h3 className="title">{t('telegram.title')}</h3>
+          </div>
+        </div>
         <p className="subtle">{t('telegram.subtitle')}</p>
 
-        <div className="telegram-steps">
-          <p className="telegram-step">{t('telegram.step1')}</p>
-          <p className="telegram-step">{t('telegram.step2')}</p>
-          <p className="telegram-step">{t('telegram.step3')}</p>
+        {/* Step-by-step guide */}
+        <div className="tg-steps-flow">
+          <div className="tg-step-item">
+            <div className="tg-step-number">1</div>
+            <div className="tg-step-body">
+              <p className="tg-step-title">{t('telegram.stepGenTitle')}</p>
+              <p className="tg-step-desc">{t('telegram.stepGenDesc')}</p>
+            </div>
+          </div>
+          <div className="tg-step-connector" />
+          <div className="tg-step-item">
+            <div className="tg-step-number">2</div>
+            <div className="tg-step-body">
+              <p className="tg-step-title">{t('telegram.stepOpenTitle')}</p>
+              <p className="tg-step-desc">{t('telegram.stepOpenDesc')}</p>
+            </div>
+          </div>
+          <div className="tg-step-connector" />
+          <div className="tg-step-item">
+            <div className="tg-step-number">3</div>
+            <div className="tg-step-body">
+              <p className="tg-step-title">{t('telegram.stepSendTitle')}</p>
+              <p className="tg-step-desc">{t('telegram.stepSendDesc')}</p>
+            </div>
+          </div>
         </div>
 
+        {/* Command code panel */}
         {isLoadingLinkCode ? (
-          <p className="subtle">{t('telegram.loadingActive')}</p>
+          <div className="tg-loading-skeleton">
+            <div className="tg-skeleton-line" />
+            <div className="tg-skeleton-line short" />
+          </div>
         ) : (
-          <div className="telegram-code-panel">
-            <p className="telegram-code-label">{t('telegram.commandLabel')}</p>
-            <p className="telegram-code-value">{activeCode?.telegramCommand || t('telegram.noActiveCode')}</p>
-            <p className="subtle" style={{ fontSize: 13 }}>
-              {t('telegram.expires')}: {activeCode ? expiresLabel : '-'}
-            </p>
+          <div className="tg-command-card">
+            <p className="tg-command-label">{t('telegram.commandLabel')}</p>
+            <div className="tg-command-row">
+              <code className="tg-command-code">
+                {activeCode?.telegramCommand || t('telegram.noActiveCode')}
+              </code>
+              {activeCode?.telegramCommand && (
+                <button type="button" className="tg-copy-btn" onClick={handleCopy} title={t('telegram.copyCommand')}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {activeCode && (
+              <p className="tg-expires">{t('telegram.expires')}: {expiresLabel}</p>
+            )}
           </div>
         )}
 
         {errorMessage ? <p className="auth-state auth-state-error">{errorMessage}</p> : null}
         {copyMessage ? <p className="auth-state auth-state-success">{copyMessage}</p> : null}
 
-        <div className="toolbar">
-          <button type="button" className="btn btn-primary" onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? t('telegram.generating') : activeCode ? t('telegram.generateNew') : t('telegram.generate')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={handleCopy}
-            disabled={!activeCode?.telegramCommand || isGenerating}
-          >
-            {t('telegram.copyCommand')}
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={loadActiveCode} disabled={isGenerating}>
-            {t('common.refresh')}
-          </button>
+        {/* Primary actions */}
+        <div className="tg-actions">
+          {!activeCode?.telegramCommand ? (
+            <button type="button" className="btn btn-primary tg-btn-full" onClick={handleGenerate} disabled={isGenerating}>
+              {isGenerating ? t('telegram.generating') : t('telegram.generate')}
+            </button>
+          ) : (
+            <>
+              <button type="button" className="tg-bot-link-btn" onClick={handleCopyAndOpen}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.28-.02-.12.03-2.02 1.28-5.69 3.77-.54.37-1.03.55-1.47.54-.48-.01-1.4-.27-2.09-.49-.84-.27-1.51-.42-1.45-.88.03-.24.37-.49 1.02-.74 3.98-1.73 6.64-2.88 7.97-3.43 3.8-1.58 4.59-1.86 5.1-1.87.11 0 .37.03.53.17.14.12.18.28.2.45-.01.06.01.24 0 .41z" fill="currentColor"/>
+                </svg>
+                {t('telegram.openBotAndSend')}
+              </button>
+              <div className="tg-secondary-actions">
+                <button type="button" className="btn btn-secondary" onClick={handleGenerate} disabled={isGenerating}>
+                  {isGenerating ? t('telegram.generating') : t('telegram.generateNew')}
+                </button>
+                <button type="button" className="btn btn-ghost" onClick={loadActiveCode} disabled={isGenerating}>
+                  {t('common.refresh')}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Direct bot link */}
+        <div className="tg-bot-hint">
+          <p>{t('telegram.botHint')}</p>
+          <a href={TELEGRAM_BOT_URL} target="_blank" rel="noopener noreferrer" className="tg-bot-url">
+            @BizCashflowBot
+          </a>
         </div>
       </section>
 
