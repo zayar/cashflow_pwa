@@ -30,6 +30,7 @@ const ExpenseView = lazy(() => import('./pages/ExpenseView'));
 const ExpenseEdit = lazy(() => import('./pages/ExpenseEdit'));
 const Subscribe = lazy(() => import('./pages/Subscribe'));
 const CompanyProfile = lazy(() => import('./pages/CompanyProfile'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
 
 function suspense(element) {
   return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
@@ -59,6 +60,7 @@ export function AppRoutes() {
         { path: 'more/integrations/telegram', element: suspense(<TelegramConnect />) },
         { path: 'more/subscribe', element: suspense(<Subscribe />) },
         { path: 'more/company-profile', element: suspense(<CompanyProfile />) },
+        { path: 'onboarding', element: suspense(<Onboarding />) },
         { path: 'expenses', element: suspense(<Expenses />) },
         { path: 'expenses/new', element: suspense(<ExpenseForm />) },
         { path: 'expenses/:id', element: suspense(<ExpenseView />) },

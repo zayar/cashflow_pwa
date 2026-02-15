@@ -1,4 +1,4 @@
-import { getToken, handleUnauthorized } from './auth';
+import { getToken, handleUnauthorized } from './auth.js';
 
 const DEFAULT_PROD_URI = '/query';
 const DEFAULT_DEV_URI = 'http://localhost:4000/query';

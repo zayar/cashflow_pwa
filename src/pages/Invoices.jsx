@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { useInvoiceDraft } from '../state/invoiceDraft';
@@ -6,6 +6,9 @@ import { formatInvoiceNumberShort, formatMoney, formatShortDate } from '../lib/f
 import { extractStorageObjectKey } from '../lib/uploadApi';
 import { useI18n } from '../i18n';
 import { getInvoiceStatusKey } from '../i18n/status';
+import { useBusinessProfile } from '../state/businessProfile';
+import { getTelegramAutoReportSettings } from '../lib/telegramLinkApi';
+import { deriveTelegramStatus } from '../lib/onboardingFlow';
 
 const INVOICES_QUERY = gql`
   query PaginateInvoices($limit: Int = 20) {
@@ -84,11 +87,84 @@ function LoadingInvoices() {
   );
 }
 
+function NextStepsCard({ telegramStatus }) {
+  const { t } = useI18n();
+
+  const actions = [
+    {
+      title: 'Create your first invoice',
+      copy: 'Send a polished invoice in seconds.',
+      cta: t('invoices.newInvoice'),
+      to: '/invoices/new',
+      kind: 'primary'
+    },
+    telegramStatus?.linked
+      ? {
+          title: 'View Today report',
+          copy: 'Open Telegram and send “today” to get the latest summary.',
+          to: null,
+          kind: 'ghost'
+        }
+      : {
+          title: 'Connect Telegram',
+          copy: 'Link BizCashflowBot to get daily and weekly reports.',
+          to: '/more/integrations/telegram',
+          kind: 'secondary'
+        },
+    telegramStatus?.linked
+      ? {
+          title: 'Schedule reports',
+          copy: 'Daily and weekly auto-reports keep you updated.',
+          to: '/more/integrations/telegram',
+          kind: 'secondary'
+        }
+      : null
+  ].filter(Boolean);
+
+  return (
+    <section className="card next-steps-card">
+      <div className="card-header">
+        <div>
+          <p className="kicker">Next steps</p>
+          <h2 className="title">Keep moving</h2>
+          <p className="subtle">Shortcuts to finish setup.</p>
+        </div>
+      </div>
+
+      <div className="next-steps-grid">
+        {actions.map((action, index) => (
+          <div key={`${action.title}-${index}`} className="next-step">
+            <p className="next-step-title">{action.title}</p>
+            <p className="subtle" style={{ margin: '6px 0 10px' }}>
+              {action.copy}
+            </p>
+            {action.to ? (
+              <Link to={action.to} className={`btn ${action.kind === 'primary' ? 'btn-primary' : 'btn-secondary'}`}>
+                {action.cta || t('common.open')}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => window.open('https://t.me/BizCashflowBot', '_blank', 'noopener,noreferrer')}
+              >
+                Open Telegram
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Invoices() {
   const { t } = useI18n();
   const { dispatch } = useInvoiceDraft();
   const [tab, setTab] = useState('all');
   const [search, setSearch] = useState('');
+  const { profileComplete } = useBusinessProfile();
+  const [telegramStatus, setTelegramStatus] = useState({ linked: false, linkedRecipients: 0, loading: true, error: '' });
 
   const { data: businessData } = useQuery(BUSINESS_QUERY, { fetchPolicy: 'cache-first', nextFetchPolicy: 'cache-first' });
   const { data, loading, error, refetch } = useQuery(INVOICES_QUERY, {
@@ -120,6 +196,31 @@ function Invoices() {
     });
   }, [invoices, search, tab]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadStatus = async () => {
+      try {
+        const payload = await getTelegramAutoReportSettings();
+        const derived = deriveTelegramStatus(payload);
+        if (!cancelled) {
+          setTelegramStatus({ ...derived, loading: false, error: '' });
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setTelegramStatus((prev) => ({
+            ...prev,
+            loading: false,
+            error: e?.message || 'Could not load Telegram status'
+          }));
+        }
+      }
+    };
+    loadStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const paymentProofCount = (invoice) => {
     const docs = invoice?.documents || [];
     if (!Array.isArray(docs) || docs.length === 0) return 0;
@@ -131,8 +232,12 @@ function Invoices() {
     }).length;
   };
 
+  const showNextSteps = profileComplete && !telegramStatus.loading;
+
   return (
     <div className="stack">
+      {showNextSteps && <NextStepsCard telegramStatus={telegramStatus} />}
+
       <section className="card">
         <div className="card-header">
           <div>

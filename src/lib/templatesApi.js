@@ -1,5 +1,5 @@
-import { getToken, handleUnauthorized } from './auth';
-import { getApiBaseUrl } from './uploadApi';
+import { getToken, handleUnauthorized } from './auth.js';
+import { getApiBaseUrl } from './uploadApi.js';
 
 const buildHeaders = () => {
   const token = getToken();

@@ -128,7 +128,8 @@ export default {
     expenseEdit: { title: 'Edit Expense', kicker: 'Expenses' },
     expenseView: { title: 'Expense', kicker: 'Expenses' },
     reports: { title: 'Reports', kicker: 'Insights' },
-    more: { title: 'More', kicker: 'Settings' }
+    more: { title: 'More', kicker: 'Settings' },
+    onboarding: { title: 'Onboarding', kicker: 'Setup' }
   },
   invoices: {
     cardKicker: 'Invoice List',

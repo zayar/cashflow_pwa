@@ -128,7 +128,8 @@ export default {
     expenseEdit: { title: 'အသုံးစရိတ် ပြင်ရန်', kicker: 'အသုံးစရိတ်များ' },
     expenseView: { title: 'အသုံးစရိတ်', kicker: 'အသုံးစရိတ်များ' },
     reports: { title: 'အစီရင်ခံစာများ', kicker: 'အချက်အလက်' },
-    more: { title: 'ပိုမို', kicker: 'ဆက်တင်များ' }
+    more: { title: 'ပိုမို', kicker: 'ဆက်တင်များ' },
+    onboarding: { title: 'Onboarding', kicker: 'Setup' }
   },
   invoices: {
     cardKicker: 'အင်ဗွိုက်စ် စာရင်း',

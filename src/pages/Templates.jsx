@@ -8,6 +8,7 @@ import {
   safeParseConfigString,
   setDefaultTemplate
 } from '../lib/templatesApi';
+import { DEFAULT_INVOICE_TEMPLATE_CONFIG } from '../lib/invoiceTemplateDefaults';
 import { formatShortDate } from '../lib/formatters';
 
 const GET_BUSINESS = gql`
@@ -20,27 +21,6 @@ const GET_BUSINESS = gql`
 `;
 
 const DOCUMENT_TYPE = 'invoice';
-
-const defaultConfig = {
-  theme: {
-    primaryColor: '#1677ff',
-    textColor: '#111827',
-    tableHeaderBg: '#f3f4f6',
-    tableHeaderText: '#111827',
-    borderColor: '#e5e7eb'
-  },
-  header: {
-    showLogo: true
-  },
-  footer: {
-    termsText: ''
-  },
-  layout: {
-    paperSize: 'A4',
-    orientation: 'portrait',
-    marginsIn: { top: 1, bottom: 1, left: 0.2, right: 0.2 }
-  }
-};
 
 function Templates() {
   const navigate = useNavigate();
@@ -89,7 +69,7 @@ function Templates() {
     setError('');
     try {
       const baseName = activeDefault?.name || t('templates.invoiceTemplate');
-      const config = activeDefault ? safeParseConfigString(activeDefault.config_json) : defaultConfig;
+      const config = activeDefault ? safeParseConfigString(activeDefault.config_json) : DEFAULT_INVOICE_TEMPLATE_CONFIG;
       const created = await createTemplate({
         documentType: DOCUMENT_TYPE,
         name: `Copy of ${baseName}`,

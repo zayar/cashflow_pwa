@@ -4,6 +4,8 @@ import BottomNav from '../components/BottomNav';
 import Fab from '../components/Fab';
 import BrandLogo from '../components/BrandLogo';
 import { clearToken, getToken, getUsername } from '../lib/auth';
+import { useBusinessProfile } from '../state/businessProfile';
+import { shouldShowOnboarding } from '../lib/onboardingFlow';
 import { useI18n } from '../i18n';
 
 function getPageCopy(pathname) {
@@ -64,6 +66,9 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/more/integrations/telegram')) {
     return { titleKey: 'pages.telegramConnect.title', kickerKey: 'pages.telegramConnect.kicker', backPath: '/more' };
   }
+  if (pathname.startsWith('/onboarding')) {
+    return { titleKey: 'pages.onboarding.title', kickerKey: 'pages.onboarding.kicker', backPath: '/' };
+  }
   if (pathname.startsWith('/reports')) {
     return { titleKey: 'pages.reports.title', kickerKey: 'pages.reports.kicker', backPath: '/' };
   }
@@ -91,6 +96,7 @@ function RootLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, tEn } = useI18n();
+  const { profile, loading: profileLoading, loadProfile } = useBusinessProfile();
   const [token, setToken] = useState('');
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -103,6 +109,8 @@ function RootLayout() {
   const isItemDetail = Boolean(itemId && itemId !== 'new');
   const isClientDetail = Boolean(clientId && clientId !== 'new');
 
+  const isOnboardingPage = location.pathname.startsWith('/onboarding');
+
   const isEditorPage =
     location.pathname.startsWith('/invoices/') ||
     location.pathname.startsWith('/items/new') ||
@@ -113,6 +121,7 @@ function RootLayout() {
     location.pathname.startsWith('/more/company-profile') ||
     location.pathname.startsWith('/more/subscribe') ||
     location.pathname.startsWith('/expenses/') ||
+    isOnboardingPage ||
     isItemDetail ||
     isClientDetail;
   const hideFab = location.pathname.startsWith('/reports') || location.pathname.startsWith('/expenses');
@@ -129,6 +138,26 @@ function RootLayout() {
       navigate('/welcome', { replace: true });
     }
   }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    if (!getToken()) return;
+    loadProfile().catch(() => {
+      // Soft fail; page-level components surface errors.
+    });
+  }, [loadProfile]);
+
+  useEffect(() => {
+    if (!token || profileLoading) return;
+    const needsOnboarding = shouldShowOnboarding(profile);
+    const onOnboardingPage = isOnboardingPage;
+
+    if (needsOnboarding && !onOnboardingPage) {
+      navigate('/onboarding', { replace: true });
+    }
+    if (!needsOnboarding && onOnboardingPage) {
+      navigate('/', { replace: true });
+    }
+  }, [token, profile, profileLoading, navigate, isOnboardingPage]);
 
   const handleLogout = () => {
     clearToken();
