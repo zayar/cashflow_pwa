@@ -3662,6 +3662,50 @@ html[lang='my'] .login-flat-foot {
   font-size: 13px;
 }
 
+.telegram-plan-lock {
+  display: grid;
+  gap: 8px;
+  border: 1px dashed color-mix(in srgb, var(--warning) 48%, white 52%);
+  border-radius: 10px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface-soft) 92%);
+}
+
+.telegram-plan-lock-badge {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a4e02;
+  background: color-mix(in srgb, var(--warning) 42%, white 58%);
+}
+
+.telegram-plan-lock-btn {
+  justify-self: flex-start;
+}
+
+.telegram-schedule-group-locked {
+  opacity: 0.88;
+}
+
+.telegram-pro-pill {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a4e02;
+  background: color-mix(in srgb, var(--warning) 45%, white 55%);
+}
+
 .telegram-frequency-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

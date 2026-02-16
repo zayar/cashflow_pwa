@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   getActiveTelegramLinkCode,
   generateTelegramLinkCode,
@@ -8,6 +9,14 @@ import {
   getLinkedRecipients,
   disconnectRecipient
 } from '../lib/telegramLinkApi';
+import { useBusinessProfile } from '../state/businessProfile';
+import {
+  TELEGRAM_FEATURE_INVENTORY_SUMMARY,
+  TELEGRAM_FEATURE_LOW_INVENTORY,
+  getTelegramAllowedFeatures,
+  isTelegramFeatureAllowed,
+  isTelegramReportCodeAllowed
+} from '../lib/telegramFeatures';
 import { useI18n } from '../i18n';
 
 const DEFAULT_TIMEZONE = 'Asia/Yangon';
@@ -72,7 +81,9 @@ const normalizeLowMaxItems = (value) => {
 };
 
 function TelegramConnect() {
+  const navigate = useNavigate();
   const { t } = useI18n();
+  const { entitlement } = useBusinessProfile();
   const [activeCode, setActiveCode] = useState(null);
   const [isLoadingLinkCode, setIsLoadingLinkCode] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -118,6 +129,8 @@ function TelegramConnect() {
   const [lowInventoryMaxItems, setLowInventoryMaxItems] = useState(DEFAULT_LOW_STOCK_MAX_ITEMS);
 
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
+  const [settingsPlan, setSettingsPlan] = useState('');
+  const [settingsAllowedFeatures, setSettingsAllowedFeatures] = useState([]);
 
   const yesterdayToggleLabel = t('telegram.dailyYesterdayToggle');
   const todayToggleLabel = t('telegram.dailyTodayToggle');
@@ -127,6 +140,26 @@ function TelegramConnect() {
       : yesterdayToggleLabel;
   const fallbackTodayToggle =
     todayToggleLabel === 'telegram.dailyTodayToggle' ? 'Today report' : todayToggleLabel;
+
+  const entitlementPlan = String(entitlement?.plan || '').trim().toUpperCase();
+  const effectivePlan = String(settingsPlan || entitlementPlan || 'PRO').toUpperCase();
+  const allowedTelegramFeatures = useMemo(() => {
+    if (Array.isArray(settingsAllowedFeatures) && settingsAllowedFeatures.length > 0) {
+      return settingsAllowedFeatures;
+    }
+    return getTelegramAllowedFeatures(effectivePlan);
+  }, [effectivePlan, settingsAllowedFeatures]);
+  const hasWildcardFeature = allowedTelegramFeatures.includes('*');
+  const canUseFeature = useCallback(
+    (feature) =>
+      hasWildcardFeature ||
+      allowedTelegramFeatures.includes(feature) ||
+      isTelegramFeatureAllowed(effectivePlan, feature),
+    [allowedTelegramFeatures, effectivePlan, hasWildcardFeature]
+  );
+  const inventorySummaryLocked = !canUseFeature(TELEGRAM_FEATURE_INVENTORY_SUMMARY);
+  const lowInventoryLocked = !canUseFeature(TELEGRAM_FEATURE_LOW_INVENTORY);
+  const inventoryReportsLocked = inventorySummaryLocked && lowInventoryLocked;
 
   const loadActiveCode = useCallback(async () => {
     setErrorMessage('');
@@ -149,6 +182,20 @@ function TelegramConnect() {
       const schedules = Array.isArray(payload?.schedules) ? payload.schedules : [];
       const linked = Boolean(payload?.telegramLinked);
       const timezoneDefault = String(payload?.timezoneDefault || DEFAULT_TIMEZONE) || DEFAULT_TIMEZONE;
+      const nextPlan = String(payload?.plan || entitlementPlan || 'PRO').trim().toUpperCase();
+      const nextAllowedFeatures = Array.isArray(payload?.allowedFeatures)
+        ? payload.allowedFeatures
+            .map((feature) => String(feature || '').trim().toLowerCase())
+            .filter(Boolean)
+        : [];
+      const canUseInventorySummary =
+        nextAllowedFeatures.includes('*') ||
+        nextAllowedFeatures.includes(TELEGRAM_FEATURE_INVENTORY_SUMMARY) ||
+        isTelegramReportCodeAllowed(nextPlan, REPORT_CODE_INVENTORY_SUMMARY);
+      const canUseLowInventory =
+        nextAllowedFeatures.includes('*') ||
+        nextAllowedFeatures.includes(TELEGRAM_FEATURE_LOW_INVENTORY) ||
+        isTelegramReportCodeAllowed(nextPlan, REPORT_CODE_LOW_INVENTORY);
 
       const byCode = new Map();
       schedules.forEach((row) => {
@@ -164,6 +211,8 @@ function TelegramConnect() {
       setCanManageSchedules(Boolean(payload?.canManage));
       setTelegramLinked(linked);
       setLinkedRecipientsCount(Number(payload?.linkedRecipientsCount || 0));
+      setSettingsPlan(nextPlan);
+      setSettingsAllowedFeatures(nextAllowedFeatures);
       setRecipients([]);
       setTimezone(
         String(
@@ -191,28 +240,40 @@ function TelegramConnect() {
       setWeeklyTime(String(weekly?.time || DEFAULT_WEEKLY_TIME));
 
       setInventorySummaryScheduleId(String(inventorySummary?.id || ''));
-      setInventorySummaryEnabled(Boolean(inventorySummary?.enabled));
-      setInventorySummaryFrequency(inventorySummary?.type === 'WEEKLY' ? FREQ_WEEKLY : FREQ_DAILY);
-      setInventorySummaryDayOfWeek(String(inventorySummary?.dayOfWeek || DEFAULT_WEEKLY_DAY));
-      setInventorySummaryTime(String(inventorySummary?.time || DEFAULT_DAILY_TIME));
+      setInventorySummaryEnabled(canUseInventorySummary ? Boolean(inventorySummary?.enabled) : false);
+      setInventorySummaryFrequency(
+        canUseInventorySummary && inventorySummary?.type === 'WEEKLY' ? FREQ_WEEKLY : FREQ_DAILY
+      );
+      setInventorySummaryDayOfWeek(
+        String(canUseInventorySummary ? inventorySummary?.dayOfWeek || DEFAULT_WEEKLY_DAY : DEFAULT_WEEKLY_DAY)
+      );
+      setInventorySummaryTime(
+        String(canUseInventorySummary ? inventorySummary?.time || DEFAULT_DAILY_TIME : DEFAULT_DAILY_TIME)
+      );
 
       const lowOptions = lowInventory?.options || {};
       setLowInventoryScheduleId(String(lowInventory?.id || ''));
-      setLowInventoryEnabled(Boolean(lowInventory?.enabled));
-      setLowInventoryFrequency(lowInventory?.type === 'WEEKLY' ? FREQ_WEEKLY : FREQ_DAILY);
-      setLowInventoryDayOfWeek(String(lowInventory?.dayOfWeek || DEFAULT_WEEKLY_DAY));
-      setLowInventoryTime(String(lowInventory?.time || DEFAULT_DAILY_TIME));
-      setLowInventoryThreshold(normalizeLowThreshold(lowOptions?.lowStockThreshold));
-      setLowInventoryIncludeOutOfStock(
-        typeof lowOptions?.includeOutOfStock === 'boolean' ? lowOptions.includeOutOfStock : true
+      setLowInventoryEnabled(canUseLowInventory ? Boolean(lowInventory?.enabled) : false);
+      setLowInventoryFrequency(canUseLowInventory && lowInventory?.type === 'WEEKLY' ? FREQ_WEEKLY : FREQ_DAILY);
+      setLowInventoryDayOfWeek(
+        String(canUseLowInventory ? lowInventory?.dayOfWeek || DEFAULT_WEEKLY_DAY : DEFAULT_WEEKLY_DAY)
       );
-      setLowInventoryMaxItems(normalizeLowMaxItems(lowOptions?.maxItems));
+      setLowInventoryTime(String(canUseLowInventory ? lowInventory?.time || DEFAULT_DAILY_TIME : DEFAULT_DAILY_TIME));
+      setLowInventoryThreshold(
+        canUseLowInventory ? normalizeLowThreshold(lowOptions?.lowStockThreshold) : DEFAULT_LOW_STOCK_THRESHOLD
+      );
+      setLowInventoryIncludeOutOfStock(
+        canUseLowInventory && typeof lowOptions?.includeOutOfStock === 'boolean'
+          ? lowOptions.includeOutOfStock
+          : true
+      );
+      setLowInventoryMaxItems(canUseLowInventory ? normalizeLowMaxItems(lowOptions?.maxItems) : DEFAULT_LOW_STOCK_MAX_ITEMS);
     } catch (err) {
       setSettingsError(err?.message || t('telegram.scheduleLoadFailed'));
     } finally {
       setIsLoadingSettings(false);
     }
-  }, [t]);
+  }, [entitlementPlan, t]);
 
   const loadRecipients = useCallback(async () => {
     if (!telegramLinked) {
@@ -245,6 +306,20 @@ function TelegramConnect() {
       setRecipients([]);
     }
   }, [telegramLinked, loadRecipients]);
+
+  useEffect(() => {
+    if (inventorySummaryLocked && inventorySummaryEnabled) {
+      setInventorySummaryEnabled(false);
+    }
+    if (lowInventoryLocked && lowInventoryEnabled) {
+      setLowInventoryEnabled(false);
+    }
+  }, [
+    inventorySummaryEnabled,
+    inventorySummaryLocked,
+    lowInventoryEnabled,
+    lowInventoryLocked
+  ]);
 
   const expiresLabel = useMemo(() => formatDateTime(activeCode?.expiresAt), [activeCode?.expiresAt]);
 
@@ -322,28 +397,34 @@ function TelegramConnect() {
         dayOfWeek: weeklyDayOfWeek || DEFAULT_WEEKLY_DAY
       });
 
-      const savedInventorySummary = await upsertTelegramAutoReportSchedule({
-        id: inventorySummaryScheduleId || undefined,
-        reportCode: REPORT_CODE_INVENTORY_SUMMARY,
-        type: inventorySummaryFrequency === FREQ_WEEKLY ? 'WEEKLY' : 'DAILY',
-        enabled: Boolean(inventorySummaryEnabled),
-        time: inventorySummaryTime || DEFAULT_DAILY_TIME,
-        timezone: normalizedTz,
-        dayOfWeek: inventorySummaryFrequency === FREQ_WEEKLY ? inventorySummaryDayOfWeek || DEFAULT_WEEKLY_DAY : undefined
-      });
+      let savedInventorySummary = null;
+      if (!inventorySummaryLocked) {
+        savedInventorySummary = await upsertTelegramAutoReportSchedule({
+          id: inventorySummaryScheduleId || undefined,
+          reportCode: REPORT_CODE_INVENTORY_SUMMARY,
+          type: inventorySummaryFrequency === FREQ_WEEKLY ? 'WEEKLY' : 'DAILY',
+          enabled: Boolean(inventorySummaryEnabled),
+          time: inventorySummaryTime || DEFAULT_DAILY_TIME,
+          timezone: normalizedTz,
+          dayOfWeek: inventorySummaryFrequency === FREQ_WEEKLY ? inventorySummaryDayOfWeek || DEFAULT_WEEKLY_DAY : undefined
+        });
+      }
 
-      const savedLowInventory = await upsertTelegramAutoReportSchedule({
-        id: lowInventoryScheduleId || undefined,
-        reportCode: REPORT_CODE_LOW_INVENTORY,
-        type: lowInventoryFrequency === FREQ_WEEKLY ? 'WEEKLY' : 'DAILY',
-        enabled: Boolean(lowInventoryEnabled),
-        time: lowInventoryTime || DEFAULT_DAILY_TIME,
-        timezone: normalizedTz,
-        dayOfWeek: lowInventoryFrequency === FREQ_WEEKLY ? lowInventoryDayOfWeek || DEFAULT_WEEKLY_DAY : undefined,
-        lowStockThreshold: Math.max(0, normalizeLowThreshold(lowInventoryThreshold)),
-        includeOutOfStock: Boolean(lowInventoryIncludeOutOfStock),
-        maxItems: normalizeLowMaxItems(lowInventoryMaxItems)
-      });
+      let savedLowInventory = null;
+      if (!lowInventoryLocked) {
+        savedLowInventory = await upsertTelegramAutoReportSchedule({
+          id: lowInventoryScheduleId || undefined,
+          reportCode: REPORT_CODE_LOW_INVENTORY,
+          type: lowInventoryFrequency === FREQ_WEEKLY ? 'WEEKLY' : 'DAILY',
+          enabled: Boolean(lowInventoryEnabled),
+          time: lowInventoryTime || DEFAULT_DAILY_TIME,
+          timezone: normalizedTz,
+          dayOfWeek: lowInventoryFrequency === FREQ_WEEKLY ? lowInventoryDayOfWeek || DEFAULT_WEEKLY_DAY : undefined,
+          lowStockThreshold: Math.max(0, normalizeLowThreshold(lowInventoryThreshold)),
+          includeOutOfStock: Boolean(lowInventoryIncludeOutOfStock),
+          maxItems: normalizeLowMaxItems(lowInventoryMaxItems)
+        });
+      }
 
       setYesterdayScheduleId(String(savedYesterday?.id || yesterdayScheduleId || ''));
       setTodayScheduleId(String(savedToday?.id || todayScheduleId || ''));
@@ -369,9 +450,13 @@ function TelegramConnect() {
       let targetScheduleId =
         yesterdayScheduleId ||
         todayScheduleId ||
-        weeklyScheduleId ||
-        inventorySummaryScheduleId ||
-        lowInventoryScheduleId;
+        weeklyScheduleId;
+      if (!targetScheduleId && !inventorySummaryLocked) {
+        targetScheduleId = inventorySummaryScheduleId;
+      }
+      if (!targetScheduleId && !lowInventoryLocked) {
+        targetScheduleId = lowInventoryScheduleId;
+      }
       if (!targetScheduleId) {
         const createdDaily = await upsertTelegramAutoReportSchedule({
           reportCode: REPORT_CODE_YESTERDAY,
@@ -397,6 +482,10 @@ function TelegramConnect() {
   };
 
   const controlsDisabled = !canManageSchedules || isSavingSettings || isSendingTest;
+  const inventoryControlsDisabled = controlsDisabled || inventoryReportsLocked;
+  const handleUpgradeToPro = () => {
+    navigate('/more/subscribe');
+  };
 
   const TELEGRAM_BOT_URL = 'https://t.me/BizCashflowBot';
 
@@ -686,24 +775,38 @@ function TelegramConnect() {
                   ? 'INVENTORY REPORTS'
                   : t('telegram.inventoryKicker')}
               </p>
+              {inventoryReportsLocked ? (
+                <div className="telegram-plan-lock">
+                  <span className="telegram-plan-lock-badge">{t('telegram.proOnly')}</span>
+                  <p className="subtle telegram-helper-text">{t('telegram.inventoryUpgradeHint')}</p>
+                  <button type="button" className="btn btn-upgrade telegram-plan-lock-btn" onClick={handleUpgradeToPro}>
+                    {t('telegram.upgradeToPro')}
+                  </button>
+                </div>
+              ) : null}
 
-              <div className="telegram-schedule-group">
+              <div className={`telegram-schedule-group${inventorySummaryLocked ? ' telegram-schedule-group-locked' : ''}`}>
                 <label className="toggle" htmlFor="inventory-summary-enabled-toggle">
                   <input
                     id="inventory-summary-enabled-toggle"
                     type="checkbox"
                     checked={inventorySummaryEnabled}
                     onChange={(event) => setInventorySummaryEnabled(event.target.checked)}
-                    disabled={controlsDisabled}
+                    disabled={inventoryControlsDisabled}
                   />
-                  {t('telegram.inventorySummaryEnabled') === 'telegram.inventorySummaryEnabled'
-                    ? 'Enable Inventory Summary'
-                    : t('telegram.inventorySummaryEnabled')}
+                  <span>
+                    {t('telegram.inventorySummaryEnabled') === 'telegram.inventorySummaryEnabled'
+                      ? 'Enable Inventory Summary'
+                      : t('telegram.inventorySummaryEnabled')}
+                  </span>
+                  {inventorySummaryLocked ? <span className="telegram-pro-pill">{t('telegram.proOnly')}</span> : null}
                 </label>
                 <p className="subtle telegram-helper-text">
-                  {t('telegram.inventorySummaryHelper') === 'telegram.inventorySummaryHelper'
-                    ? 'Sends stock overview: in stock, out of stock, low stock count.'
-                    : t('telegram.inventorySummaryHelper')}
+                  {inventorySummaryLocked
+                    ? t('telegram.inventoryUpgradeHint')
+                    : t('telegram.inventorySummaryHelper') === 'telegram.inventorySummaryHelper'
+                      ? 'Sends stock overview: in stock, out of stock, low stock count.'
+                      : t('telegram.inventorySummaryHelper')}
                 </p>
 
                 {inventorySummaryEnabled ? (
@@ -715,7 +818,7 @@ function TelegramConnect() {
                           inventorySummaryFrequency === FREQ_DAILY ? 'active' : ''
                         }`}
                         onClick={() => setInventorySummaryFrequency(FREQ_DAILY)}
-                        disabled={controlsDisabled}
+                        disabled={inventoryControlsDisabled}
                       >
                         {t('telegram.frequencyDaily') === 'telegram.frequencyDaily'
                           ? 'Daily'
@@ -727,7 +830,7 @@ function TelegramConnect() {
                           inventorySummaryFrequency === FREQ_WEEKLY ? 'active' : ''
                         }`}
                         onClick={() => setInventorySummaryFrequency(FREQ_WEEKLY)}
-                        disabled={controlsDisabled}
+                        disabled={inventoryControlsDisabled}
                       >
                         {t('telegram.frequencyWeekly') === 'telegram.frequencyWeekly'
                           ? 'Weekly'
@@ -743,7 +846,7 @@ function TelegramConnect() {
                             className="input"
                             value={inventorySummaryDayOfWeek}
                             onChange={(event) => setInventorySummaryDayOfWeek(event.target.value)}
-                            disabled={controlsDisabled}
+                            disabled={inventoryControlsDisabled}
                           >
                             {DAY_OPTIONS.map((option) => (
                               <option key={option.value} value={option.value}>
@@ -759,7 +862,7 @@ function TelegramConnect() {
                             type="time"
                             value={inventorySummaryTime}
                             onChange={(event) => setInventorySummaryTime(event.target.value)}
-                            disabled={controlsDisabled}
+                            disabled={inventoryControlsDisabled}
                           />
                         </div>
                       </div>
@@ -771,7 +874,7 @@ function TelegramConnect() {
                           type="time"
                           value={inventorySummaryTime}
                           onChange={(event) => setInventorySummaryTime(event.target.value)}
-                          disabled={controlsDisabled}
+                          disabled={inventoryControlsDisabled}
                         />
                       </div>
                     )}
@@ -779,18 +882,21 @@ function TelegramConnect() {
                 ) : null}
               </div>
 
-              <div className="telegram-schedule-group">
+              <div className={`telegram-schedule-group${lowInventoryLocked ? ' telegram-schedule-group-locked' : ''}`}>
                 <label className="toggle" htmlFor="low-inventory-enabled-toggle">
                   <input
                     id="low-inventory-enabled-toggle"
                     type="checkbox"
                     checked={lowInventoryEnabled}
                     onChange={(event) => setLowInventoryEnabled(event.target.checked)}
-                    disabled={controlsDisabled}
+                    disabled={inventoryControlsDisabled}
                   />
-                  {t('telegram.lowInventoryEnabled') === 'telegram.lowInventoryEnabled'
-                    ? 'Enable Low Inventory Report'
-                    : t('telegram.lowInventoryEnabled')}
+                  <span>
+                    {t('telegram.lowInventoryEnabled') === 'telegram.lowInventoryEnabled'
+                      ? 'Enable Low Inventory Report'
+                      : t('telegram.lowInventoryEnabled')}
+                  </span>
+                  {lowInventoryLocked ? <span className="telegram-pro-pill">{t('telegram.proOnly')}</span> : null}
                 </label>
 
                 {lowInventoryEnabled ? (
@@ -808,7 +914,7 @@ function TelegramConnect() {
                         step="1"
                         value={String(lowInventoryThreshold)}
                         onChange={(event) => setLowInventoryThreshold(normalizeLowThreshold(event.target.value))}
-                        disabled={controlsDisabled}
+                        disabled={inventoryControlsDisabled}
                       />
                     </div>
 
@@ -824,7 +930,7 @@ function TelegramConnect() {
                         type="checkbox"
                         checked={lowInventoryIncludeOutOfStock}
                         onChange={(event) => setLowInventoryIncludeOutOfStock(event.target.checked)}
-                        disabled={controlsDisabled}
+                        disabled={inventoryControlsDisabled}
                       />
                       {t('telegram.lowInventoryIncludeOut') === 'telegram.lowInventoryIncludeOut'
                         ? 'Include out of stock (0)'
@@ -841,7 +947,7 @@ function TelegramConnect() {
                         className="input"
                         value={String(lowInventoryMaxItems)}
                         onChange={(event) => setLowInventoryMaxItems(normalizeLowMaxItems(event.target.value))}
-                        disabled={controlsDisabled}
+                        disabled={inventoryControlsDisabled}
                       >
                         {LOW_STOCK_MAX_OPTIONS.map((value) => (
                           <option key={value} value={String(value)}>
@@ -856,7 +962,7 @@ function TelegramConnect() {
                         type="button"
                         className={`telegram-frequency-tab ${lowInventoryFrequency === FREQ_DAILY ? 'active' : ''}`}
                         onClick={() => setLowInventoryFrequency(FREQ_DAILY)}
-                        disabled={controlsDisabled}
+                        disabled={inventoryControlsDisabled}
                       >
                         {t('telegram.frequencyDaily') === 'telegram.frequencyDaily'
                           ? 'Daily'
@@ -866,7 +972,7 @@ function TelegramConnect() {
                         type="button"
                         className={`telegram-frequency-tab ${lowInventoryFrequency === FREQ_WEEKLY ? 'active' : ''}`}
                         onClick={() => setLowInventoryFrequency(FREQ_WEEKLY)}
-                        disabled={controlsDisabled}
+                        disabled={inventoryControlsDisabled}
                       >
                         {t('telegram.frequencyWeekly') === 'telegram.frequencyWeekly'
                           ? 'Weekly'
@@ -882,7 +988,7 @@ function TelegramConnect() {
                             className="input"
                             value={lowInventoryDayOfWeek}
                             onChange={(event) => setLowInventoryDayOfWeek(event.target.value)}
-                            disabled={controlsDisabled}
+                            disabled={inventoryControlsDisabled}
                           >
                             {DAY_OPTIONS.map((option) => (
                               <option key={option.value} value={option.value}>
@@ -898,7 +1004,7 @@ function TelegramConnect() {
                             type="time"
                             value={lowInventoryTime}
                             onChange={(event) => setLowInventoryTime(event.target.value)}
-                            disabled={controlsDisabled}
+                            disabled={inventoryControlsDisabled}
                           />
                         </div>
                       </div>
@@ -910,7 +1016,7 @@ function TelegramConnect() {
                           type="time"
                           value={lowInventoryTime}
                           onChange={(event) => setLowInventoryTime(event.target.value)}
-                          disabled={controlsDisabled}
+                          disabled={inventoryControlsDisabled}
                         />
                       </div>
                     )}
