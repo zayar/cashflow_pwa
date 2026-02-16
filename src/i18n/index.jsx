@@ -3,7 +3,7 @@ import en from './translations/en';
 import my from './translations/my';
 
 const STORAGE_KEY = 'cashflow_pwa.language';
-const DEFAULT_LANG = 'en';
+const DEFAULT_LANG = 'my';
 
 const dictionaries = { en, my };
 const supported = new Set(Object.keys(dictionaries));
