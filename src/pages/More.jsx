@@ -83,6 +83,16 @@ function CompanyIcon() {
   );
 }
 
+function AccountIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="8" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M6 18.2c0-2.8 2.7-4.6 6-4.6s6 1.8 6 4.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M19 4.2v2M18 5.2h2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function ActionTile({ title, copy, icon, thumbnailUrl, onClick, variant }) {
   return (
     <button className={`more-action-tile ${variant || ''}`.trim()} type="button" onClick={onClick}>
@@ -177,6 +187,13 @@ function More() {
             icon={<BankIcon />}
             variant="action-bank"
             onClick={() => navigate('/bank-accounts')}
+          />
+          <ActionTile
+            title={t('more.accountSettings')}
+            copy={t('more.accountSettingsCopy')}
+            icon={<AccountIcon />}
+            variant="action-account"
+            onClick={() => navigate('/more/account-settings')}
           />
           <ActionTile
             title={t('more.telegramConnect')}

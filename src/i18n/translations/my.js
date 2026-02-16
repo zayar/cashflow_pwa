@@ -122,6 +122,7 @@ export default {
     templateEdit: { title: 'တမ်းပလိတ် ပြင်ရန်', kicker: 'တမ်းပလိတ်များ' },
     bankAccounts: { title: 'ဘဏ်အကောင့်များ', kicker: 'ဆက်တင်များ' },
     telegramConnect: { title: 'Telegram ချိတ်ဆက်ရန်', kicker: 'ချိတ်ဆက်မှုများ' },
+    accountSettings: { title: 'အကောင့်ဆက်တင်များ', kicker: 'အကောင့်' },
     subscribe: { title: 'စာရင်းသွင်းရန်', kicker: 'အဆင့်မြှင့်ရန်' },
     expenses: { title: 'အသုံးစရိတ်များ', kicker: 'ဝယ်ယူမှု' },
     expenseNew: { title: 'အသုံးစရိတ် အသစ်', kicker: 'အသုံးစရိတ်များ' },
@@ -331,6 +332,8 @@ export default {
     edit: 'ပြင်ရန်',
     bankAccounts: 'ဘဏ်အကောင့်များ',
     bankAccountsCopy: 'မှတ်တမ်းတင်ထားသော ငွေပေးချေမှုများကို မည်သို့ သွင်းမည်ကို ရွေးပါ။',
+    accountSettings: 'အကောင့်ဆက်တင်များ',
+    accountSettingsCopy: 'ဤဝင်ရောက်မှုအတွက် စကားဝှက်ကို ပြောင်းလဲပါ။',
     manage: 'စီမံရန်',
     quickKicker: 'အမြန်လမ်းကြောင်း',
     quickTitle: 'အမြန်လုပ်ဆောင်ချက်များ',
@@ -351,6 +354,26 @@ export default {
     languageTitle: 'ဘာသာစကား',
     languageCopy: 'ဤအက်ပ်တွင် အသုံးပြုမည့် ဘာသာစကားကို ရွေးပါ။',
     languageAria: 'ဘာသာစကား ရွေးချယ်မှု'
+  },
+  accountSettings: {
+    securityKicker: 'လုံခြုံရေး',
+    securityTitle: 'စကားဝှက် ပြောင်းရန်',
+    securityCopy: 'လုံခြုံရေးအတွက် စကားဝှက်ပြောင်းပြီးလျှင် အကောင့်မှ ထွက်ခိုင်းပါမည်။',
+    currentPassword: 'လက်ရှိ စကားဝှက်',
+    newPassword: 'စကားဝှက် အသစ်',
+    confirmPassword: 'စကားဝှက် အသစ် အတည်ပြုရန်',
+    updatePassword: 'စကားဝှက် အပ်ဒိတ်လုပ်ရန်',
+    updatingPassword: 'အပ်ဒိတ်လုပ်နေသည်...',
+    passwordUpdated: 'စကားဝှက် အပ်ဒိတ်ပြီးပါပြီ။',
+    loginEmailKicker: 'ဝင်ရောက်မှု အီးမေးလ်',
+    loginEmailCopy: 'ဒီနေရာကနေ ဝင်ရောက်မှု အီးမေးလ်ကို မပြောင်းနိုင်ပါ။',
+    errors: {
+      required: 'စကားဝှက်အကွက်အားလုံး ဖြည့်ပါ။',
+      minLength: 'စကားဝှက်အသစ်သည် အနည်းဆုံး {{count}} လုံး ရှိရမည်။',
+      mismatch: 'စကားဝှက်အသစ် နှင့် အတည်ပြုချက် မကိုက်ညီပါ။',
+      sameAsCurrent: 'စကားဝှက်အသစ်သည် လက်ရှိစကားဝှက်နှင့် မတူရပါ။',
+      failed: 'စကားဝှက်ကို အပ်ဒိတ် မလုပ်နိုင်ပါ။'
+    }
   },
   subscribe: {
     kicker: 'Cashflow Pro',

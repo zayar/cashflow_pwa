@@ -122,6 +122,7 @@ export default {
     templateEdit: { title: 'Edit Template', kicker: 'Templates' },
     bankAccounts: { title: 'Bank Accounts', kicker: 'Settings' },
     telegramConnect: { title: 'Telegram Connect', kicker: 'Integrations' },
+    accountSettings: { title: 'Account Settings', kicker: 'Account' },
     subscribe: { title: 'Subscribe', kicker: 'Upgrade' },
     expenses: { title: 'Expenses', kicker: 'Purchases' },
     expenseNew: { title: 'New Expense', kicker: 'Expenses' },
@@ -331,6 +332,8 @@ export default {
     edit: 'Edit',
     bankAccounts: 'Bank accounts',
     bankAccountsCopy: 'Choose where recorded payments are deposited.',
+    accountSettings: 'Account settings',
+    accountSettingsCopy: 'Update your password for this login account.',
     manage: 'Manage',
     quickKicker: 'Shortcuts',
     quickTitle: 'Quick actions',
@@ -351,6 +354,26 @@ export default {
     languageTitle: 'Language',
     languageCopy: 'Choose the language used in this app.',
     languageAria: 'Language selection'
+  },
+  accountSettings: {
+    securityKicker: 'Security',
+    securityTitle: 'Change password',
+    securityCopy: 'For security, you will be signed out after updating your password.',
+    currentPassword: 'Current password',
+    newPassword: 'New password',
+    confirmPassword: 'Confirm new password',
+    updatePassword: 'Update Password',
+    updatingPassword: 'Updating...',
+    passwordUpdated: 'Password updated.',
+    loginEmailKicker: 'Login Email',
+    loginEmailCopy: "Your login email can't be changed here.",
+    errors: {
+      required: 'Please fill all password fields.',
+      minLength: 'New password must be at least {{count}} characters.',
+      mismatch: 'New password and confirmation do not match.',
+      sameAsCurrent: 'New password must be different from current password.',
+      failed: 'Unable to update password.'
+    }
   },
   subscribe: {
     kicker: 'Cashflow Pro',

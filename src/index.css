@@ -2598,6 +2598,10 @@ html[lang='my'] .login-flat-foot {
   --action-accent: #0f1217;
 }
 
+.more-action-tile.action-account {
+  --action-accent: #5f3dc4;
+}
+
 .more-action-top {
   display: flex;
   align-items: center;
@@ -2677,6 +2681,10 @@ html[lang='my'] .login-flat-foot {
 }
 
 .company-profile-page {
+  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+}
+
+.account-settings-page {
   padding-bottom: calc(104px + env(safe-area-inset-bottom));
 }
 

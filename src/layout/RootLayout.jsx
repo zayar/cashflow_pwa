@@ -16,6 +16,9 @@ function getPageCopy(pathname) {
   if (pathname.startsWith('/more/subscribe')) {
     return { titleKey: 'pages.subscribe.title', kickerKey: 'pages.subscribe.kicker', backPath: '/more' };
   }
+  if (pathname.startsWith('/more/account-settings')) {
+    return { titleKey: 'pages.accountSettings.title', kickerKey: 'pages.accountSettings.kicker', backPath: '/more' };
+  }
   if (pathname.startsWith('/invoices/new')) {
     return { titleKey: 'pages.invoiceNew.title', kickerKey: 'pages.invoiceNew.kicker', backPath: '/' };
   }
@@ -122,6 +125,7 @@ function RootLayout() {
     location.pathname.startsWith('/more/integrations') ||
     location.pathname.startsWith('/more/company-profile') ||
     location.pathname.startsWith('/more/subscribe') ||
+    location.pathname.startsWith('/more/account-settings') ||
     location.pathname.startsWith('/expenses/') ||
     isOnboardingPage ||
     isItemDetail ||
