@@ -131,8 +131,6 @@ function Invoices() {
     }).length;
   };
 
-  const showNextSteps = profileComplete && !telegramStatus.loading;
-
   return (
     <div className="stack">
       <section className="card">
