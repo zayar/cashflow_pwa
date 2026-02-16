@@ -8,6 +8,7 @@ async function request(path, options = {}) {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      'X-Client-App': 'pwa',
       ...(token ? { token } : {}),
       ...(options.headers || {})
     }

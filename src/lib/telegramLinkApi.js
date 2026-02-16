@@ -4,7 +4,8 @@ import { getApiBaseUrl } from './uploadApi';
 const buildHeaders = () => {
   const token = getToken();
   const headers = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'X-Client-App': 'pwa'
   };
   if (token) {
     headers.token = token;
