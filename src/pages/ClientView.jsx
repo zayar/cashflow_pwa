@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { useInvoiceDraft } from '../state/invoiceDraft';
 import { useI18n } from '../i18n';
+import { formatMoney } from '../lib/formatters';
 
 const FIND_CUSTOMER = gql`
   query FindCustomer($limit: Int = 80) {
@@ -73,9 +74,7 @@ const DELETE_CUSTOMER = gql`
   }
 `;
 
-function formatCurrency(amount) {
-  return `$${Number(amount || 0).toFixed(2)}`;
-}
+
 
 function formatAddress(address) {
   if (!address) return '—';
@@ -244,7 +243,7 @@ function ClientView() {
 	            {t('clientView.clientId')} {customer.id}
 	          </span>
 	          <span className="meta-chip">
-	            {t('clientView.outstandingLabel')}: {formatCurrency(outstanding)}
+	            {t('clientView.outstandingLabel')}: {formatMoney(outstanding, null)}
 	          </span>
 	        </div>
 	      </section>

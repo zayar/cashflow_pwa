@@ -2,6 +2,7 @@ import { useQuery, gql } from '@apollo/client';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useI18n } from '../i18n';
+import { formatMoney } from '../lib/formatters';
 
 const GET_PRODUCTS = gql`
   query GetProducts($limit: Int, $after: String) {
@@ -45,9 +46,7 @@ function ItemsLoading() {
   );
 }
 
-function formatCurrency(amount) {
-  return `$${Number(amount || 0).toFixed(2)}`;
-}
+
 
 function Items() {
   const { t } = useI18n();
@@ -194,7 +193,7 @@ function Items() {
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <p style={{ margin: 0, fontWeight: 800 }}>{formatCurrency(item.salesPrice)}</p>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{formatMoney(item.salesPrice, null)}</p>
                   <span className={`badge ${item.isActive ? 'badge-success' : 'badge-neutral'}`}>
                     {item.isActive ? t('items.active') : t('items.inactive')}
                   </span>

@@ -7,6 +7,7 @@ import Modal from '../components/Modal';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
 import { saveDefaultInvoiceCurrencyId, saveDefaultInvoiceLocationIds, getDefaultInvoiceLocationIds, getDefaultInvoiceCurrencyId } from '../lib/auth';
 import { useI18n } from '../i18n';
+import { formatMoney } from '../lib/formatters';
 
 const CREATE_INVOICE = gql`
   mutation CreateInvoice($input: NewSalesInvoice!) {
@@ -66,9 +67,7 @@ const paymentTermsOptions = [
   { value: 'Net30', labelKey: 'invoiceForm.paymentTerms.net30' }
 ];
 
-function currency(value) {
-  return `$${Number(value || 0).toFixed(2)}`;
-}
+
 
 function parseStepParam(value) {
   if (value === 'items') return 1;
@@ -700,6 +699,7 @@ function InvoiceForm() {
                 key={line.id}
                 line={line}
                 showError={errors.lines.includes(line.id)}
+                currency={baseCurrency}
                 onSelectItem={() => openItemPicker(line.id)}
                 onChangeQty={(value) => dispatch({ type: 'updateLine', lineId: line.id, field: 'qty', value })}
                 onChangeRate={(value) => dispatch({ type: 'updateLine', lineId: line.id, field: 'rate', value })}
@@ -827,19 +827,19 @@ function InvoiceForm() {
           <div className="summary-card totals-hero-card">
             <div className="summary-row">
               <span>{t('invoiceForm.subtotal')}</span>
-              <span>{currency(totals.subtotal)}</span>
+              <span>{formatMoney(totals.subtotal, baseCurrency)}</span>
             </div>
             <div className="summary-row">
               <span>{t('invoiceForm.discount')}</span>
-              <span>-{currency(totals.discount)}</span>
+              <span>-{formatMoney(totals.discount, baseCurrency)}</span>
             </div>
             <div className="summary-row">
               <span>{t('invoiceForm.tax')}</span>
-              <span>{currency(totals.tax)}</span>
+              <span>{formatMoney(totals.tax, baseCurrency)}</span>
             </div>
             <div className="summary-row summary-total">
               <span>{t('invoiceForm.total')}</span>
-              <span>{currency(totals.total)}</span>
+              <span>{formatMoney(totals.total, baseCurrency)}</span>
             </div>
           </div>
 
@@ -877,7 +877,7 @@ function InvoiceForm() {
             onClick={() => setIsPreviewOpen(true)}
             aria-expanded={isPreviewOpen}
           >
-            {t('invoiceForm.previewInvoice', { amount: currency(totals.total) })}
+            {t('invoiceForm.previewInvoice', { amount: formatMoney(totals.total, baseCurrency) })}
           </button>
         </section>
       )}
@@ -1051,7 +1051,7 @@ function InvoiceForm() {
             {t('common.close')}
           </button>
         </div>
-        <InvoicePreview invoice={invoice} />
+        <InvoicePreview invoice={invoice} currency={baseCurrency} />
       </section>
 
       <div className="sticky-actions">

@@ -6,6 +6,7 @@ import QuickAddItem from './QuickAddItem';
 import { useInvoiceDraft } from '../state/invoiceDraft';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { useI18n } from '../i18n';
+import { formatMoney } from '../lib/formatters';
 
 const SEARCH_PRODUCTS = gql`
   query SearchProducts($name: String) {
@@ -127,7 +128,7 @@ function ItemPicker() {
             {recentItems.map((item) => (
               <button key={item.id} type="button" className="picker-item" onClick={() => handleSelect(item)}>
                 <div className="picker-item-title">{item.name}</div>
-                <div className="picker-item-meta">${Number(item.salesPrice ?? 0).toFixed(2)}</div>
+                <div className="picker-item-meta">{formatMoney(item.salesPrice, null)}</div>
               </button>
             ))}
           </div>
@@ -162,7 +163,7 @@ function ItemPicker() {
             {items.map((item) => (
               <button key={item.id} type="button" className="picker-item" onClick={() => handleSelect(item)}>
                 <div className="picker-item-title">{item.name}</div>
-                <div className="picker-item-meta">${Number(item.salesPrice ?? 0).toFixed(2)}</div>
+                <div className="picker-item-meta">{formatMoney(item.salesPrice, null)}</div>
               </button>
             ))}
           </div>

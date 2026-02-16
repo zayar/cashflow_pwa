@@ -63,8 +63,8 @@ export function formatMoney(amount, currency) {
   const safe = Number.isFinite(number) ? number : 0;
   const formatted = safe.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const prefix = (currency?.symbol || currency?.name || '').trim();
-  if (!prefix) return `$${formatted}`;
+  const prefix = (currency?.symbol || currency?.name || 'MMK').trim();
+  if (!prefix) return `MMK ${formatted}`;
 
   const needsSpace = prefix.length > 1 && !/[$€£¥]/.test(prefix);
   return needsSpace ? `${prefix} ${formatted}` : `${prefix}${formatted}`;

@@ -3,6 +3,7 @@ import { gql, useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { useI18n } from '../i18n';
+import { formatMoney } from '../lib/formatters';
 
 const FIND_PRODUCT = gql`
   query FindProduct($limit: Int = 80) {
@@ -45,9 +46,7 @@ const DELETE_PRODUCT = gql`
   }
 `;
 
-function formatCurrency(amount) {
-  return `$${Number(amount || 0).toFixed(2)}`;
-}
+
 
 function ItemView() {
   const navigate = useNavigate();
@@ -192,13 +191,13 @@ function ItemView() {
           <div className="field">
             <span className="label">{t('itemView.salesPrice')}</span>
             <p className="subtle" style={{ margin: 0 }}>
-              {formatCurrency(product.salesPrice)}
+              {formatMoney(product.salesPrice, null)}
             </p>
           </div>
           <div className="field">
             <span className="label">{t('itemView.purchasePrice')}</span>
             <p className="subtle" style={{ margin: 0 }}>
-              {formatCurrency(product.purchasePrice)}
+              {formatMoney(product.purchasePrice, null)}
             </p>
           </div>
         </div>

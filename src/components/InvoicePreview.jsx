@@ -1,10 +1,7 @@
 import { useI18n } from '../i18n';
 import { resolveStorageAccessUrl } from '../lib/uploadApi';
 import { useBusinessProfile } from '../state/businessProfile';
-
-function currency(amount) {
-  return `$${Number(amount || 0).toFixed(2)}`;
-}
+import { formatMoney } from '../lib/formatters';
 
 function formatTerms(value, t) {
   switch (value) {
@@ -21,7 +18,7 @@ function formatTerms(value, t) {
   }
 }
 
-function InvoicePreview({ invoice }) {
+function InvoicePreview({ invoice, currency }) {
   const { t } = useI18n();
   const { profile } = useBusinessProfile();
   const subtotal = invoice.lines.reduce((sum, line) => sum + Number(line.qty || 0) * Number(line.rate || 0), 0);
@@ -80,7 +77,7 @@ function InvoicePreview({ invoice }) {
             <span>
               {line.name || t('invoicePreview.item')} x {Number(line.qty || 0)}
             </span>
-            <span>{currency(Number(line.qty || 0) * Number(line.rate || 0))}</span>
+            <span>{formatMoney(Number(line.qty || 0) * Number(line.rate || 0), currency)}</span>
           </div>
         ))}
       </div>
@@ -88,15 +85,15 @@ function InvoicePreview({ invoice }) {
       <div className="preview-divider">
         <div className="preview-line">
           <span>{t('invoicePreview.subtotal')}</span>
-          <span>{currency(subtotal)}</span>
+          <span>{formatMoney(subtotal, currency)}</span>
         </div>
         <div className="preview-line">
           <span>{t('invoicePreview.discounts')}</span>
-          <span>-{currency(discounts)}</span>
+          <span>-{formatMoney(discounts, currency)}</span>
         </div>
         <div className="preview-line" style={{ fontWeight: 800, marginBottom: 0 }}>
           <span>{t('invoicePreview.total')}</span>
-          <span>{currency(total)}</span>
+          <span>{formatMoney(total, currency)}</span>
         </div>
       </div>
     </div>

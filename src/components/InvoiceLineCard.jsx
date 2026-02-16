@@ -1,9 +1,5 @@
 import { useI18n } from '../i18n';
-
-function formatAmount(value) {
-  const number = Number(value || 0);
-  return `$${number.toFixed(2)}`;
-}
+import { formatMoney } from '../lib/formatters';
 
 function parseNumber(value) {
   if (value === '' || Number.isNaN(Number(value))) return 0;
@@ -18,7 +14,8 @@ function InvoiceLineCard({
   onChangeDiscount,
   onToggleTaxable,
   onRemove,
-  showError
+  showError,
+  currency
 }) {
   const { t } = useI18n();
   const amount = Number(line.qty || 0) * Number(line.rate || 0) - Number(line.discount || 0);
@@ -30,7 +27,7 @@ function InvoiceLineCard({
           <div className="line-title">{line.name || t('invoiceLine.selectItem')}</div>
           <div className="line-subtitle">{line.name ? t('invoiceLine.tapToChange') : t('invoiceLine.tapToChoose')}</div>
         </div>
-        <div className="line-amount">{formatAmount(amount)}</div>
+        <div className="line-amount">{formatMoney(amount, currency)}</div>
       </button>
 
       <div className="line-fields">

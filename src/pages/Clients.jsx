@@ -2,6 +2,7 @@ import { useQuery, gql } from '@apollo/client';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useI18n } from '../i18n';
+import { formatMoney } from '../lib/formatters';
 
 const GET_CUSTOMERS = gql`
   query GetCustomers($limit: Int, $after: String) {
@@ -45,9 +46,7 @@ function ClientsLoading() {
   );
 }
 
-function formatCurrency(amount) {
-  return `$${Number(amount || 0).toFixed(2)}`;
-}
+
 
 function Clients() {
   const { t } = useI18n();
@@ -187,7 +186,7 @@ function Clients() {
                   </div>
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 800 }}>{formatCurrency(outstanding)}</p>
+                    <p style={{ margin: 0, fontWeight: 800 }}>{formatMoney(outstanding, null)}</p>
                     <span className={`badge ${hasOutstanding ? 'badge-warning' : 'badge-success'}`}>
                       {hasOutstanding ? t('clients.outstanding') : t('clients.clear')}
                     </span>
