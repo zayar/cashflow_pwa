@@ -5744,3 +5744,579 @@ html[lang='my'] .login-flat-foot {
     transition: none;
   }
 }
+
+/* ============================================================
+   REPORTS V2 - Modern Fintech SaaS Design
+   ============================================================ */
+
+.reports-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+/* Loading State */
+.reports-v2-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+.reports-v2-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.reports-v2-loading p {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Error State */
+.reports-v2-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.reports-v2-error-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff5f5;
+  color: #e53e3e;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.reports-v2-error h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.reports-v2-error p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  max-width: 320px;
+}
+
+/* Hero Section - Total Revenue */
+.reports-v2-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 4px 20px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.reports-v2-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(99, 102, 241, 0.05) 100%);
+  pointer-events: none;
+}
+
+.reports-v2-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reports-v2-hero-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.reports-v2-hero-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.reports-v2-hero-amount .currency {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.reports-v2-hero-amount .amount {
+  font-size: 36px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.reports-v2-hero-meta {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.reports-v2-hero-trend {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #10b981;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.reports-v2-hero-trend svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Trend Indicator */
+.trend-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.trend-indicator.up {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.trend-indicator.down {
+  background: #fff5f5;
+  color: #ef4444;
+}
+
+.trend-indicator svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Controls Section */
+.reports-v2-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Year Selector */
+.reports-v2-year-selector {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.reports-v2-year-btn {
+  min-height: 36px;
+  padding: 0 20px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reports-v2-year-btn:hover {
+  color: #0f172a;
+}
+
+.reports-v2-year-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Tab Selector */
+.reports-v2-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.reports-v2-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.reports-v2-tab {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.reports-v2-tab:hover {
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.reports-v2-tab.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+/* Empty State */
+.reports-v2-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reports-v2-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: #f8fafc;
+  color: #cbd5e1;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.reports-v2-empty-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.reports-v2-empty h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.reports-v2-empty p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  max-width: 280px;
+}
+
+/* Monthly Cards Container */
+.reports-v2-months {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Individual Month Card */
+.reports-v2-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.reports-v2-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Card Header */
+.reports-v2-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.reports-v2-card-month {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.reports-v2-card-month h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.reports-v2-card-year {
+  font-size: 14px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.reports-v2-card-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+/* Revenue Section */
+.reports-v2-card-revenue {
+  margin-bottom: 20px;
+}
+
+.reports-v2-card-revenue .revenue-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.reports-v2-card-revenue .revenue-amount {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reports-v2-card-revenue .revenue-currency {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.reports-v2-card-revenue .revenue-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+/* Divider */
+.reports-v2-card-divider {
+  height: 1px;
+  background: linear-gradient(90deg, #e2e8f0 0%, transparent 100%);
+  margin: 20px 0;
+}
+
+/* Metrics Row */
+.reports-v2-card-metrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 4px 0;
+  margin-bottom: 20px;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.metric-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.metric-divider {
+  width: 1px;
+  height: 32px;
+  background: #e2e8f0;
+}
+
+/* Detail Section */
+.reports-v2-card-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.reports-v2-card-detail--paid {
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.reports-v2-card-detail--clients {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.reports-v2-card-detail--items {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.reports-v2-card-detail .detail-label {
+  font-weight: 600;
+}
+
+.reports-v2-card-detail .detail-value {
+  font-weight: 700;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .reports-v2 {
+    gap: 16px;
+  }
+  
+  .reports-v2-hero {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+  
+  .reports-v2-hero-amount .amount {
+    font-size: 28px;
+  }
+  
+  .reports-v2-hero-amount .currency {
+    font-size: 16px;
+  }
+  
+  .reports-v2-hero-trend {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+  
+  .reports-v2-hero-trend svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .reports-v2-year-btn {
+    padding: 0 16px;
+    font-size: 13px;
+    min-height: 34px;
+  }
+  
+  .reports-v2-tab {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+  
+  .reports-v2-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .reports-v2-card-month h3 {
+    font-size: 18px;
+  }
+  
+  .reports-v2-card-revenue .revenue-value {
+    font-size: 24px;
+  }
+  
+  .reports-v2-card-revenue .revenue-currency {
+    font-size: 16px;
+  }
+  
+  .metric-value {
+    font-size: 16px;
+  }
+  
+  .metric-label {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 380px) {
+  .reports-v2-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .reports-v2-hero-trend {
+    align-self: flex-end;
+  }
+  
+  .reports-v2-card-metrics {
+    gap: 8px;
+  }
+  
+  .metric-divider {
+    display: none;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .reports-v2-card,
+  .reports-v2-year-btn,
+  .reports-v2-tab {
+    transition: none;
+  }
+  
+  .reports-v2-spinner {
+    animation: none;
+  }
+}

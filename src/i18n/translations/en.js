@@ -9,6 +9,7 @@ export default {
     cancel: 'Cancel',
     save: 'Save',
     saving: 'Saving...',
+    loading: 'Loading...',
     refresh: 'Refresh',
     tryAgain: 'Try again',
     loadMore: 'Load more',
@@ -312,7 +313,12 @@ export default {
     collected: 'Collected',
     activeClients: 'Active clients',
     uniqueItems: 'Unique items',
-    qtySold: 'Qty sold'
+    qtySold: 'Qty sold',
+    totalRevenue: 'Total Revenue',
+    revenue: 'Revenue',
+    itemsSold: 'Items Sold',
+    qty: 'qty',
+    clients: 'Clients'
   },
   more: {
     upgradeKicker: 'Upgrade',

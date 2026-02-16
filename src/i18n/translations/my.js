@@ -312,7 +312,12 @@ export default {
     collected: 'လက်ခံရရှိပြီး',
     activeClients: 'လှုပ်ရှားနေသော ဖောက်သည်များ',
     uniqueItems: 'ထူးခြားသော ပစ္စည်းများ',
-    qtySold: 'ရောင်းချအရေအတွက်'
+    qtySold: 'ရောင်းချအရေအတွက်',
+    totalRevenue: 'စုစုပေါင်း ရောင်းရငွေ',
+    revenue: 'ရောင်းရငွေ',
+    itemsSold: 'ရောင်းချပစ္စည်းများ',
+    qty: 'အရေအတွက်',
+    clients: 'ဖောက်သည်များ'
   },
   more: {
     upgradeKicker: 'အဆင့်မြှင့်ရန်',

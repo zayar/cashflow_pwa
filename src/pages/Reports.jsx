@@ -51,6 +51,21 @@ function monthLabel(year, monthIndex) {
   return new Date(year, monthIndex, 1).toLocaleDateString(undefined, { month: 'short' });
 }
 
+// Trend indicator component (placeholder for future trend data)
+function TrendIndicator({ direction = 'up' }) {
+  return (
+    <span className={`trend-indicator ${direction}`}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        {direction === 'up' ? (
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+        ) : (
+          <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+        )}
+      </svg>
+    </span>
+  );
+}
+
 function Reports() {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('paid');
@@ -208,144 +223,172 @@ function Reports() {
 
   if (loading && !data) {
     return (
-      <div className="stack reports-page">
-        <section className="state-loading" aria-live="polite">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div className="skeleton-card" key={index}>
-              <div className="skeleton skeleton-line long" />
-              <div className="skeleton skeleton-line short" />
-            </div>
-          ))}
-        </section>
+      <div className="reports-v2">
+        <div className="reports-v2-loading">
+          <div className="reports-v2-spinner" />
+          <p>{t('common.loading')}</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="stack reports-page">
-        <section className="state-error" role="alert">
-          <p className="state-title">{t('reports.couldNotLoad')}</p>
-          <p className="state-message">{error.message}</p>
-          <div className="state-actions">
-            <button className="btn btn-secondary" type="button" onClick={() => refetch()}>
-              {t('common.tryAgain')}
-            </button>
-          </div>
-        </section>
+      <div className="reports-v2">
+        <div className="reports-v2-error" role="alert">
+          <div className="reports-v2-error-icon">!</div>
+          <h3>{t('reports.couldNotLoad')}</h3>
+          <p>{error.message}</p>
+          <button className="btn btn-primary" type="button" onClick={() => refetch()}>
+            {t('common.tryAgain')}
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="stack reports-page">
-      <section className="reports-hero">
-        <p className="kicker">{t('reports.heroKicker')}</p>
-        <h2 className="title">{t('reports.heroTitle')}</h2>
-        <p className="subtle">{t('reports.heroSubtitle')}</p>
-
-        <div className="reports-summary-grid">
-          <div className={`reports-summary-card ${activeTab === 'paid' ? 'active' : ''}`}>
-            <span className="reports-summary-label">{t('reports.tabs.paid')}</span>
-            <strong className="reports-summary-value">{formatMoney(yearSummary.paidAmount, baseCurrency)}</strong>
+    <div className="reports-v2">
+      {/* Hero Section - Total Revenue */}
+      <section className="reports-v2-hero">
+        <div className="reports-v2-hero-content">
+          <span className="reports-v2-hero-label">{t('reports.totalRevenue')}</span>
+          <div className="reports-v2-hero-amount">
+            <span className="currency">{baseCurrency?.symbol || 'MMK'}</span>
+            <span className="amount">{formatMoney(yearSummary.paidAmount, baseCurrency).replace(baseCurrency?.symbol || 'MMK', '').trim()}</span>
           </div>
-          <div className={`reports-summary-card ${activeTab === 'clients' ? 'active' : ''}`}>
-            <span className="reports-summary-label">{t('reports.tabs.clients')}</span>
-            <strong className="reports-summary-value">{yearSummary.clients}</strong>
+          <div className="reports-v2-hero-meta">
+            <span>{year} · {yearSummary.invoices} {t('reports.invoices')}</span>
           </div>
-          <div className={`reports-summary-card ${activeTab === 'items' ? 'active' : ''}`}>
-            <span className="reports-summary-label">{t('reports.tabs.items')}</span>
-            <strong className="reports-summary-value">{yearSummary.items}</strong>
-          </div>
+        </div>
+        <div className="reports-v2-hero-trend">
+          <TrendIndicator direction="up" />
         </div>
       </section>
 
-      <section className="reports-controls" aria-label="Report filters">
-        <div className="reports-tabs" role="tablist" aria-label="Report categories">
-          {REPORT_TABS.map((tab) => {
-            const isActive = tab.key === activeTab;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                className={`reports-tab ${isActive ? 'active' : ''}`}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {t(tab.labelKey)}
-              </button>
-            );
-          })}
+      {/* Controls - Year & Tab Selection */}
+      <section className="reports-v2-controls">
+        {/* Year Selector */}
+        <div className="reports-v2-year-selector">
+          {yearOptions.map((yearOption) => (
+            <button
+              key={yearOption}
+              type="button"
+              className={`reports-v2-year-btn ${yearOption === year ? 'active' : ''}`}
+              onClick={() => setYear(yearOption)}
+            >
+              {yearOption}
+            </button>
+          ))}
         </div>
 
-        <div className="reports-years" role="tablist" aria-label={t('reports.selectYearAria')}>
-          {yearOptions.map((yearOption) => {
-            const isActive = yearOption === year;
-            return (
-              <button
-                key={yearOption}
-                type="button"
-                className={`reports-year-pill ${isActive ? 'active' : ''}`}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setYear(yearOption)}
-              >
-                {yearOption}
-              </button>
-            );
-          })}
+        {/* Tab Selector */}
+        <div className="reports-v2-tabs">
+          {REPORT_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={`reports-v2-tab ${activeTab === tab.key ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {t(tab.labelKey)}
+            </button>
+          ))}
         </div>
       </section>
 
-      {monthlyCards.every((month) => month.invoiceCount === 0) ? (
-        <section className="state-empty" role="status">
-          <p className="state-title">{t('reports.emptyTitle', { year })}</p>
-          <p className="state-message">{t('reports.emptyMessage')}</p>
+      {/* Monthly Cards */}
+      {monthlyCards.length === 0 ? (
+        <section className="reports-v2-empty">
+          <div className="reports-v2-empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <h3>{t('reports.emptyTitle', { year })}</h3>
+          <p>{t('reports.emptyMessage')}</p>
         </section>
       ) : (
-        <section className="reports-month-list" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-          {monthlyCards.map((month) => (
-            <article className="reports-month-card" key={`${year}-${month.monthIndex}`}>
-              <div className="reports-month-head">
-                <h3>{month.monthLabel}</h3>
-                <span className="reports-month-chip">{t('reports.invoiceCount', { count: month.invoiceCount })}</span>
-              </div>
+        <section className="reports-v2-months" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          {monthlyCards.map((month, index) => {
+            const prevMonth = monthlyCards[index + 1];
+            const revenueTrend = prevMonth 
+              ? month.paidAmount >= prevMonth.paidAmount ? 'up' : 'down'
+              : 'up';
+            
+            return (
+              <article className="reports-v2-card" key={`${year}-${month.monthIndex}`}>
+                {/* Card Header */}
+                <div className="reports-v2-card-header">
+                  <div className="reports-v2-card-month">
+                    <h3>{month.monthLabel}</h3>
+                    <span className="reports-v2-card-year">{year}</span>
+                  </div>
+                  <div className="reports-v2-card-badge">
+                    {month.invoiceCount} {t('reports.invoices')}
+                  </div>
+                </div>
 
-              <div className="reports-month-grid">
-                <div className="reports-metric">
-                  <span>{t('reports.tabs.clients')}</span>
-                  <strong>{month.clientCount}</strong>
+                {/* Revenue - Hero Element */}
+                <div className="reports-v2-card-revenue">
+                  <span className="revenue-label">{t('reports.revenue')}</span>
+                  <div className="revenue-amount">
+                    <span className="revenue-currency">{baseCurrency?.symbol || 'MMK'}</span>
+                    <span className="revenue-value">
+                      {formatMoney(month.paidAmount, baseCurrency).replace(baseCurrency?.symbol || 'MMK', '').trim()}
+                    </span>
+                    <TrendIndicator direction={revenueTrend} />
+                  </div>
                 </div>
-                <div className="reports-metric">
-                  <span>{t('nav.invoices')}</span>
-                  <strong>{month.invoiceCount}</strong>
-                </div>
-                <div className="reports-metric reports-metric-wide">
-                  <span>{t('reports.tabs.paid')}</span>
-                  <strong>{formatMoney(month.paidAmount, baseCurrency)}</strong>
-                </div>
-              </div>
 
-              <div className={`reports-focus-line reports-focus-${activeTab}`}>
-                {activeTab === 'paid' && (
-                  <span>
-                    {t('reports.collected')}: {formatMoney(month.paidAmount, baseCurrency)}
-                  </span>
-                )}
-                {activeTab === 'clients' && (
-                  <span>
-                    {t('reports.activeClients')}: {month.clientCount}
-                  </span>
-                )}
-                {activeTab === 'items' && (
-                  <span>
-                    {t('reports.uniqueItems')}: {month.itemCount} · {t('reports.qtySold')}: {month.itemQty.toLocaleString()}
-                  </span>
-                )}
-              </div>
-            </article>
-          ))}
+                {/* Divider */}
+                <div className="reports-v2-card-divider" />
+
+                {/* Metrics Row */}
+                <div className="reports-v2-card-metrics">
+                  <div className="metric-item">
+                    <span className="metric-value">{month.clientCount}</span>
+                    <span className="metric-label">{t('reports.clients')}</span>
+                  </div>
+                  <div className="metric-divider" />
+                  <div className="metric-item">
+                    <span className="metric-value">{month.invoiceCount}</span>
+                    <span className="metric-label">{t('reports.invoices')}</span>
+                  </div>
+                  <div className="metric-divider" />
+                  <div className="metric-item">
+                    <span className="metric-value">{month.itemCount}</span>
+                    <span className="metric-label">{t('reports.items')}</span>
+                  </div>
+                </div>
+
+                {/* Active Tab Detail */}
+                <div className={`reports-v2-card-detail reports-v2-card-detail--${activeTab}`}>
+                  {activeTab === 'paid' && (
+                    <>
+                      <span className="detail-label">{t('reports.collected')}</span>
+                      <span className="detail-value">{formatMoney(month.paidAmount, baseCurrency)}</span>
+                    </>
+                  )}
+                  {activeTab === 'clients' && (
+                    <>
+                      <span className="detail-label">{t('reports.activeClients')}</span>
+                      <span className="detail-value">{month.clientCount} {t('reports.clients')}</span>
+                    </>
+                  )}
+                  {activeTab === 'items' && (
+                    <>
+                      <span className="detail-label">{t('reports.itemsSold')}</span>
+                      <span className="detail-value">{month.itemQty.toLocaleString()} {t('reports.qty')}</span>
+                    </>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </section>
       )}
     </div>
