@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate, Navigate } from 'react-router-dom';
+import { useApolloClient } from '@apollo/client';
 import BottomNav from '../components/BottomNav';
 import Fab from '../components/Fab';
 import BrandLogo from '../components/BrandLogo';
@@ -97,6 +98,7 @@ function getPageCopy(pathname) {
 }
 
 function RootLayout() {
+  const client = useApolloClient();
   const navigate = useNavigate();
   const location = useLocation();
   const { t, tEn } = useI18n();
@@ -171,8 +173,9 @@ function RootLayout() {
     }
   }, [token, profile, profileLoading, onboardingLoading, onboardingStatus, navigate, isOnboardingPage]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearToken();
+    await client.clearStore().catch(() => undefined);
     setToken('');
     setUsername('');
     navigate('/welcome', { replace: true });

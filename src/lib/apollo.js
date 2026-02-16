@@ -1,7 +1,7 @@
 import { ApolloClient, InMemoryCache, HttpLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
-import { getToken, handleUnauthorized } from './auth';
+import { getCurrentBusinessId, getToken, handleUnauthorized } from './auth';
 
 const httpLink = new HttpLink({
   uri: '/query'
@@ -47,10 +47,12 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
 
 const authLink = setContext((_, { headers }) => {
   const token = getToken();
+  const businessId = getCurrentBusinessId();
   return {
     headers: {
       ...headers,
       'X-Client-App': 'pwa',
+      ...(businessId ? { 'X-Business-Id': businessId } : {}),
       ...(token ? { token } : {})
     }
   };

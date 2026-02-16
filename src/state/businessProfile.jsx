@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useApolloClient } from '@apollo/client';
-import { getToken } from '../lib/auth';
+import { getToken, setCurrentBusinessId } from '../lib/auth';
 import {
   fetchBusinessEntitlement,
   fetchBusinessProfile,
@@ -33,6 +33,7 @@ export function BusinessProfileProvider({ children }) {
       if (!token) {
         setProfile(null);
         setProfileToken('');
+        setCurrentBusinessId('');
         return null;
       }
 
@@ -51,6 +52,7 @@ export function BusinessProfileProvider({ children }) {
         setProfile(next || null);
         setEntitlement(nextEntitlement || null);
         setProfileToken(token);
+        setCurrentBusinessId(next?.id || '');
         return next || null;
       } catch (err) {
         setError(err?.message || 'Failed to load business profile.');
@@ -76,6 +78,7 @@ export function BusinessProfileProvider({ children }) {
         const next = await updateBusinessProfile(client, { currentProfile, updates });
         setProfile(next || null);
         setProfileToken(token);
+        setCurrentBusinessId(next?.id || '');
         const nextEntitlement = await fetchBusinessEntitlement(client, { fetchPolicy: 'network-only' });
         setEntitlement(nextEntitlement || null);
         return next || null;
@@ -95,6 +98,7 @@ export function BusinessProfileProvider({ children }) {
       setEntitlement(null);
       setProfileToken('');
       setError('');
+      setCurrentBusinessId('');
       return;
     }
     loadProfile().catch(() => {

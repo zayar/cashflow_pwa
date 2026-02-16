@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { gql, useMutation } from '@apollo/client';
+import { gql, useApolloClient, useMutation } from '@apollo/client';
 import { useNavigate, Link } from 'react-router-dom';
 import BrandLogo from '../components/BrandLogo';
 import { setToken, setUsername, getToken } from '../lib/auth';
@@ -16,6 +16,7 @@ const LOGIN_MUTATION = gql`
 `;
 
 function Login() {
+  const client = useApolloClient();
   const navigate = useNavigate();
   const { t } = useI18n();
   const [form, setForm] = useState({ username: '', password: '' });
@@ -41,6 +42,7 @@ function Login() {
       const { data } = await login({ variables: form });
       const info = data?.login;
       if (info?.token) {
+        await client.clearStore().catch(() => undefined);
         setToken(info.token);
         if (info.name) setUsername(info.name);
         setMessage(t('login.signedInRedirecting'));

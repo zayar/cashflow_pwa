@@ -93,6 +93,23 @@ const FIND_PRODUCT = gql`
   }
 `;
 
+function pickDefaultUnit(units) {
+  const allUnits = Array.isArray(units) ? units.filter(Boolean) : [];
+  if (allUnits.length === 0) return null;
+
+  const activeUnits = allUnits.filter((unit) => unit.isActive !== false);
+  const candidateUnits = activeUnits.length > 0 ? activeUnits : allUnits;
+
+  const eachUnit = candidateUnits.find(
+    (unit) => String(unit?.name || '').trim().toLowerCase() === 'each'
+  );
+  if (eachUnit) return eachUnit;
+
+  if (candidateUnits.length === 1) return candidateUnits[0];
+
+  return candidateUnits[0];
+}
+
 function ItemForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -164,8 +181,8 @@ function ItemForm() {
       return;
     }
 
-    const activeUnits = unitsData?.listAllProductUnit?.filter((unit) => unit.isActive) || [];
-    const defaultUnitId = activeUnits[0]?.id;
+    const defaultUnit = pickDefaultUnit(unitsData?.listAllProductUnit);
+    const defaultUnitId = defaultUnit?.id;
     if (!defaultUnitId) {
       setError(t('itemForm.noActiveUnit'));
       return;

@@ -58,7 +58,7 @@ function Items() {
 
   const { data, loading, error, refetch } = useQuery(GET_PRODUCTS, {
     variables: { limit: 50 },
-    fetchPolicy: 'cache-first',
+    fetchPolicy: 'network-only',
     nextFetchPolicy: 'cache-first'
   });
 

@@ -1,6 +1,7 @@
 // Local copy of shared auth utilities to avoid workspace package resolution in standalone PWA build.
 const TOKEN_KEY = 'pwa-invoice-token';
 const NAME_KEY = 'pwa-invoice-username';
+const CURRENT_BUSINESS_ID_KEY = 'pwa-invoice-business-id';
 const DEFAULT_BRANCH_KEY = 'pwa-invoice-default-branch-id';
 const DEFAULT_WAREHOUSE_KEY = 'pwa-invoice-default-warehouse-id';
 const DEFAULT_CURRENCY_KEY = 'pwa-invoice-default-currency-id';
@@ -128,6 +129,7 @@ export function clearToken() {
   if (!isBrowser()) return;
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(NAME_KEY);
+  localStorage.removeItem(CURRENT_BUSINESS_ID_KEY);
 }
 
 let hasHandledUnauthorized = false;
@@ -153,6 +155,21 @@ export function getUsername() {
 export function setUsername(name) {
   if (!isBrowser()) return;
   localStorage.setItem(NAME_KEY, name);
+}
+
+export function getCurrentBusinessId() {
+  if (!isBrowser()) return '';
+  return (localStorage.getItem(CURRENT_BUSINESS_ID_KEY) || '').trim();
+}
+
+export function setCurrentBusinessId(businessId) {
+  if (!isBrowser()) return;
+  const normalizedId = String(businessId || '').trim();
+  if (!normalizedId) {
+    localStorage.removeItem(CURRENT_BUSINESS_ID_KEY);
+    return;
+  }
+  localStorage.setItem(CURRENT_BUSINESS_ID_KEY, normalizedId);
 }
 
 function readStoredDefault(key) {
