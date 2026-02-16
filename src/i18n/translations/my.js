@@ -494,6 +494,7 @@ export default {
     warehouseIdPlaceholder: 'ဂိုဒေါင် ID',
     currencyIdPlaceholder: 'ငွေကြေး ID',
     locationInputInvalid: 'ခွဲရုံး၊ ဂိုဒေါင်နှင့် ငွေကြေးကို မှန်ကန်စွာ ထည့်ပါ။',
+    noWarehouseForBranch: 'ဤခွဲရုံးအတွက် ဂိုဒေါင် မရှိသေးပါ။ ဂိုဒေါင်တစ်ခု အရင်ဖန်တီးပါ။',
     saveDefaults: 'မူလတန်ဖိုးများ သိမ်းရန်',
     invoicePreviewAria: 'အင်ဗွိုက်စ် ကြိုကြည့်ရန်',
     invoicePreviewTitle: 'အင်ဗွိုက်စ် ကြိုကြည့်ရန်',

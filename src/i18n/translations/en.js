@@ -494,6 +494,7 @@ export default {
     warehouseIdPlaceholder: 'Warehouse ID',
     currencyIdPlaceholder: 'Currency ID',
     locationInputInvalid: 'Please enter a valid branch, warehouse, and currency.',
+    noWarehouseForBranch: 'No warehouse is available for this branch. Create a warehouse first.',
     saveDefaults: 'Save defaults',
     invoicePreviewAria: 'Invoice preview',
     invoicePreviewTitle: 'Invoice preview',

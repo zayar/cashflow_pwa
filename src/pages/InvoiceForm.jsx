@@ -32,14 +32,13 @@ const GET_INVOICE_LOCATIONS = gql`
     listAllBranch {
       id
       name
-      isPrimary
-      isDefault
+      isActive
     }
     listAllWarehouse {
       id
       name
-      isPrimary
-      isDefault
+      branchId
+      isActive
     }
   }
 `;
@@ -48,6 +47,9 @@ const GET_BUSINESS_DEFAULTS = gql`
   query GetBusinessDefaults {
     getBusiness {
       id
+      primaryBranch {
+        id
+      }
       baseCurrency {
         id
         name
@@ -90,6 +92,13 @@ function pickPreferredId(options, preferredId) {
   const primary = options.find((item) => item?.isPrimary || item?.isDefault);
   if (primary) return toPositiveInt(primary.id);
   return toPositiveInt(options[0]?.id);
+}
+
+function getWarehousesForBranch(warehouses, branchId) {
+  if (!Array.isArray(warehouses) || warehouses.length === 0) return [];
+  const normalizedBranchId = toPositiveInt(branchId);
+  if (!normalizedBranchId) return warehouses;
+  return warehouses.filter((warehouse) => toPositiveInt(warehouse?.branchId) === normalizedBranchId);
 }
 
 function getNetworkErrorMessage(error) {
@@ -180,41 +189,55 @@ function InvoiceForm() {
   }, [errors.customer, hasCustomer]);
 
   const businessId = toPositiveInt(businessData?.getBusiness?.id);
+  const primaryBranchId = toPositiveInt(businessData?.getBusiness?.primaryBranch?.id);
   const baseCurrency = businessData?.getBusiness?.baseCurrency;
   const baseCurrencyId = toPositiveInt(baseCurrency?.id);
-  const branches = locationData?.listAllBranch ?? [];
-  const warehouses = locationData?.listAllWarehouse ?? [];
+  const branches = useMemo(
+    () => (locationData?.listAllBranch ?? []).filter((branch) => branch?.isActive !== false),
+    [locationData]
+  );
+  const warehouses = useMemo(
+    () => (locationData?.listAllWarehouse ?? []).filter((warehouse) => warehouse?.isActive !== false),
+    [locationData]
+  );
   const storedLocationDefaults = useMemo(() => getDefaultInvoiceLocationIds(businessId), [businessId]);
   const storedCurrencyDefault = useMemo(() => getDefaultInvoiceCurrencyId(businessId), [businessId]);
 
   const selectedBranchId = toPositiveInt(invoice.branchId);
   const selectedWarehouseId = toPositiveInt(invoice.warehouseId);
   const selectedCurrencyId = toPositiveInt(invoice.currencyId || baseCurrencyId);
+  const branchWarehouses = useMemo(
+    () => getWarehousesForBranch(warehouses, selectedBranchId),
+    [warehouses, selectedBranchId]
+  );
+  const modalBranchId = toPositiveInt(branchIdInput || selectedBranchId);
+  const modalWarehouses = useMemo(
+    () => getWarehousesForBranch(warehouses, modalBranchId),
+    [warehouses, modalBranchId]
+  );
 
   const hasBranchSelection = selectedBranchId > 0;
   const hasWarehouseSelection = selectedWarehouseId > 0;
   const hasCurrencySelection = selectedCurrencyId > 0;
-  const hasValidBranchSelection =
-    hasBranchSelection &&
-    (branches.length === 0 || branches.some((branch) => toPositiveInt(branch.id) === selectedBranchId));
-  const hasValidWarehouseSelection =
-    hasWarehouseSelection &&
-    (warehouses.length === 0 || warehouses.some((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId));
+  const hasValidBranchSelection = hasBranchSelection && branches.some((branch) => toPositiveInt(branch.id) === selectedBranchId);
+  const hasValidWarehouseSelection = hasWarehouseSelection && branchWarehouses.some((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId);
   const hasValidCurrencySelection = hasCurrencySelection && (!baseCurrencyId || selectedCurrencyId === baseCurrencyId);
   const defaultsReady = hasValidBranchSelection && hasValidWarehouseSelection && hasValidCurrencySelection;
   const reviewReady = hasCustomer && linesReady && defaultsReady;
 
   const selectedBranchName = useMemo(() => {
+    if (locationsLoading) return '';
     if (!selectedBranchId) return '';
     const selected = branches.find((branch) => toPositiveInt(branch.id) === selectedBranchId);
-    return selected?.name || `#${selectedBranchId}`;
-  }, [branches, selectedBranchId]);
+    return selected?.name || '';
+  }, [branches, locationsLoading, selectedBranchId]);
 
   const selectedWarehouseName = useMemo(() => {
+    if (locationsLoading) return '';
     if (!selectedWarehouseId) return '';
-    const selected = warehouses.find((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId);
-    return selected?.name || `#${selectedWarehouseId}`;
-  }, [selectedWarehouseId, warehouses]);
+    const selected = branchWarehouses.find((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId);
+    return selected?.name || '';
+  }, [branchWarehouses, locationsLoading, selectedWarehouseId]);
 
   const selectedCurrencyLabel = useMemo(() => {
     if (!selectedCurrencyId) return t('invoiceForm.notSet');
@@ -272,29 +295,37 @@ function InvoiceForm() {
 
   useEffect(() => {
     if (locationsLoading) return;
-    if (!branches.length || !warehouses.length) return;
+    if (!branches.length) return;
 
-    const nextBranchId = pickPreferredId(branches, storedLocationDefaults.branchId);
-    const nextWarehouseId = pickPreferredId(warehouses, storedLocationDefaults.warehouseId);
-    const branchInvalid = !selectedBranchId || !branches.some((branch) => toPositiveInt(branch.id) === selectedBranchId);
-    const warehouseInvalid =
-      !selectedWarehouseId || !warehouses.some((warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId);
+    const hasCurrentBranch = branches.some((branch) => toPositiveInt(branch.id) === selectedBranchId);
+    const preferredBranchId = storedLocationDefaults.branchId || primaryBranchId;
+    const resolvedBranchId = hasCurrentBranch ? selectedBranchId : pickPreferredId(branches, preferredBranchId);
+    const availableWarehouses = getWarehousesForBranch(warehouses, resolvedBranchId);
+    const hasCurrentWarehouse = availableWarehouses.some(
+      (warehouse) => toPositiveInt(warehouse.id) === selectedWarehouseId
+    );
+    const resolvedWarehouseId = hasCurrentWarehouse
+      ? selectedWarehouseId
+      : pickPreferredId(availableWarehouses, storedLocationDefaults.warehouseId);
 
-    if (branchInvalid || selectedBranchId !== nextBranchId) {
-      dispatch({ type: 'setField', field: 'branchId', value: nextBranchId });
-      saveDefaultInvoiceLocationIds(nextBranchId, selectedWarehouseId || nextWarehouseId, businessId);
-      if (isLocationOpen) setBranchIdInput(String(nextBranchId));
+    if (resolvedBranchId && resolvedBranchId !== selectedBranchId) {
+      dispatch({ type: 'setField', field: 'branchId', value: resolvedBranchId });
+      if (isLocationOpen) setBranchIdInput(String(resolvedBranchId));
     }
 
-    if (warehouseInvalid || selectedWarehouseId !== nextWarehouseId) {
-      dispatch({ type: 'setField', field: 'warehouseId', value: nextWarehouseId });
-      saveDefaultInvoiceLocationIds(selectedBranchId || nextBranchId, nextWarehouseId, businessId);
-      if (isLocationOpen) setWarehouseIdInput(String(nextWarehouseId));
+    if (resolvedWarehouseId !== selectedWarehouseId) {
+      dispatch({ type: 'setField', field: 'warehouseId', value: resolvedWarehouseId });
+      if (isLocationOpen) setWarehouseIdInput(String(resolvedWarehouseId || ''));
+    }
+
+    if (resolvedBranchId && resolvedWarehouseId) {
+      saveDefaultInvoiceLocationIds(resolvedBranchId, resolvedWarehouseId, businessId);
     }
   }, [
     branches,
     warehouses,
     locationsLoading,
+    primaryBranchId,
     selectedBranchId,
     selectedWarehouseId,
     storedLocationDefaults.branchId,
@@ -308,28 +339,61 @@ function InvoiceForm() {
     if (!isLocationOpen) return;
 
     const branchIds = new Set(branches.map((branch) => String(branch.id)));
-    const warehouseIds = new Set(warehouses.map((warehouse) => String(warehouse.id)));
+    const currentBranchInput = toPositiveInt(branchIdInput);
+    const nextBranchInput =
+      branches.length > 0 && (!currentBranchInput || !branchIds.has(String(currentBranchInput)))
+        ? pickPreferredId(branches, selectedBranchId || storedLocationDefaults.branchId || primaryBranchId)
+        : currentBranchInput;
+    const branchScopedWarehouses = getWarehousesForBranch(warehouses, nextBranchInput);
+    const warehouseIds = new Set(branchScopedWarehouses.map((warehouse) => String(warehouse.id)));
 
-    const primaryBranch = branches.find((branch) => branch?.isPrimary || branch?.isDefault);
-    const primaryWarehouse = warehouses.find((warehouse) => warehouse?.isPrimary || warehouse?.isDefault);
-
-    if (branches.length > 0 && (!branchIdInput || !branchIds.has(String(branchIdInput)))) {
-      setBranchIdInput(String(primaryBranch?.id ?? branches[0]?.id ?? ''));
+    if (branches.length > 0 && (!currentBranchInput || !branchIds.has(String(currentBranchInput)))) {
+      setBranchIdInput(String(nextBranchInput || ''));
     }
 
-    if (warehouses.length > 0 && (!warehouseIdInput || !warehouseIds.has(String(warehouseIdInput)))) {
-      setWarehouseIdInput(String(primaryWarehouse?.id ?? warehouses[0]?.id ?? ''));
+    if (
+      branchScopedWarehouses.length > 0 &&
+      (!warehouseIdInput || !warehouseIds.has(String(warehouseIdInput)))
+    ) {
+      const nextWarehouseInput = pickPreferredId(
+        branchScopedWarehouses,
+        selectedWarehouseId || storedLocationDefaults.warehouseId
+      );
+      setWarehouseIdInput(String(nextWarehouseInput || ''));
+    }
+
+    if (branchScopedWarehouses.length === 0) {
+      setWarehouseIdInput('');
     }
 
     if (baseCurrencyId && toPositiveInt(currencyIdInput) !== baseCurrencyId) {
       setCurrencyIdInput(String(baseCurrencyId));
     }
-  }, [branches, warehouses, branchIdInput, warehouseIdInput, baseCurrencyId, currencyIdInput, isLocationOpen]);
+  }, [
+    branches,
+    warehouses,
+    branchIdInput,
+    warehouseIdInput,
+    selectedBranchId,
+    selectedWarehouseId,
+    storedLocationDefaults.branchId,
+    storedLocationDefaults.warehouseId,
+    primaryBranchId,
+    baseCurrencyId,
+    currencyIdInput,
+    isLocationOpen
+  ]);
 
   const saveLocationSettings = () => {
     const nextBranchId = toPositiveInt(branchIdInput);
     const nextWarehouseId = toPositiveInt(warehouseIdInput);
     const nextCurrencyId = toPositiveInt(currencyIdInput || baseCurrencyId);
+    const branchScopedWarehouses = getWarehousesForBranch(warehouses, nextBranchId);
+
+    if (nextBranchId && warehouses.length > 0 && branchScopedWarehouses.length === 0) {
+      setLocationInputError(t('invoiceForm.noWarehouseForBranch'));
+      return;
+    }
 
     if (!nextBranchId || !nextWarehouseId || !nextCurrencyId) {
       setLocationInputError(t('invoiceForm.locationInputInvalid'));
@@ -594,11 +658,15 @@ function InvoiceForm() {
             <div className="location-settings-grid">
               <div className="location-settings-item">
                 <span className="location-settings-label">{t('invoiceForm.branch')}</span>
-                <span className="location-settings-value">{selectedBranchName || t('invoiceForm.notSet')}</span>
+                <span className="location-settings-value">
+                  {selectedBranchName || (locationsLoading ? t('invoiceForm.loadingLocations') : t('invoiceForm.notSet'))}
+                </span>
               </div>
               <div className="location-settings-item">
                 <span className="location-settings-label">{t('invoiceForm.warehouse')}</span>
-                <span className="location-settings-value">{selectedWarehouseName || t('invoiceForm.notSet')}</span>
+                <span className="location-settings-value">
+                  {selectedWarehouseName || (locationsLoading ? t('invoiceForm.loadingLocations') : t('invoiceForm.notSet'))}
+                </span>
               </div>
               <div className="location-settings-item">
                 <span className="location-settings-label">{t('invoiceForm.currency')}</span>
@@ -897,19 +965,19 @@ function InvoiceForm() {
 
             <label className="field">
               <span className="label">{t('invoiceForm.warehouse')}</span>
-              {warehouses.length > 0 ? (
+              {modalWarehouses.length > 0 ? (
                 <select
                   className="input"
                   value={warehouseIdInput}
                   onChange={(event) => setWarehouseIdInput(event.target.value)}
                 >
-                  {warehouses.map((warehouse) => (
+                  {modalWarehouses.map((warehouse) => (
                     <option key={warehouse.id} value={warehouse.id}>
                       {warehouse.name ? `${warehouse.name} (#${warehouse.id})` : `#${warehouse.id}`}
                     </option>
                   ))}
                 </select>
-              ) : (
+              ) : locationsError || (!locationsLoading && warehouses.length === 0) ? (
                 <input
                   className="input"
                   type="number"
@@ -919,6 +987,8 @@ function InvoiceForm() {
                   onChange={(event) => setWarehouseIdInput(event.target.value)}
                   placeholder={t('invoiceForm.warehouseIdPlaceholder')}
                 />
+              ) : (
+                <div className="inline-error">{t('invoiceForm.noWarehouseForBranch')}</div>
               )}
             </label>
 
