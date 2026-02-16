@@ -5,7 +5,8 @@ import Fab from '../components/Fab';
 import BrandLogo from '../components/BrandLogo';
 import { clearToken, getToken, getUsername } from '../lib/auth';
 import { useBusinessProfile } from '../state/businessProfile';
-import { shouldShowOnboarding } from '../lib/onboardingFlow';
+import { useOnboardingStatus } from '../state/onboardingStatus';
+import { isBasicsComplete } from '../lib/onboardingFlow';
 import { useI18n } from '../i18n';
 
 function getPageCopy(pathname) {
@@ -97,6 +98,7 @@ function RootLayout() {
   const location = useLocation();
   const { t, tEn } = useI18n();
   const { profile, loading: profileLoading, loadProfile } = useBusinessProfile();
+  const { status: onboardingStatus, loading: onboardingLoading, refreshStatus } = useOnboardingStatus();
   const [token, setToken] = useState('');
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -144,11 +146,17 @@ function RootLayout() {
     loadProfile().catch(() => {
       // Soft fail; page-level components surface errors.
     });
-  }, [loadProfile]);
+    refreshStatus().catch(() => {
+      // Onboarding page will surface its own errors.
+    });
+  }, [loadProfile, refreshStatus]);
 
   useEffect(() => {
-    if (!token || profileLoading) return;
-    const needsOnboarding = shouldShowOnboarding(profile);
+    if (!token || profileLoading || onboardingLoading) return;
+    const hasServerStatus = onboardingStatus && (onboardingStatus.step !== undefined || onboardingStatus.completed !== undefined);
+    const needsOnboarding = hasServerStatus
+      ? !onboardingStatus.completed
+      : !isBasicsComplete(profile);
     const onOnboardingPage = isOnboardingPage;
 
     if (needsOnboarding && !onOnboardingPage) {
@@ -157,7 +165,7 @@ function RootLayout() {
     if (!needsOnboarding && onOnboardingPage) {
       navigate('/', { replace: true });
     }
-  }, [token, profile, profileLoading, navigate, isOnboardingPage]);
+  }, [token, profile, profileLoading, onboardingLoading, onboardingStatus, navigate, isOnboardingPage]);
 
   const handleLogout = () => {
     clearToken();

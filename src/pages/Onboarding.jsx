@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBusinessProfile } from '../state/businessProfile';
-import { buildCompanyBasicsPayload, ensureDefaultInvoiceTemplate, formatTelegramCommand } from '../lib/onboardingFlow';
+import { useOnboardingStatus } from '../state/onboardingStatus';
+import { buildCompanyBasicsPayload, ensureDefaultInvoiceTemplate, formatTelegramCommand, isBasicsComplete } from '../lib/onboardingFlow';
 import { completeUpload, resolveStorageAccessUrl, signUpload, uploadToSignedUrl } from '../lib/uploadApi';
 import { getActiveTelegramLinkCode, generateTelegramLinkCode, getTelegramAutoReportSettings } from '../lib/telegramLinkApi';
 
-const STEP_KEYS = ['basics', 'template', 'telegram'];
+const STEP_KEYS = ['basics', 'template', 'telegram', 'complete'];
 const TELEGRAM_BOT_URL = 'https://t.me/BizCashflowBot';
 
 function normalizeText(value) {
@@ -69,7 +70,8 @@ function StepPill({ index, label, active, done }) {
 
 function Onboarding() {
   const navigate = useNavigate();
-  const { profile, loading: profileLoading, error, saveProfile, refreshProfile, profileComplete } = useBusinessProfile();
+  const { profile, loading: profileLoading, error, saveProfile, refreshProfile } = useBusinessProfile();
+  const { status: onboardingStatus, loading: onboardingLoading, error: onboardingError, saveStatus, refreshStatus } = useOnboardingStatus();
 
   const fileInputRef = useRef(null);
 
@@ -93,13 +95,23 @@ function Onboarding() {
     copyMessage: ''
   });
 
+  // Resume from server-stored step.
+  useEffect(() => {
+    if (onboardingStatus?.completed) {
+      navigate('/', { replace: true });
+      return;
+    }
+    if (typeof onboardingStatus?.step === 'number' && onboardingStatus.step >= 0 && onboardingStatus.step < STEP_KEYS.length) {
+      setActiveStep(onboardingStatus.step);
+    }
+  }, [navigate, onboardingStatus]);
   useEffect(() => {
     if (!profile) return;
     setValues(toFormValues(profile));
-    setBasicsSavedAt(profileComplete ? Date.now() : 0);
+    setBasicsSavedAt(isBasicsComplete(profile) ? Date.now() : 0);
     setFieldErrors({});
     setFormError('');
-  }, [profile, profileComplete]);
+  }, [profile]);
 
   const logoPreviewUrl = useMemo(() => resolveStorageAccessUrl(values.logoUrl || ''), [values.logoUrl]);
 
@@ -148,6 +160,7 @@ function Onboarding() {
       await saveProfile(payload);
       await refreshProfile();
       setBasicsSavedAt(Date.now());
+      await saveStatus({ step: 1, completed: false });
       return true;
     } catch (err) {
       setFormError(err?.message || 'Unable to save company details.');
@@ -173,6 +186,7 @@ function Onboarding() {
               : 'Default invoice template ready.',
         source
       });
+      await saveStatus({ step: 2, completed: false });
     } catch (err) {
       setTemplateStatus({
         state: 'error',
@@ -180,7 +194,7 @@ function Onboarding() {
         source: 'error'
       });
     }
-  }, [profile?.id]);
+  }, [profile?.id, saveStatus]);
 
   const loadTelegramStatus = useCallback(
     async ({ silent = false } = {}) => {
@@ -288,10 +302,12 @@ function Onboarding() {
     [telegramState.activeCode]
   );
 
+  const basicsComplete = isBasicsComplete(profile) || Boolean(basicsSavedAt);
   const stepDone = {
-    basics: Boolean(profileComplete || basicsSavedAt),
+    basics: basicsComplete,
     template: templateStatus.state === 'ready',
-    telegram: telegramState.linked
+    telegram: telegramState.linked,
+    complete: onboardingStatus?.completed
   };
 
   const handleNext = async () => {
@@ -302,9 +318,16 @@ function Onboarding() {
       return;
     }
     if (activeStep === 1) {
+      await saveStatus({ step: 2, completed: false });
       setActiveStep(2);
       return;
     }
+    if (activeStep === 2) {
+      await saveStatus({ step: 3, completed: false });
+      setActiveStep(3);
+      return;
+    }
+    await saveStatus({ step: 3, completed: true });
     navigate('/', { replace: true });
   };
 
@@ -313,7 +336,7 @@ function Onboarding() {
   };
 
   const stepTitle = useMemo(
-    () => ['Company basics', 'Default invoice template', 'Connect Telegram'][activeStep] || 'Onboarding',
+    () => ['Company basics', 'Default invoice template', 'Connect Telegram', 'All set'][activeStep] || 'Onboarding',
     [activeStep]
   );
 
@@ -503,11 +526,32 @@ function Onboarding() {
     );
   };
 
+  const renderComplete = () => (
+    <section className="card onboarding-card">
+      <div className="onboarding-card-header">
+        <div>
+          <p className="kicker">Step 4 · Completed</p>
+          <h2 className="title">You’re ready</h2>
+          <p className="subtle">Everything is set. Start invoicing now.</p>
+        </div>
+        <span className="badge badge-success">Done</span>
+      </div>
+      <div className="onboarding-complete">
+        <p className="onboarding-status-title">Company profile saved</p>
+        <p className="onboarding-status-title">Invoice template ready</p>
+        <p className="onboarding-status-title">
+          Telegram {telegramState.linked ? 'connected' : 'can be connected later from Integrations'}
+        </p>
+      </div>
+    </section>
+  );
+
   const nextLabel = activeStep === STEP_KEYS.length - 1 ? 'Finish' : 'Next';
   const disableNext =
-    activeStep === 0 ? savingBasics || uploading || profileLoading : activeStep === 1 ? templateStatus.state === 'checking' : false;
+    onboardingLoading ||
+    (activeStep === 0 ? savingBasics || uploading || profileLoading : activeStep === 1 ? templateStatus.state === 'checking' : false);
 
-  if (profileLoading && !profile) {
+  if ((profileLoading && !profile) || (onboardingLoading && !onboardingStatus)) {
     return (
       <div className="stack">
         <section className="state-loading" aria-live="polite">
@@ -520,12 +564,12 @@ function Onboarding() {
     );
   }
 
-  if (error && !profile) {
+  if ((error && !profile) || onboardingError) {
     return (
       <div className="stack">
         <section className="state-error" role="alert">
           <p className="state-title">Could not load your profile.</p>
-          <p className="state-message">{error}</p>
+          <p className="state-message">{error || onboardingError}</p>
         </section>
       </div>
     );
@@ -550,11 +594,17 @@ function Onboarding() {
           <h1 className="title" style={{ marginBottom: 6 }}>
             Finish setting up Cashflow
           </h1>
-          <p className="subtle">3 quick steps: company basics, invoice template, and Telegram link.</p>
+          <p className="subtle">4 quick steps: company basics, invoice template, Telegram link, and you’re done.</p>
         </div>
         <div className="onboarding-progress">
           {STEP_KEYS.map((key, index) => (
-            <StepPill key={key} index={index} label={['Basics', 'Template', 'Telegram'][index]} active={activeStep === index} done={stepDone[key]} />
+            <StepPill
+              key={key}
+              index={index}
+              label={['Basics', 'Template', 'Telegram', 'Complete'][index]}
+              active={activeStep === index}
+              done={stepDone[key]}
+            />
           ))}
         </div>
       </section>
@@ -564,8 +614,13 @@ function Onboarding() {
           <p className="state-message">{formError}</p>
         </section>
       )}
+      {onboardingError && (
+        <section className="state-error" role="alert">
+          <p className="state-message">{onboardingError}</p>
+        </section>
+      )}
 
-      {renderStep()}
+      {activeStep >= STEP_KEYS.length - 1 ? renderComplete() : renderStep()}
 
       <div className="sticky-actions onboarding-actions">
         <button className="btn btn-secondary" type="button" onClick={handlePrevious} disabled={activeStep === 0 || savingBasics || uploading}>

@@ -1,22 +1,18 @@
+import { DEFAULT_INVOICE_TEMPLATE_CONFIG, getDefaultInvoiceTemplateName } from './invoiceTemplateDefaults.js';
 import {
   createTemplate,
   getDefaultTemplate,
   listTemplates,
   setDefaultTemplate
 } from './templatesApi.js';
-import { DEFAULT_INVOICE_TEMPLATE_CONFIG, getDefaultInvoiceTemplateName } from './invoiceTemplateDefaults.js';
 
 const DEFAULT_DOCUMENT_TYPE = 'invoice';
 
-function isBasicsComplete(profile) {
+export function isBasicsComplete(profile) {
   if (!profile) return false;
   const name = String(profile.businessName || profile.name || '').trim();
   const phone = String(profile.phone || '').trim();
   return Boolean(name && phone);
-}
-
-export function shouldShowOnboarding(profile) {
-  return !isBasicsComplete(profile || null);
 }
 
 export function buildCompanyBasicsPayload(values = {}) {

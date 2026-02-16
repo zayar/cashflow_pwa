@@ -6,15 +6,15 @@ import {
   deriveTelegramStatus,
   ensureDefaultInvoiceTemplate,
   formatTelegramCommand,
-  shouldShowOnboarding
+  isBasicsComplete
 } from '../src/lib/onboardingFlow.js';
 
-test('shouldShowOnboarding flags missing required fields', () => {
+test('isBasicsComplete checks required fields', () => {
   const missingPhone = { businessName: 'Acme Co', phone: '' };
   const complete = { businessName: 'Acme Co', phone: '123' };
 
-  assert.equal(shouldShowOnboarding(missingPhone), true);
-  assert.equal(shouldShowOnboarding(complete), false);
+  assert.equal(isBasicsComplete(missingPhone), false);
+  assert.equal(isBasicsComplete(complete), true);
 });
 
 test('buildCompanyBasicsPayload trims inputs', () => {

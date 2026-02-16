@@ -2950,6 +2950,16 @@ html[lang='my'] .login-flat-foot {
   border-radius: var(--radius-sm);
 }
 
+.onboarding-complete {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+}
+
 .onboarding-steps-list {
   margin: 0 0 12px;
   padding-left: 20px;
