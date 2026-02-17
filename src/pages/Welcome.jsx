@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from '../lib/auth';
 import BrandLogo from '../components/BrandLogo';
@@ -205,15 +205,6 @@ function Welcome() {
         <button onClick={() => navigate('/login')} className="welcome-primary-btn" type="button">
           {t('welcome.getStarted')}
         </button>
-        <p className="welcome-actions-subline">
-          {t('welcome.alreadyHaveAccount')}{' '}
-          <Link to="/login" className="welcome-secondary-link">
-            {t('welcome.logIn')}
-          </Link>
-        </p>
-        <p className="welcome-powered">
-          {t('welcome.poweredBy')}
-        </p>
       </div>
     </div>
   );
