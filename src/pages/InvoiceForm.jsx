@@ -6,6 +6,7 @@ import InvoiceLineCard from '../components/InvoiceLineCard';
 import Modal from '../components/Modal';
 import { createLine, useInvoiceDraft } from '../state/invoiceDraft';
 import { saveDefaultInvoiceCurrencyId, saveDefaultInvoiceLocationIds, getDefaultInvoiceLocationIds, getDefaultInvoiceCurrencyId } from '../lib/auth';
+import { buildInvoiceMutationInput } from '../lib/invoicePayload';
 import { useI18n } from '../i18n';
 import { formatMoney } from '../lib/formatters';
 
@@ -470,23 +471,13 @@ function InvoiceForm() {
       ? new Date(`${invoice.invoiceDate}T00:00:00Z`).toISOString()
       : new Date().toISOString();
 
-    const input = {
-      customerId: Number(invoice.customerId),
+    const input = buildInvoiceMutationInput({
+      invoice,
       branchId,
       warehouseId,
       currencyId,
-      invoiceDate: isoDate,
-      invoicePaymentTerms: invoice.paymentTerms,
-      currentStatus: invoice.currentStatus || 'Draft',
-      referenceNumber: invoice.referenceNumber || undefined,
-      isTaxInclusive: false,
-      details: invoice.lines.map((line) => ({
-        name: line.name,
-        detailQty: Number(line.qty) || 0,
-        detailUnitRate: Number(line.rate) || 0,
-        detailDiscount: Number(line.discount) || 0
-      }))
-    };
+      invoiceDateIso: isoDate
+    });
 
     const isUpdating = Boolean(invoice.invoiceId);
     const variables = isUpdating ? { id: invoice.invoiceId, input } : { input };

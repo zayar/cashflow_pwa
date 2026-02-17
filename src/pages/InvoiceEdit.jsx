@@ -25,6 +25,7 @@ const FIND_INVOICE = gql`
             detailQty
             detailUnitRate
             detailDiscount
+            detailDiscountType
           }
         }
       }
@@ -70,6 +71,7 @@ function InvoiceEdit() {
           qty: Number(detail.detailQty ?? 0),
           rate: Number(detail.detailUnitRate ?? 0),
           discount: Number(detail.detailDiscount ?? 0),
+          discountType: detail.detailDiscountType || 'A',
           taxable: true
         }))
       : [];

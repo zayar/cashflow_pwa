@@ -15,6 +15,7 @@ export function createLine() {
     qty: 1,
     rate: 0,
     discount: 0,
+    discountType: 'A',
     taxable: true
   };
 }
