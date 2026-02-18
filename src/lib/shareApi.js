@@ -29,7 +29,10 @@ const getShareViewerOrigin = () => {
 
 const request = async (path, { method = 'GET', body, includeToken = true } = {}) => {
   const baseUrl = getApiBaseUrl();
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Client-App': 'pwa'
+  };
   if (includeToken) {
     const token = getToken();
     if (token) {
