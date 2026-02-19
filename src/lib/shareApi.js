@@ -1,4 +1,11 @@
-import { getToken, handleUnauthorized } from './auth';
+import { getToken, handleUnauthorized } from './auth.js';
+
+const CANONICAL_PUBLIC_VIEWER_ORIGIN = 'https://cashflow-483906.web.app';
+const PWA_HOSTS_USING_CANONICAL_VIEWER = new Set([
+  'pwa-invoice.web.app',
+  'pwa-invoice.firebaseapp.com',
+  'invoice.cashfloweasy.app'
+]);
 
 const getApiBaseUrl = () => {
   const envBase = import.meta?.env?.VITE_API_BASE_URL;
@@ -19,8 +26,8 @@ const getShareViewerOrigin = () => {
   // This matches how share links work in the web product.
   if (typeof window !== 'undefined') {
     const hostname = window.location?.hostname || '';
-    if (hostname === 'pwa-invoice.web.app') {
-      return 'https://cashflow-483906.web.app';
+    if (PWA_HOSTS_USING_CANONICAL_VIEWER.has(hostname)) {
+      return CANONICAL_PUBLIC_VIEWER_ORIGIN;
     }
   }
 
