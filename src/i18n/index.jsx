@@ -76,8 +76,8 @@ export function I18nProvider({ children }) {
   // For UI that must remain in English even when the user switches languages
   // (e.g. top navigation labels to avoid layout shifts).
   const tEn = useCallback((key, vars) => {
-    const fallback = dictionaries[DEFAULT_LANG];
-    const raw = getByPath(fallback, key);
+    const enDict = dictionaries['en'];
+    const raw = getByPath(enDict, key);
     const resolved = typeof raw === 'string' ? raw : String(key || '');
     return interpolate(resolved, vars);
   }, []);

@@ -30,7 +30,7 @@ function TemplateInvoicePreview({ logoUrl, qrUrl }) {
           {logoUrl ? <img src={logoUrl} alt="Logo" /> : <span>Logo</span>}
         </div>
         <div className="template-preview-header">
-          <div className="template-preview-title">{t('templatePreview.invoice')}</div>
+          <div className="template-preview-title">INVOICE</div>
           <div className="template-preview-number"># INV-0001</div>
           <div className="template-preview-date">06 Feb 2026</div>
         </div>

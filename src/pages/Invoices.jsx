@@ -137,7 +137,7 @@ function Invoices() {
         <div className="card-header">
           <div>
             <p className="kicker">{t('invoices.cardKicker')}</p>
-            <h2 className="title">{t('invoices.cardTitle')}</h2>
+            <h2 className="title">INVOICES</h2>
           </div>
           <Link
             to="/invoices/new"
