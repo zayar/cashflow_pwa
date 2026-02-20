@@ -11,7 +11,10 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-        cleanupOutdatedCaches: true
+        cleanupOutdatedCaches: true,
+        // CRITICAL: do not let the service worker intercept short-link navigations.
+        // `/i/:shortId` must hit Firebase rewrites -> Cloud Run so we get the 302 redirect.
+        navigateFallbackDenylist: [/^\/i\//]
       },
       includeAssets: ['favicon.svg', 'favicon.ico', 'simplecashflow_logo.png'],
       manifest: {
