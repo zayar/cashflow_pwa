@@ -13,8 +13,8 @@ import { I18nProvider } from './i18n';
 
 const root = document.getElementById('root');
 
-// Back-compat: old share links used `/#/public/invoices/:token` on this app.
-// Redirect to the canonical public invoice viewer (no auth) used by the Cashflow web app.
+// Back-compat: old share links used `/#/public/invoices/:token`.
+// Redirect to the canonical viewer at cashfloweasy.app.
 if (typeof window !== 'undefined') {
   const hash = window.location.hash || '';
   const match = hash.match(/^#\/public\/invoices\/(.+)$/);

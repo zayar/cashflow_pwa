@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
 import InvoiceItemsTable from '../components/InvoiceItemsTable';
 import { getDefaultInvoiceLocationIds } from '../lib/auth';
-import { buildInvoiceShareUrl, createInvoiceShareToken } from '../lib/shareApi';
+import { buildInvoiceShareUrl, buildShortShareUrl, createInvoiceShareToken, createShortLink } from '../lib/shareApi';
 import { getDefaultTemplate, safeParseConfigString } from '../lib/templatesApi';
 import { extractStorageObjectKey, resolveStorageAccessUrl } from '../lib/uploadApi';
 import { useBusinessProfile } from '../state/businessProfile';
@@ -383,8 +383,23 @@ function InvoiceView() {
     if (!canShare) return;
     setStatus('');
     try {
-      const share = await createInvoiceShareToken(invoice.id);
-      const shareUrl = buildInvoiceShareUrl(share?.token, { lang });
+      let shareUrl = '';
+
+      // Try short link first; fall back to full-length token URL.
+      try {
+        const shortLink = await createShortLink(invoice.id, { lang });
+        if (shortLink?.short_id) {
+          shareUrl = buildShortShareUrl(shortLink.short_id);
+        }
+      } catch {
+        // Short-link endpoint may not be deployed yet; fall back gracefully.
+      }
+
+      if (!shareUrl) {
+        const share = await createInvoiceShareToken(invoice.id);
+        shareUrl = buildInvoiceShareUrl(share?.token, { lang });
+      }
+
       if (!shareUrl) {
         throw new Error(t('invoiceForm.shareUnavailable'));
       }

@@ -1,11 +1,6 @@
 import { getToken, handleUnauthorized } from './auth.js';
 
-const CANONICAL_PUBLIC_VIEWER_ORIGIN = 'https://cashflow-483906.web.app';
-const PWA_HOSTS_USING_CANONICAL_VIEWER = new Set([
-  'pwa-invoice.web.app',
-  'pwa-invoice.firebaseapp.com',
-  'invoice.cashfloweasy.app'
-]);
+const DEFAULT_PUBLIC_HOST = 'https://cashfloweasy.app';
 
 const getApiBaseUrl = () => {
   const envBase = import.meta?.env?.VITE_API_BASE_URL;
@@ -13,25 +8,14 @@ const getApiBaseUrl = () => {
   return '';
 };
 
-const getShareViewerOrigin = () => {
-  const envOrigin = import.meta?.env?.VITE_SHARE_VIEWER_ORIGIN;
-  if (envOrigin) return String(envOrigin).replace(/\/$/, '');
-
-  const origin =
-    typeof window !== 'undefined' && window.location?.origin
-      ? window.location.origin.replace(/\/$/, '')
-      : '';
-
-  // Default to the main Cashflow web app for the public invoice viewer.
-  // This matches how share links work in the web product.
-  if (typeof window !== 'undefined') {
-    const hostname = window.location?.hostname || '';
-    if (PWA_HOSTS_USING_CANONICAL_VIEWER.has(hostname)) {
-      return CANONICAL_PUBLIC_VIEWER_ORIGIN;
-    }
+const getPublicHost = () => {
+  const envHost = import.meta?.env?.VITE_PUBLIC_HOST;
+  if (envHost) return String(envHost).replace(/\/$/, '');
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const origin = window.location.origin.replace(/\/$/, '');
+    if (origin && !origin.includes('localhost')) return origin;
   }
-
-  return origin;
+  return DEFAULT_PUBLIC_HOST;
 };
 
 const request = async (path, { method = 'GET', body, includeToken = true } = {}) => {
@@ -78,11 +62,24 @@ export const createInvoiceShareToken = async (invoiceId) => {
   });
 };
 
+export const createShortLink = async (invoiceId, { lang } = {}) => {
+  if (!invoiceId) {
+    throw new Error('Invoice ID is required');
+  }
+  const body = { invoice_id: invoiceId };
+  if (lang && lang !== 'en') body.lang = lang;
+  return request('/api/share/short-link', { method: 'POST', body });
+};
+
 export const buildInvoiceShareUrl = (token, { lang } = {}) => {
   if (!token) return '';
-  const origin = getShareViewerOrigin();
-  // Public invoice viewer lives in the main Cashflow web app.
+  const host = getPublicHost();
   const normalizedLang = String(lang || '').trim().toLowerCase();
   const suffix = normalizedLang && normalizedLang !== 'en' ? `?lang=${encodeURIComponent(normalizedLang)}` : '';
-  return `${origin}/#/public/invoices/${encodeURIComponent(String(token))}${suffix}`;
+  return `${host}/#/public/invoices/${encodeURIComponent(String(token))}${suffix}`;
+};
+
+export const buildShortShareUrl = (shortId) => {
+  if (!shortId) return '';
+  return `${getPublicHost()}/i/${encodeURIComponent(shortId)}`;
 };

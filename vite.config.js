@@ -12,10 +12,10 @@ export default defineConfig({
         clientsClaim: true,
         cleanupOutdatedCaches: true
       },
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'favicon.ico', 'simplecashflow_logo.png'],
       manifest: {
-        name: 'PWA Invoice',
-        short_name: 'Invoice',
+        name: 'Cashfloweasy — Simple Accounting',
+        short_name: 'Cashfloweasy',
         start_url: '/',
         display: 'standalone',
         background_color: '#0f172a',
@@ -23,8 +23,15 @@ export default defineConfig({
         icons: [
           {
             src: '/favicon.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml'
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any'
+          },
+          {
+            src: '/simplecashflow_logo.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
