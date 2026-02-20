@@ -132,6 +132,11 @@ const defaultInvoiceTemplateConfig = {
   header: {
     showLogo: true,
     logoUrl: ''
+  },
+  footer: {
+    termsText: '',
+    qrTitle: '',
+    qrImageUrl: ''
   }
 };
 
@@ -140,7 +145,8 @@ function mergeInvoiceTemplateConfig(parsed) {
     ...defaultInvoiceTemplateConfig,
     ...parsed,
     theme: { ...defaultInvoiceTemplateConfig.theme, ...(parsed?.theme || {}) },
-    header: { ...defaultInvoiceTemplateConfig.header, ...(parsed?.header || {}) }
+    header: { ...defaultInvoiceTemplateConfig.header, ...(parsed?.header || {}) },
+    footer: { ...defaultInvoiceTemplateConfig.footer, ...(parsed?.footer || {}) }
   };
 }
 
@@ -352,8 +358,24 @@ function InvoiceView() {
 
   const templateTheme = invoiceTemplateConfig?.theme || defaultInvoiceTemplateConfig.theme;
   const paperLogoUrl = useMemo(() => {
-    return resolveStorageAccessUrl(profile?.logoUrl || '');
-  }, [profile?.logoUrl]);
+    const show = invoiceTemplateConfig?.header?.showLogo !== false;
+    if (!show) return '';
+    const fromTemplate = invoiceTemplateConfig?.header?.logoUrl || '';
+    const fromProfile = profile?.logoUrl || '';
+    return resolveStorageAccessUrl(fromTemplate || fromProfile);
+  }, [invoiceTemplateConfig?.header?.logoUrl, invoiceTemplateConfig?.header?.showLogo, profile?.logoUrl]);
+
+  const qrUrl = useMemo(() => {
+    return resolveStorageAccessUrl(invoiceTemplateConfig?.footer?.qrImageUrl || '');
+  }, [invoiceTemplateConfig?.footer?.qrImageUrl]);
+
+  const qrTitle = useMemo(() => {
+    return String(invoiceTemplateConfig?.footer?.qrTitle || '').trim();
+  }, [invoiceTemplateConfig?.footer?.qrTitle]);
+
+  const termsText = useMemo(() => {
+    return String(invoiceTemplateConfig?.footer?.termsText || '').trim();
+  }, [invoiceTemplateConfig?.footer?.termsText]);
 
   const invoicePaperVars = useMemo(
     () => ({
@@ -724,6 +746,26 @@ function InvoiceView() {
               </div>
             </div>
           </div>
+
+          {(termsText || qrUrl) && (
+            <div className="template-preview-footer" style={{ marginTop: 18 }}>
+              <div className="template-preview-notes">
+                <div className="template-preview-label">{t('templatePreview.notes')}</div>
+                <p>{termsText || '--'}</p>
+              </div>
+              {qrUrl && (
+                <div className="template-preview-pay">
+                  <div className="template-preview-qr">
+                    <img src={qrUrl} alt="QR" loading="lazy" />
+                  </div>
+                  <div className="template-preview-pay-text">
+                    <span>{qrTitle || t('templatePreview.scanToPay')}</span>
+                    <strong>{formatMoney(totals.total, baseCurrency)}</strong>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

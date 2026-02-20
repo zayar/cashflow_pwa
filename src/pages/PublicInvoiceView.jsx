@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import InvoiceItemsTable from '../components/InvoiceItemsTable';
+import { useI18n } from '../i18n';
 import {
   computeDueDate,
   formatInvoiceNumberShort,
@@ -8,13 +9,25 @@ import {
   formatPaymentTerms,
   formatShortDate
 } from '../lib/formatters';
+import { resolveStorageAccessUrl, uploadToSignedUrl } from '../lib/uploadApi';
 
-const defaultTemplateTheme = {
-  primaryColor: '#1677ff',
-  textColor: '#111827',
-  tableHeaderBg: '#111827',
-  tableHeaderText: '#ffffff',
-  borderColor: '#e2e8f0'
+const defaultTemplateConfig = {
+  theme: {
+    primaryColor: '#1677ff',
+    textColor: '#111827',
+    tableHeaderBg: '#111827',
+    tableHeaderText: '#ffffff',
+    borderColor: '#e2e8f0'
+  },
+  header: {
+    showLogo: true,
+    logoUrl: ''
+  },
+  footer: {
+    termsText: '',
+    qrTitle: '',
+    qrImageUrl: ''
+  }
 };
 
 function safeParseJson(raw) {
@@ -26,18 +39,34 @@ function safeParseJson(raw) {
   }
 }
 
-function mergeTheme(parsed) {
-  return { ...defaultTemplateTheme, ...(parsed?.theme || {}) };
+function mergeConfig(parsed) {
+  return {
+    ...defaultTemplateConfig,
+    ...parsed,
+    theme: { ...defaultTemplateConfig.theme, ...(parsed?.theme || {}) },
+    header: { ...defaultTemplateConfig.header, ...(parsed?.header || {}) },
+    footer: { ...defaultTemplateConfig.footer, ...(parsed?.footer || {}) }
+  };
 }
 
 function PublicInvoiceView() {
   const { token } = useParams();
   const [searchParams] = useSearchParams();
   const lang = searchParams.get('lang') || '';
+  const { t, setLang } = useI18n();
 
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [proofs, setProofs] = useState([]);
+  const [proofStatus, setProofStatus] = useState('');
+  const [proofError, setProofError] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const normalized = String(lang || '').trim().toLowerCase();
+    if (normalized) setLang(normalized);
+  }, [lang, setLang]);
 
   useEffect(() => {
     if (!token) {
@@ -83,10 +112,12 @@ function PublicInvoiceView() {
   const business = data?.business;
   const template = data?.template;
 
-  const theme = useMemo(() => {
+  const templateConfig = useMemo(() => {
     const parsed = safeParseJson(template?.config_json);
-    return mergeTheme(parsed);
+    return mergeConfig(parsed);
   }, [template?.config_json]);
+
+  const theme = templateConfig?.theme || defaultTemplateConfig.theme;
 
   const paperVars = useMemo(() => ({
     '--invoice-template-primary': theme.primaryColor,
@@ -97,6 +128,19 @@ function PublicInvoiceView() {
   }), [theme]);
 
   const currency = invoice?.currency || null;
+  const showLogo = templateConfig?.header?.showLogo !== false;
+  const logoUrl = useMemo(() => {
+    if (!showLogo) return '';
+    const fromTemplate = templateConfig?.header?.logoUrl || '';
+    const fromBusiness = business?.logo_url || business?.logoUrl || '';
+    return resolveStorageAccessUrl(fromTemplate || fromBusiness);
+  }, [business?.logoUrl, business?.logo_url, showLogo, templateConfig?.header?.logoUrl]);
+
+  const qrUrl = useMemo(() => {
+    return resolveStorageAccessUrl(templateConfig?.footer?.qrImageUrl || '');
+  }, [templateConfig?.footer?.qrImageUrl]);
+  const qrTitle = useMemo(() => String(templateConfig?.footer?.qrTitle || '').trim(), [templateConfig?.footer?.qrTitle]);
+  const termsText = useMemo(() => String(templateConfig?.footer?.termsText || '').trim(), [templateConfig?.footer?.termsText]);
 
   const displayNumber = useMemo(() => {
     if (invoice?.invoice_number) return formatInvoiceNumberShort(invoice.invoice_number);
@@ -151,6 +195,74 @@ function PublicInvoiceView() {
   const customerName = invoice?.customer?.name || '--';
   const remainingBalance = Number(invoice?.remaining_balance || invoice?.remainingBalance || 0);
 
+  const loadProofs = async () => {
+    if (!token) return;
+    setProofError('');
+    try {
+      const res = await fetch(`/public/invoices/${encodeURIComponent(token)}/payment-proofs`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setProofError(json?.error || 'Unable to load payment proofs.');
+        return;
+      }
+      setProofs(Array.isArray(json?.data) ? json.data : []);
+    } catch {
+      setProofError('Unable to load payment proofs. Please check your connection.');
+    }
+  };
+
+  useEffect(() => {
+    if (!invoice) return;
+    loadProofs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice?.id, token]);
+
+  const handleUploadProof = async (file) => {
+    if (!token || !file) return;
+    setProofStatus('');
+    setProofError('');
+    setUploading(true);
+    try {
+      const signRes = await fetch(`/public/invoices/${encodeURIComponent(token)}/payment-proofs/sign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          mimeType: file.type,
+          size: file.size
+        })
+      });
+      const signJson = await signRes.json().catch(() => null);
+      if (!signRes.ok || !signJson?.data) {
+        throw new Error(signJson?.error || 'Unable to start upload.');
+      }
+
+      await uploadToSignedUrl({ signed: signJson.data, file });
+
+      const completeRes = await fetch(`/public/invoices/${encodeURIComponent(token)}/payment-proofs/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          objectKey: signJson.data.objectKey,
+          mimeType: file.type
+        })
+      });
+      const completeJson = await completeRes.json().catch(() => null);
+      if (!completeRes.ok || !completeJson?.data) {
+        throw new Error(completeJson?.error || 'Unable to complete upload.');
+      }
+
+      setProofStatus('Payment proof uploaded.');
+      await loadProofs();
+    } catch (e) {
+      setProofError(e?.message || 'Unable to upload payment proof.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="public-invoice-shell">
@@ -199,6 +311,7 @@ function PublicInvoiceView() {
           <div className="invoice-paper invoice-paper-template" style={paperVars}>
             <div className="invoice-paper-head">
               <div className="invoice-paper-brand" aria-label="Business identity">
+                {logoUrl && <img src={logoUrl} alt="" className="invoice-paper-logo-image" loading="lazy" />}
                 {businessName && <p className="invoice-paper-brand-title">{businessName}</p>}
                 {businessPhone && <p className="invoice-paper-brand-subtle">{businessPhone}</p>}
                 {businessAddress && <p className="invoice-paper-brand-subtle">{businessAddress}</p>}
@@ -268,7 +381,79 @@ function PublicInvoiceView() {
                 </div>
               </div>
             </div>
+
+            {(termsText || qrUrl) && (
+              <div className="template-preview-footer" style={{ marginTop: 18 }}>
+                <div className="template-preview-notes">
+                  <div className="template-preview-label">{t('templatePreview.notes')}</div>
+                  <p>{termsText || '--'}</p>
+                </div>
+                {qrUrl && (
+                  <div className="template-preview-pay">
+                    <div className="template-preview-qr">
+                      <img src={qrUrl} alt="QR" loading="lazy" />
+                    </div>
+                    <div className="template-preview-pay-text">
+                      <span>{qrTitle || t('templatePreview.scanToPay')}</span>
+                      <strong>{formatMoney(totals.total, currency)}</strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+        </section>
+
+        <section className="card" aria-label="Upload payment proof" style={{ marginTop: 14 }}>
+          <p className="kicker">Upload Payment Proof</p>
+          <p className="subtle" style={{ marginTop: 6 }}>
+            Add up to 5 images (JPG/PNG/WebP). Max 5MB each.
+          </p>
+
+          <div className="toolbar" style={{ gap: 10, flexWrap: 'wrap' }}>
+            <label className="btn btn-secondary" style={{ cursor: uploading ? 'not-allowed' : 'pointer' }}>
+              {uploading ? 'Uploading...' : 'Choose image'}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={uploading}
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (file) handleUploadProof(file);
+                }}
+              />
+            </label>
+            {proofStatus && <span className="meta-chip">{proofStatus}</span>}
+          </div>
+
+          {proofError && (
+            <p className="subtle" style={{ color: '#b91c1c', marginTop: 10 }}>
+              {proofError}
+            </p>
+          )}
+
+          {proofs.length > 0 && (
+            <div className="cf-thumb-grid" style={{ marginTop: 12 }}>
+              {proofs.map((doc) => {
+                const src = resolveStorageAccessUrl(doc?.documentUrl || '');
+                if (!src) return null;
+                return (
+                  <a
+                    key={doc?.id || doc?.documentUrl}
+                    className="cf-thumb"
+                    href={src}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Open payment proof"
+                  >
+                    <img src={src} alt="" loading="lazy" />
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <footer className="public-invoice-footer">
