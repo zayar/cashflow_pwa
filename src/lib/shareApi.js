@@ -76,7 +76,7 @@ export const buildInvoiceShareUrl = (token, { lang } = {}) => {
   const host = getPublicHost();
   const normalizedLang = String(lang || '').trim().toLowerCase();
   const suffix = normalizedLang && normalizedLang !== 'en' ? `?lang=${encodeURIComponent(normalizedLang)}` : '';
-  return `${host}/#/public/invoices/${encodeURIComponent(String(token))}${suffix}`;
+  return `${host}/p/${encodeURIComponent(String(token))}${suffix}`;
 };
 
 export const buildShortShareUrl = (shortId) => {

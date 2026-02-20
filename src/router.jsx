@@ -32,6 +32,7 @@ const Subscribe = lazy(() => import('./pages/Subscribe'));
 const CompanyProfile = lazy(() => import('./pages/CompanyProfile'));
 const AccountSettings = lazy(() => import('./pages/AccountSettings'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
+const PublicInvoiceView = lazy(() => import('./pages/PublicInvoiceView'));
 
 function suspense(element) {
   return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
@@ -39,6 +40,8 @@ function suspense(element) {
 
 export function AppRoutes() {
   return useRoutes([
+    // Public invoice viewer — no auth required.
+    { path: '/p/:token', element: suspense(<PublicInvoiceView />) },
     {
       path: '/',
       element: suspense(<RootLayout />),

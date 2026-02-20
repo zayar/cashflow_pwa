@@ -6386,3 +6386,34 @@ html[lang='my'] .login-flat-foot {
     animation: none;
   }
 }
+
+/* Public Invoice Viewer (anonymous, no auth) */
+.public-invoice-shell {
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.public-invoice-shell .stack {
+  width: 100%;
+  max-width: 640px;
+}
+
+.public-invoice-shell .public-error-card {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.public-invoice-footer {
+  text-align: center;
+  padding: 24px 0 8px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.public-invoice-footer strong {
+  color: #64748b;
+}
