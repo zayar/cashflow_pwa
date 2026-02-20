@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import Modal from '../components/Modal';
 import InvoiceItemsTable from '../components/InvoiceItemsTable';
 import { useI18n } from '../i18n';
 import {
@@ -62,6 +63,7 @@ function PublicInvoiceView() {
   const [proofStatus, setProofStatus] = useState('');
   const [proofError, setProofError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
 
   useEffect(() => {
     const normalized = String(lang || '').trim().toLowerCase();
@@ -263,6 +265,29 @@ function PublicInvoiceView() {
     }
   };
 
+  const handleDeleteProof = async (doc) => {
+    const id = Number(doc?.id || 0);
+    if (!token || !id) return;
+    const ok = window.confirm('Remove this payment proof image?');
+    if (!ok) return;
+    setProofStatus('');
+    setProofError('');
+    try {
+      const res = await fetch(`/public/invoices/${encodeURIComponent(token)}/payment-proofs/${encodeURIComponent(String(id))}`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok && res.status !== 204) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error || 'Unable to delete payment proof.');
+      }
+      setProofStatus('Payment proof removed.');
+      await loadProofs();
+    } catch (e) {
+      setProofError(e?.message || 'Unable to delete payment proof.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="public-invoice-shell">
@@ -416,12 +441,22 @@ function PublicInvoiceView() {
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
+                multiple
                 disabled={uploading}
                 style={{ display: 'none' }}
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
+                  const files = Array.from(e.target.files || []);
                   e.target.value = '';
-                  if (file) handleUploadProof(file);
+                  if (files.length === 0) return;
+                  // Upload sequentially to keep status/errors predictable.
+                  (async () => {
+                    for (const file of files) {
+                      // Stop when we reach max proofs.
+                      if ((proofs?.length || 0) >= 5) break;
+                      // eslint-disable-next-line no-await-in-loop
+                      await handleUploadProof(file);
+                    }
+                  })();
                 }}
               />
             </label>
@@ -437,24 +472,61 @@ function PublicInvoiceView() {
           {proofs.length > 0 && (
             <div className="cf-thumb-grid" style={{ marginTop: 12 }}>
               {proofs.map((doc) => {
-                const src = resolveStorageAccessUrl(doc?.documentUrl || '');
+                const viewUrl = String(doc?.viewUrl || '').trim();
+                const src = viewUrl || resolveStorageAccessUrl(doc?.documentUrl || '');
                 if (!src) return null;
                 return (
-                  <a
+                  <div
                     key={doc?.id || doc?.documentUrl}
-                    className="cf-thumb"
-                    href={src}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Open payment proof"
+                    style={{ position: 'relative' }}
                   >
-                    <img src={src} alt="" loading="lazy" />
-                  </a>
+                    <button className="cf-thumb" type="button" aria-label="Open payment proof" onClick={() => setPreviewUrl(src)}>
+                      <img src={src} alt="" loading="lazy" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Remove payment proof"
+                      title="Remove"
+                      onClick={() => handleDeleteProof(doc)}
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        width: 32,
+                        height: 32,
+                        borderRadius: 999,
+                        border: '1px solid rgba(15, 23, 42, 0.12)',
+                        background: 'rgba(255, 255, 255, 0.92)',
+                        display: 'grid',
+                        placeItems: 'center',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
                 );
               })}
             </div>
           )}
         </section>
+
+        {previewUrl && (
+          <Modal title="Payment proof" onClose={() => setPreviewUrl('')}>
+            <div style={{ display: 'grid', placeItems: 'center' }}>
+              <img
+                src={previewUrl}
+                alt="Payment proof"
+                style={{ maxWidth: '100%', height: 'auto', borderRadius: 12 }}
+              />
+              <div className="toolbar" style={{ justifyContent: 'flex-end', marginTop: 12 }}>
+                <a className="btn btn-secondary" href={previewUrl} target="_blank" rel="noreferrer">
+                  Open in new tab
+                </a>
+              </div>
+            </div>
+          </Modal>
+        )}
 
         <footer className="public-invoice-footer">
           <p>Powered by <strong>Cashfloweasy</strong></p>
