@@ -6417,3 +6417,38 @@ html[lang='my'] .login-flat-foot {
 .public-invoice-footer strong {
   color: #64748b;
 }
+
+/* --- PWA NATIVE OPTIMIZATIONS (2026 Mobile First) --- */
+/* 1. Native Feel WebView Resets */
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+input, textarea, select {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+/* 2. Touch Targets (Min 48px for a11y & fat-finger prevention) */
+.btn, 
+button, 
+.fab, 
+.nav-pill, 
+input[type="text"], 
+input[type="number"], 
+input[type="email"], 
+input[type="password"], 
+input[type="date"], 
+select, 
+textarea {
+  min-height: 48px !important;
+}
+
+/* Ensure minimum width for icon buttons */
+.btn-icon,
+.nav-pill,
+.fab {
+  min-width: 48px !important;
+}
